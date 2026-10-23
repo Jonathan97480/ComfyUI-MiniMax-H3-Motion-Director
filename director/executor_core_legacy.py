@@ -1297,7 +1297,7 @@ def execute_director_plan_core(
         if fill is None:
             raise ValueError(
                 f"Segment {seg.index + 1} is not selected and has no valid cache or source frames to passthrough. "
-                "Include it in「选择运行」, or switch export to「分段导出」."
+                "Include it in「选择运行」(Run Selection / Sélectionner à exécuter), or switch export to「分段导出」(Export by segment / Export par segment)."
             )
         completed_outputs[seg.index] = fill
         passthrough_indices.append(seg.index)

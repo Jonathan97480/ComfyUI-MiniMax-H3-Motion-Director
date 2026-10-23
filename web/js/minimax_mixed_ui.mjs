@@ -76,7 +76,8 @@ function cloneState(value) {
 }
 
 function dragLabel() {
-    return getLocale() === "en" ? "Drag to reorder" : "拖动排序";
+    const l = String(getLocale?.() || "zh").toLowerCase();
+    return l.startsWith("fr") ? "Glisser pour réorganiser" : (l.startsWith("en") ? "Drag to reorder" : "拖动排序");
 }
 
 function ensureInteractionStyles() {

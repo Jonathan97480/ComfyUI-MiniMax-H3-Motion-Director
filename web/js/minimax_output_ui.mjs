@@ -37,11 +37,12 @@ const OUTPUT_TEXT = {
         director_preview: "Aperçu Director",
         suppressed: "Aperçu ComfyUI par défaut : DÉSACTIVÉ",
 
-        preview_frames: "preview_frames",
-        preview_fps: "preview_fps",
-        max_resolution: "max_resolution",
-        jpeg_quality: "jpeg_quality",
-        preview_every: "preview_every",
+        preview_frames: "Nb images d'aperçu",
+        preview_fps: "FPS d'aperçu",
+        max_resolution: "Résolution max",
+        jpeg_quality: "Qualité JPEG",
+        preview_every: "Intervalle d'aperçu",
+        last_preview: "Dernier aperçu",
 
         save_video: "Enregistrer la vidéo",
         auto_save: "Enregistrement automatique du résultat final",
@@ -115,11 +116,12 @@ const OUTPUT_TEXT = {
         director_preview: "Director Preview",
         suppressed: "ComfyUI Default Preview: SUPPRESSED",
 
-        preview_frames: "preview_frames",
-        preview_fps: "preview_fps",
-        max_resolution: "max_resolution",
-        jpeg_quality: "jpeg_quality",
-        preview_every: "preview_every",
+        preview_frames: "Preview Frames",
+        preview_fps: "Preview FPS",
+        max_resolution: "Max Resolution",
+        jpeg_quality: "JPEG Quality",
+        preview_every: "Preview Interval",
+        last_preview: "Last Preview",
 
         save_video: "Save Video",
         auto_save: "Auto-save Final Result",
@@ -199,6 +201,7 @@ const OUTPUT_TEXT = {
         max_resolution: "最大分辨率",
         jpeg_quality: "JPEG 品质",
         preview_every: "预览间隔",
+        last_preview: "上次预览",
 
         save_video: "保存影片",
         auto_save: "自动保存最终结果",
@@ -643,19 +646,19 @@ export function mountOutputUI(
             data-live-tab="generation"
             class="active"
             data-output-text="live_generation"
-          >一般</button>
+          >${tx("live_generation")}</button>
 
           <button
             type="button"
             data-live-tab="global_refine"
             data-output-text="live_global"
-          >放大</button>
+          >${tx("live_global")}</button>
 
           <button
             type="button"
             data-live-tab="face_refine"
             data-output-text="live_face"
-          >脸部精修</button>
+          >${tx("live_face")}</button>
         </div>
 
         <div class="mmx-live-source">
@@ -679,13 +682,13 @@ export function mountOutputUI(
           <div
             class="mmx-live-empty"
             data-output-text="live_waiting"
-          >等待实时预览…</div>
+          >${tx("live_waiting")}</div>
 
           <div
             class="mmx-live-badge"
             data-live-badge
             data-output-text="idle"
-          >待命</div>
+          >${tx("idle")}</div>
         </div>
 
         <div
@@ -703,13 +706,13 @@ export function mountOutputUI(
             class="bd-run-title"
             data-r="run-title"
             data-output-text="current_run"
-          >当前运行 · 待命</div>
+          >${tx("current_run")}</div>
 
           <div
             class="bd-run-detail"
             data-r="run-detail"
             data-output-text="task_detail"
-          >任务 / 片段 / 阶段 / 步数</div>
+          >${tx("task_detail")}</div>
 
           <div
             class="bd-run-select-bar hidden"
@@ -861,26 +864,26 @@ export function mountOutputUI(
             data-result-tab="segment"
             class="active"
             data-output-text="segment"
-          >分段</button>
+          >${tx("segment")}</button>
 
           <button
             type="button"
             data-result-tab="multi"
             data-output-text="multi"
-          >多段</button>
+          >${tx("multi")}</button>
 
           <button
             type="button"
             data-result-tab="final"
             data-output-text="final"
-          >最终结果</button>
+          >${tx("final")}</button>
         </div>
 
         <div class="mmx-result-source">
           <span
             data-source-label
             data-output-text="generated_segment"
-          >已生成片段</span>
+          >${tx("generated_segment")}</span>
 
           <select
             data-segment-select
@@ -892,12 +895,12 @@ export function mountOutputUI(
             hidden
           >
             <label>
-              <span data-output-text="range_start">起始段</span>
+              <span data-output-text="range_start">${tx("range_start")}</span>
               <select data-range-start></select>
             </label>
             <span>→</span>
             <label>
-              <span data-output-text="range_end">结束段</span>
+              <span data-output-text="range_end">${tx("range_end")}</span>
               <select data-range-end></select>
             </label>
           </div>
@@ -925,13 +928,13 @@ export function mountOutputUI(
           <div
             class="mmx-result-empty"
             data-output-text="result_waiting"
-          >等待模型生成成果…</div>
+          >${tx("result_waiting")}</div>
 
           <div
             class="mmx-result-badge"
             data-result-badge
             data-output-text="idle"
-          >待命</div>
+          >${tx("idle")}</div>
         </div>
 
         <audio
@@ -944,7 +947,7 @@ export function mountOutputUI(
             type="button"
             data-result-play
             data-output-text="play"
-          >▶ 播放</button>
+          >${tx("play")}</button>
 
           <input
             type="range"
@@ -960,12 +963,12 @@ export function mountOutputUI(
           </span>
 
           <span data-result-frame>
-            帧 0 / 0
+            ${tx("frame")} 0 / 0
           </span>
 
           <label>
             <span data-output-text="volume">
-              音量
+              ${tx("volume")}
             </span>
 
             <input
@@ -993,12 +996,12 @@ export function mountOutputUI(
           hidden
         >
           <h4 data-output-text="save_video">
-            保存影片
+            ${tx("save_video")}
           </h4>
 
           <label>
             <span data-output-text="auto_save">
-              自动保存最终结果
+              ${tx("auto_save")}
             </span>
 
             <input
@@ -1009,7 +1012,7 @@ export function mountOutputUI(
 
           <label>
             <span data-output-text="output_path">
-              路径
+              ${tx("output_path")}
             </span>
 
             <input
@@ -1021,7 +1024,7 @@ export function mountOutputUI(
 
           <label>
             <span data-output-text="filename_prefix">
-              文件名前缀
+              ${tx("filename_prefix")}
             </span>
 
             <input
@@ -1032,7 +1035,7 @@ export function mountOutputUI(
 
           <label>
             <span data-output-text="format">
-              格式
+              ${tx("format")}
             </span>
 
             <select data-save="format">
@@ -1043,7 +1046,7 @@ export function mountOutputUI(
 
           <label>
             <span data-output-text="codec">
-              编码器
+              ${tx("codec")}
             </span>
 
             <select data-save="codec">
@@ -1054,19 +1057,19 @@ export function mountOutputUI(
 
           <label>
             <span data-output-text="encoding">
-              编码模式
+              ${tx("encoding")}
             </span>
 
             <select data-save="encoding">
               <option
                 value="auto"
                 data-output-text="encoding_auto"
-              >自动</option>
+              >${tx("encoding_auto")}</option>
 
               <option
                 value="re-encode"
                 data-output-text="encoding_reencode"
-              >重新编码</option>
+              >${tx("encoding_reencode")}</option>
             </select>
           </label>
 
@@ -1090,7 +1093,7 @@ export function mountOutputUI(
               data-save-status
               data-output-text="save_not_ready"
             >
-              最终结果尚未完成
+              ${tx("save_not_ready")}
             </span>
 
             <button
@@ -1099,27 +1102,27 @@ export function mountOutputUI(
               disabled
               data-output-text="save_button"
             >
-              保存影片
+              ${tx("save_button")}
             </button>
           </div>
         </section>
 
         <section class="mmx-output-card">
           <h4 data-output-text="final_info">
-            最终成果信息
+            ${tx("final_info")}
           </h4>
 
           <div
             data-final-info
             data-output-text="not_completed"
           >
-            尚未完成
+            ${tx("not_completed")}
           </div>
         </section>
 
         <section class="mmx-output-card">
           <h4 data-output-text="report">
-            报告
+            ${tx("report")}
           </h4>
 
           <div
@@ -1127,7 +1130,7 @@ export function mountOutputUI(
             data-report
             data-output-text="waiting_report"
           >
-            等待报告…
+            ${tx("waiting_report")}
           </div>
         </section>
       </aside>
@@ -1260,15 +1263,17 @@ export function mountOutputUI(
                 .toLowerCase();
 
         if (
-            lower.includes("face")
-            && lower.includes("refine")
+            (lower.includes("face") && lower.includes("refine"))
+            || lower.includes("人脸")
+            || lower.includes("脸部")
         ) {
             return "face_refine";
         }
 
         if (
-            lower.includes("global")
-            && lower.includes("refine")
+            (lower.includes("global") && lower.includes("refine"))
+            || lower.includes("全局")
+            || lower.includes("放大")
         ) {
             return "global_refine";
         }
@@ -1296,38 +1301,42 @@ export function mountOutputUI(
             raw.toLowerCase();
 
         if (
-            lower.includes("global")
-            && lower.includes("refine")
+            (lower.includes("global") && lower.includes("refine"))
+            || raw.includes("全局精修")
+            || raw.includes("二次采样")
         ) {
             return `${tx("global_refine")}${
-                lower.includes("upscale")
+                lower.includes("upscale") || raw.includes("放大")
                     ? ` · ${tx("upscale")}`
                     : ""
             }`;
         }
 
         if (
-            lower.includes("face")
-            && lower.includes("refine")
+            (lower.includes("face") && lower.includes("refine"))
+            || raw.includes("人脸精修")
+            || raw.includes("脸部精修")
         ) {
             return tx("face_refine");
         }
 
-        if (lower.includes("assemble")) {
+        if (lower.includes("assemble") || raw.includes("多段组合") || raw.includes("组合")) {
             return tx("assemble");
         }
 
-        if (lower.includes("final")) {
+        if (lower.includes("final") || raw.includes("生成结果整理") || raw.includes("最终处理")) {
             return tx("finalize");
         }
 
-        if (lower.includes("multi")) {
+        if (lower.includes("multi") || raw.includes("多段")) {
             return tx("multi");
         }
 
-        return lower.includes("generation")
-            ? tx("generation")
-            : raw || tx("generation");
+        if (lower.includes("generation") || raw.includes("采样") || raw.includes("准备片段") || raw.includes("生成")) {
+            return tx("generation");
+        }
+
+        return raw || tx("generation");
     };
 
     const stopLiveMedia = ({
@@ -1544,7 +1553,7 @@ export function mountOutputUI(
         liveSource.textContent =
             key === state.activeLiveStage
                 ? `${label} · LIVE`
-                : `${label} · Last Preview`;
+                : `${label} · ${tx("last_preview")}`;
 
         if (item) {
             liveBadge.textContent =
@@ -2652,13 +2661,10 @@ export function mountOutputUI(
                         return;
                     }
 
+                    const currentLang = String(locale?.() || "").startsWith("fr") ? "fr" : (locale() === "en" ? "en" : "zh");
                     if (
                         key
-                        && OUTPUT_TEXT[
-                            locale() === "en"
-                                ? "en"
-                                : "zh"
-                        ][key]
+                        && (OUTPUT_TEXT[currentLang]?.[key] || OUTPUT_TEXT.zh?.[key])
                     ) {
                         element.textContent =
                             tx(key);

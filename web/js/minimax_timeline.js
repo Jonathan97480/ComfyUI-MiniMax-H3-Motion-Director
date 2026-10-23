@@ -5269,9 +5269,12 @@ class MiniMaxH3MotionDirectorEditor {
         if (this.isMixedMode()) {
             const n = this._ensureMixedTimeline().segments?.length || 0;
             const frames = this._mixedTotalFrames();
-            this.videoNameEl.textContent = getLocale() === "en"
-                ? `Mixed · ${n} segment${n === 1 ? "" : "s"} · ${frames}f`
-                : `混合 · ${n}段 · ${frames}帧`;
+            const loc = String(getLocale?.() || "zh").toLowerCase();
+            this.videoNameEl.textContent = loc.startsWith("fr")
+                ? `Mixte · ${n} segment${n === 1 ? "" : "s"} · ${frames}f`
+                : (loc.startsWith("en")
+                    ? `Mixed · ${n} segment${n === 1 ? "" : "s"} · ${frames}f`
+                    : `混合 · ${n}段 · ${frames}帧`);
             return;
         }
         if (this.isFl2vMode()) {
@@ -10024,7 +10027,32 @@ class MiniMaxH3MotionDirectorEditor {
         const timelineSeg = detail.timeline_segment ?? runSeg;
         const partialRun = !!detail.partial_run
             || (this.isRunSelectEnabled?.() && runTotal < timelineTotal);
-        const phaseLabel = detail.phase_label || detail.phase || t("run.phase.default");
+        const currentLoc = String(getLocale?.() || "zh").toLowerCase();
+        const fr = currentLoc.startsWith("fr");
+        const en = currentLoc.startsWith("en");
+
+        const resolvePhaseLabel = (d) => {
+            const phase = String(d?.phase || "");
+            const phaseMap = {
+                prepare: fr ? "Préparation du segment" : (en ? "Prepare segment" : "准备片段"),
+                context_encode: fr ? "Encodage contextuel H3" : (en ? "H3 Context encode" : "H3 条件编码"),
+                sample: fr ? "Échantillonnage" : (en ? "Sampling" : "采样"),
+                global_upscale: fr ? "Raffinement global · Agrandissement" : (en ? "Global Refine · Upscale" : "全局精修 · 放大"),
+                global_refine: fr ? "Raffinement global · 2nd échantillonnage" : (en ? "Global Refine · Resample" : "全局精修 · 二次采样"),
+                decode: fr ? "Décodage AV" : (en ? "AV Decode" : "AV 解码"),
+                assemble: fr ? "Assemblage multi-segments" : (en ? "Multi-segment assemble" : "多段组合"),
+                face_refine: fr ? "Raffinement visage" : (en ? "Face Refine" : "人脸精修"),
+                finalize: fr ? "Finalisation du résultat" : (en ? "Finalizing result" : "生成结果整理"),
+                rtx_deblur: "NVIDIA RTX Deblur",
+                plan: fr ? "Analyse chronologie / Chargement vidéo" : (en ? "Parse timeline / Load video" : "解析时间轴 / 加载视频"),
+                finish: fr ? "Terminé" : (en ? "Complete" : "全部完成"),
+            };
+            if (phaseMap[phase]) return phaseMap[phase];
+            if (fr || en) return d.phase || d.phase_label || t("run.phase.default");
+            return d.phase_label || d.phase || t("run.phase.default");
+        };
+
+        const phaseLabel = resolvePhaseLabel(detail);
         const overallPct = detail.overall_max > 0
             ? Math.round((100 * detail.overall_value) / detail.overall_max)
             : 0;
@@ -10079,7 +10107,12 @@ class MiniMaxH3MotionDirectorEditor {
         }
         this.runTitleEl.textContent = title;
         const parts = [];
-        if (detail.frames_label) parts.push(detail.frames_label);
+        if (detail.frames_label) {
+            let fl = String(detail.frames_label);
+            if (fr) fl = fl.replace(/^帧\s*/, "Images ");
+            else if (en) fl = fl.replace(/^帧\s*/, "Frames ");
+            parts.push(fl);
+        }
         if (detail.task_key) parts.push(detail.task_key);
         const elapsedSeconds = Math.max(0, Number(detail.elapsed_seconds) || 0);
         const phaseElapsedSeconds = Math.max(0, Number(detail.phase_elapsed_seconds) || 0);
@@ -10089,8 +10122,14 @@ class MiniMaxH3MotionDirectorEditor {
             const remainSeconds = Math.floor(seconds % 60);
             return `${String(minutes).padStart(2, "0")}:${String(remainSeconds).padStart(2, "0")}`;
         };
-        if (elapsedSeconds > 0) parts.push(`已用 ${fmtElapsed(elapsedSeconds)}`);
-        if (phaseElapsedSeconds > 0) parts.push(`当前阶段 ${fmtElapsed(phaseElapsedSeconds)}`);
+        if (elapsedSeconds > 0) {
+            const timeTxt = fmtElapsed(elapsedSeconds);
+            parts.push(fr ? `Écoulé ${timeTxt}` : (en ? `Elapsed ${timeTxt}` : `已用 ${timeTxt}`));
+        }
+        if (phaseElapsedSeconds > 0) {
+            const timeTxt = fmtElapsed(phaseElapsedSeconds);
+            parts.push(fr ? `Étape actuelle ${timeTxt}` : (en ? `Current phase ${timeTxt}` : `当前阶段 ${timeTxt}`));
+        }
         parts.push(t("run.detailOverall", { pct: overallPct }));
         if (runTotal > 1) {
             parts.push(this.isImageBatch()

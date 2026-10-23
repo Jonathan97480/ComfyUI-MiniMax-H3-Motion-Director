@@ -313,10 +313,10 @@ function syncLocalizedLabels(node, locale, samplingState, proxies) {
     for (const widget of node?.widgets || []) {
         const candidates = [widget?.label, widget?.value, widget?.name]
             .map((value) => String(value || ""));
-        if (!candidates.some((value) => value === "打开 Director" || value === "Open Director" || value === "打开导演台")) {
+        if (!candidates.some((value) => value === "打开 Director" || value === "Open Director" || value === "打开导演台" || value === "Ouvrir Director")) {
             continue;
         }
-        const label = locale === "en" ? "Open Director" : "打开导演台";
+        const label = locale === "fr" ? "Ouvrir Director" : (locale === "en" ? "Open Director" : "打开导演台");
         changed = setWidgetLabel(widget, label) || changed;
         if (typeof widget.value === "string" && widget.value !== label) {
             widget.value = label;
@@ -426,7 +426,8 @@ function drawDirectorSectionFrames(node, ctx) {
 function syncDirectorSections(node) {
     if (!node || !Array.isArray(node.widgets)) return;
 
-    const locale = getLocale() === "en" ? "en" : "zh";
+    const l = String(getLocale?.() || "zh").toLowerCase();
+    const locale = l.startsWith("fr") ? "fr" : (l.startsWith("en") ? "en" : "zh");
     const samplingState = getSamplingConnectionState(node.inputs || []);
     const showInternal = shouldShowInternalSampling(samplingState);
     let changed = false;

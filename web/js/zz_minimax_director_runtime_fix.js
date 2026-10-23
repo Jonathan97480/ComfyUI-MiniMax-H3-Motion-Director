@@ -188,8 +188,12 @@ function syncOutputUi(node) {
     if (!outputUi?.liveRoot) return false;
     let changed = false;
 
+    const loc = String(getLocale?.() || "zh").toLowerCase();
+    const isFr = loc.startsWith("fr");
+    const isEn = loc.startsWith("en");
+
     const syncGlobalRefineVisibleText = () => {
-        const label = locale === "fr" ? "Raffinement global" : (locale === "en" ? "Global Refine" : "全局精修");
+        const label = isFr ? "Raffinement global" : (isEn ? "Global Refine" : "全局精修");
         let localChanged = false;
         const tab = outputUi.liveRoot?.querySelector?.('[data-live-tab="global_refine"]');
         if (tab && tab.textContent !== label) {
@@ -202,7 +206,9 @@ function syncOutputUi(node) {
             const text = String(element.textContent || "");
             const next = text
                 .replace(/^放大(?=\s*·|$)/, label)
-                .replace(/^Global Refine(?=\s*·|$)/, label);
+                .replace(/^全局精修(?=\s*·|$)/, label)
+                .replace(/^Global Refine(?=\s*·|$)/, label)
+                .replace(/^Raffinement global(?=\s*·|$)/, label);
             if (next !== text) {
                 element.textContent = next;
                 localChanged = true;
@@ -254,9 +260,11 @@ function syncOutputUi(node) {
             }
             const target = outputUi.liveRoot?.querySelector?.("[data-pipeline-status]");
             if (!target) return setPipelineStatus(detail);
-            const zh = getLocale() !== "en";
-            const segmentWord = zh ? "片段" : "Segment";
-            const frameWord = zh ? "帧" : "Frame";
+            const currentLoc = String(getLocale?.() || "zh").toLowerCase();
+            const fr = currentLoc.startsWith("fr");
+            const en = currentLoc.startsWith("en");
+            const segmentWord = fr ? "Segment" : (en ? "Segment" : "片段");
+            const frameWord = fr ? "Image" : (en ? "Frame" : "帧");
             const segment = detail.timeline_segment || detail.segment || 1;
             const total = detail.timeline_segment_total || detail.segment_total || 1;
             const progress = Number(detail.phase_max) > 1

@@ -38,7 +38,7 @@ const POST_TEXT = {
         global_title: "Raffinement global", face_title: "Raffinement visage", sampling: "Second échantillonnage",
         upscale: "Mise à l'échelle (Upscale)", output_resolution: "Résolution de sortie",
         detection_canvas: "Détection", tracking_denoise: "Raffinement",
-        stitch: "Réintégration", advanced: "Paramètres avancés", enabled: "ACTIVÉ / DÉSACTIVÉ", disabled: "Désactivé",
+        stitch: "Réintégration", advanced: "Paramètres avancés", enabled: "ON / OFF", disabled: "Désactivé",
         detection_note: "Choisissez un modèle de détection de visage. Réduisez à 0.35 seulement si des visages sont manqués.",
         refine_note: "Le mode adaptatif renforce les petits visages et atténue les grands visages.",
         stitch_note: "Le masque rectangulaire est recommandé. N'utilisez SAM que si un contour précis est nécessaire.",
@@ -46,6 +46,7 @@ const POST_TEXT = {
         runtime_detected: "Bibliothèque détectée (validée au lancement de la génération)",
         missing_no_downgrade: "Non installé (cette étape échouera sans dégradation)",
         lbh_note: "Director scanne automatiquement les checkpoints MiniMax H3 learned-latent compatibles dans models/latent_upscale_models. L'architecture 2D/3D est détectée depuis les poids.",
+        divider_tracking: "Suivi", divider_adaptive: "Débruitage adaptatif", divider_identity: "Identité / Secours", divider_stitch: "Réintégration", divider_sam: "SAM",
     },
     en: {
         global_title: "Global Refine", face_title: "Face Refine", sampling: "Second Sampling",
@@ -59,12 +60,13 @@ const POST_TEXT = {
         runtime_detected: "Runtime detected (validated when generation starts)",
         missing_no_downgrade: "Not installed (stage will fail without downgrade)",
         lbh_note: "Director scans compatible MiniMax H3 learned-latent checkpoints from models/latent_upscale_models automatically. Select a checkpoint below; its 2D/3D architecture is detected from the weights. No separate LBH custom node is required.",
+        divider_tracking: "Tracking", divider_adaptive: "Adaptive Denoise", divider_identity: "Identity / Fallback", divider_stitch: "Stitch", divider_sam: "SAM",
     },
     zh: {
         global_title: "全局精修", face_title: "人脸精修", sampling: "二次采样",
         upscale: "放大", output_resolution: "输出分辨率",
         detection_canvas: "检测", tracking_denoise: "精修",
-        stitch: "回贴", advanced: "高级设置", enabled: "开 / 关", disabled: "已停用",
+        stitch: "回贴", advanced: "高级设置", enabled: "开 /关", disabled: "已停用",
         detection_note: "通常只需选择人脸检测模型。置信度 0.35 可直接使用，漏脸时再降低。",
         refine_note: "自适应会加强远处小脸、减弱近处大脸，避免重写已有细节。",
         stitch_note: "推荐矩形遮罩；只有确实需要更贴脸的边缘时再使用 SAM。",
@@ -72,6 +74,7 @@ const POST_TEXT = {
         runtime_detected: "已检测到运行库（生成时验证）",
         missing_no_downgrade: "未安装（此阶段会失败，不会自动降级）",
         lbh_note: "Director 会自动扫描 models/latent_upscale_models 中兼容的 MiniMax H3 Learned Latent checkpoint。只需选择模型，2D/3D 架构会直接从权重自动识别；无需另装 LBH 自定义节点。",
+        divider_tracking: "跟踪", divider_adaptive: "自适应降噪", divider_identity: "身份 / 回退", divider_stitch: "回贴", divider_sam: "SAM",
     },
 };
 
@@ -120,14 +123,14 @@ const POST_OPTION_LABELS = {
         offset: ["Use Seed offset", "使用 Seed 偏移", "Utiliser un décalage de Seed"],
     },
     "global_refine.upscale_method": {
-        lanczos: ["Lanczos", "Lanczos"], upscale_model: ["Upscale Model", "放大模型"],
-        nvidia_rtx_vsr: ["NVIDIA RTX VSR", "NVIDIA RTX VSR"],
-        h3_learned_latent: ["H3 Learned Latent", "H3 Learned Latent"],
+        lanczos: ["Lanczos", "Lanczos", "Lanczos"], upscale_model: ["Upscale Model", "放大模型", "Modèle d'upscale"],
+        nvidia_rtx_vsr: ["NVIDIA RTX VSR", "NVIDIA RTX VSR", "NVIDIA RTX VSR"],
+        h3_learned_latent: ["H3 Learned Latent", "H3 Learned Latent", "H3 Learned Latent"],
     },
     "global_refine.latent_upscale_precision": { fp16: ["FP16", "FP16"], bf16: ["BF16", "BF16"], fp32: ["FP32", "FP32"] },
     "global_refine.latent_upscale_device": { cuda: ["CUDA", "CUDA"], cpu: ["CPU", "CPU"] },
     "global_refine.vsr_quality": {
-        low: ["Low", "Low"], medium: ["Medium", "Medium"], high: ["High", "High"], ultra: ["Ultra", "Ultra"],
+        low: ["Low", "Low", "Faible"], medium: ["Medium", "Medium", "Moyen"], high: ["High", "High", "Élevé"], ultra: ["Ultra", "Ultra", "Ultra"],
     },
     "global_refine.resolution_mode": {
         follow_director: ["Follow Director", "跟随 Director", "Suivre Director"],
@@ -139,10 +142,10 @@ const POST_OPTION_LABELS = {
         auto_capped_768: ["Auto (recommended, max 768)", "自动（推荐，上限 768）", "Auto (recommandé, max 768)"],
     },
     "face_refine.smooth_method": {
-        gaussian: ["Gaussian", "高斯"], savgol: ["Savitzky–Golay", "Savitzky–Golay"],
-        moving_average: ["Moving average", "移动平均"],
+        gaussian: ["Gaussian", "高斯", "Gaussien"], savgol: ["Savitzky–Golay", "Savitzky–Golay", "Savitzky–Golay"],
+        moving_average: ["Moving average", "移动平均", "Moyenne mobile"],
     },
-    "face_refine.size_mode": { adaptive: ["Adaptive", "自适应"], stable: ["Stable", "稳定"] },
+    "face_refine.size_mode": { adaptive: ["Adaptive", "自适应", "Adaptatif"], stable: ["Stable", "稳定", "Stable"] },
     "face_refine.mask_mode": { rect: ["Rectangle (recommended)", "矩形（推荐）", "Rectangle (recommandé)"], ellipse: ["Ellipse", "椭圆", "Ellipse"], sam: ["SAM (optional)", "SAM（可选）", "SAM (optionnel)"] },
     "face_refine.paste_region": { face_rect: ["Face rectangle", "人脸区域", "Rectangle visage"], full_crop: ["Full crop", "完整裁切区", "Découpe complète"] },
     "face_refine.undetected_frames": { fade: ["Fade", "淡出", "Fondu"], skip: ["Skip", "跳过", "Ignorer"] },
@@ -441,7 +444,7 @@ export function mountPostprocessUI(container, store, { fetchApi, directorSize = 
           ${field("Blend", "face_refine.blend", "number", 'min="0" max="1" step="0.05"')}
         </div></div>
         <details class="mmx-post-section mmx-post-advanced"><summary data-post-text="advanced">Advanced Settings</summary>
-          <div class="mmx-post-divider-title">Tracking</div><div class="mmx-post-grid">
+          <div class="mmx-post-divider-title" data-post-text="divider_tracking">Tracking</div><div class="mmx-post-grid">
             ${field("Detector Engine", "face_refine.detector", "select", options([["ultralytics","YOLO"],["insightface","InsightFace"]]))}
             ${field("Crop Factor", "face_refine.crop_factor", "number", 'min="1.2" max="5" step="0.1"')}
             ${field("Smooth", "face_refine.smooth_method", "select", options([["gaussian","gaussian"],["savgol","savgol"],["moving_average","moving_average"]]))}
@@ -449,7 +452,7 @@ export function mountPostprocessUI(container, store, { fetchApi, directorSize = 
             ${field("Size Window", "face_refine.size_smooth_window", "number", 'min="1" max="201" step="2"')}
             ${field("Size Mode", "face_refine.size_mode", "select", options([["adaptive","adaptive"],["stable","stable"]]))}
           </div>
-          <div class="mmx-post-divider-title">Adaptive Denoise</div><div class="mmx-post-grid">
+          <div class="mmx-post-divider-title" data-post-text="divider_adaptive">Adaptive Denoise</div><div class="mmx-post-grid">
             ${field("Small Face", "face_refine.strength_small_face", "number", 'min="0" max="1" step="0.05"')}
             ${field("Large Face", "face_refine.strength_large_face", "number", 'min="0" max="1" step="0.05"')}
             ${field("Face px Small", "face_refine.face_px_small", "number", 'min="4" max="400" step="1"')}
@@ -457,21 +460,21 @@ export function mountPostprocessUI(container, store, { fetchApi, directorSize = 
             ${field("Gamma", "face_refine.gamma", "number", 'min="0.1" max="4" step="0.1"')}
             ${field("Denoise Smooth", "face_refine.denoise_smooth", "number", 'min="1" max="51" step="2"')}
           </div>
-          <div class="mmx-post-divider-title">Identity / Fallback</div><div class="mmx-post-grid">
+          <div class="mmx-post-divider-title" data-post-text="divider_identity">Identity / Fallback</div><div class="mmx-post-grid">
             ${field("Identity Track", "face_refine.identity_track", "checkbox")}
             ${conditional("face_identity", field("Identity Reference", "face_refine.identity_reference", "text"))}
             ${conditional("face_identity", field("Identity Threshold", "face_refine.identity_threshold", "number", 'min="0" max="1" step="0.01"'))}
             ${field("Fallback Detector", "face_refine.fallback_detector", "select", options([["none","none"]]))}
             ${conditional("face_fallback", field("Fallback Head Frac", "face_refine.fallback_head_frac", "number", 'min="0" max="1.5" step="0.05"'))}
           </div>
-          <div class="mmx-post-divider-title">Stitch</div><div class="mmx-post-grid">
+          <div class="mmx-post-divider-title" data-post-text="divider_stitch">Stitch</div><div class="mmx-post-grid">
             ${field("Paste", "face_refine.paste_region", "select", options([["face_rect","face_rect"],["full_crop","full_crop"]]))}
             ${field("Feather", "face_refine.feather", "number", 'min="0" max="256" step="2"')}
             ${field("Mask Dilation", "face_refine.mask_dilation", "number", 'min="0" max="256" step="2"')}
             ${field("Undetected", "face_refine.undetected_frames", "select", options([["fade","fade"],["skip","skip"]]))}
             ${field("Legacy canvas feather", "face_refine.feather_scales_with_crop", "checkbox")}
           </div>
-          <div class="mmx-post-divider-title">SAM</div><div class="mmx-post-grid">
+          <div class="mmx-post-divider-title" data-post-text="divider_sam">SAM</div><div class="mmx-post-grid">
             ${conditional("face_sam_advanced", field("SAM Threshold", "face_refine.sam_threshold", "number", 'min="0" max="1" step="0.01"'))}
             ${conditional("face_sam_advanced", field("SAM Dilation", "face_refine.sam_dilation", "number", 'min="0" max="256" step="1"'))}
             ${conditional("face_sam_advanced", field("SAM Temporal", "face_refine.sam_temporal_smooth", "number", 'min="1" max="51" step="2"'))}
@@ -498,21 +501,35 @@ export function mountPostprocessUI(container, store, { fetchApi, directorSize = 
     const setConditional = (name, hidden) => {
         root.querySelectorAll(`[data-conditional="${name}"]`).forEach((element) => { element.hidden = hidden; });
     };
+    function resolveLocalizedText(pair, lang) {
+        if (!pair) return "";
+        if (Array.isArray(pair)) {
+            if (lang === "fr") return pair[2] || pair[0];
+            if (lang === "zh") return pair[1] || pair[0];
+            return pair[0];
+        }
+        return String(pair);
+    }
+
     const updateLocale = (language = locale()) => {
-        const lang = language === "en" ? "en" : "zh";
+        const l = String(language || "").toLowerCase();
+        const lang = l.startsWith("fr") ? "fr" : (l.startsWith("en") ? "en" : "zh");
         root.querySelectorAll("[data-post-text]").forEach((element) => {
-            element.textContent = POST_TEXT[lang][element.dataset.postText] || element.textContent;
+            const val = POST_TEXT[lang]?.[element.dataset.postText] || POST_TEXT.en?.[element.dataset.postText];
+            if (val) element.textContent = val;
         });
         root.querySelectorAll("[data-field-label]").forEach((element) => {
-            const pair = element.dataset.fieldLabel === "resolved_target" ? ["Final Size", "最终尺寸"] : POST_LABELS[element.dataset.fieldLabel];
-            if (pair) element.textContent = pair[lang === "zh" ? 1 : 0];
+            const pair = element.dataset.fieldLabel === "resolved_target"
+                ? ["Final Size", "最终尺寸", "Taille finale"]
+                : POST_LABELS[element.dataset.fieldLabel];
+            if (pair) element.textContent = resolveLocalizedText(pair, lang);
         });
         root.querySelectorAll("select[data-path]").forEach((select) => {
             const labels = POST_OPTION_LABELS[select.dataset.path];
             if (!labels) return;
             for (const option of select.options) {
                 const pair = labels[option.value];
-                if (pair) option.textContent = pair[lang === "zh" ? 1 : 0];
+                if (pair) option.textContent = resolveLocalizedText(pair, lang);
             }
         });
         const vsr = root.querySelector('[data-capability="nvidia_rtx_vsr"]');

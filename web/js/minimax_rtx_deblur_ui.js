@@ -77,10 +77,12 @@ function syncRefineScheduleSummary(root) {
 }
 
 function syncText(root, section) {
-    const zh = currentLanguage(root) === "zh";
+    const lang = currentLanguage(root);
+    const zh = lang === "zh";
+    const fr = lang === "fr";
     setText(section.querySelector("[data-rtx-deblur-enabled-label]"), zh ? "开 / 关" : "ON / OFF");
-    setText(section.querySelector("[data-rtx-deblur-quality-label]"), zh ? "质量" : "Quality");
-    setText(section.querySelector("[data-rtx-deblur-strength-label]"), zh ? "强度" : "Strength");
+    setText(section.querySelector("[data-rtx-deblur-quality-label]"), fr ? "Qualité" : (zh ? "质量" : "Quality"));
+    setText(section.querySelector("[data-rtx-deblur-strength-label]"), fr ? "Force" : (zh ? "强度" : "Strength"));
     syncRefineScheduleInputs(root);
     syncRefineScheduleSummary(root);
 }

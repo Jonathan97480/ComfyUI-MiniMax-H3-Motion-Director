@@ -1,3 +1,4 @@
+import { getLocale, onLocaleChange } from "./minimax_i18n.js";
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import {
@@ -68,20 +69,33 @@ function ensureReportStyles() {
     document.head.appendChild(style);
 }
 
+function getUiLang(root) {
+    const loc = String(getLocale?.() || "").toLowerCase();
+    if (loc.startsWith("fr")) return "fr";
+    if (loc.startsWith("en")) return "en";
+    if (loc.startsWith("zh")) return "zh";
+    const text = String(root?.querySelector('[data-post-text="sampling"]')?.textContent || "").toLowerCase();
+    if (text.includes("échantillonnage")) return "fr";
+    if (text.includes("second sampling")) return "en";
+    return "zh";
+}
+
 function reportIsEnglish(heading) {
-    return String(heading?.textContent || "").trim().toLowerCase() === "report";
+    const text = String(heading?.textContent || "").trim().toLowerCase();
+    return text === "report" || text === "rapport";
 }
 
 function postprocessIsEnglish(root) {
-    const text = String(root?.querySelector('[data-post-text="sampling"]')?.textContent || "").toLowerCase();
-    return text.includes("second sampling");
+    return getUiLang(root) !== "zh";
 }
 
 function syncCopyButton(button, report, heading) {
-    const english = reportIsEnglish(heading);
+    const lang = String(getLocale?.() || "").toLowerCase();
+    const fr = lang.startsWith("fr");
+    const english = lang.startsWith("en") || reportIsEnglish(heading);
     const copied = button.dataset.copyState === "copied";
-    const label = copied ? (english ? "Copied" : "已复制") : (english ? "Copy" : "复制");
-    const title = english ? "Copy report" : "复制报告";
+    const label = copied ? (fr ? "Copié" : (english ? "Copied" : "已复制")) : (fr ? "Copier" : (english ? "Copy" : "复制"));
+    const title = fr ? "Copier le rapport" : (english ? "Copy report" : "复制报告");
     button.disabled = !report.dataset.hasReport;
     setText(button, label);
     if (button.title !== title) button.title = title;
@@ -245,13 +259,13 @@ function requestPostprocessRender(root) {
 }
 
 function syncMultiPassLabels(root) {
-    const english = postprocessIsEnglish(root);
+    const lang = getUiLang(root);
     const modelLabel = root.querySelector("[data-mmx-refine-model-label]");
     const passesLabel = root.querySelector("[data-mmx-refine-passes-label]");
     const follow = root.querySelector('[data-path="global_refine.refine_model"] option[value=""]');
-    setText(modelLabel, english ? "Refine Model" : "二采模型");
-    setText(passesLabel, english ? "Passes" : "采样轮数");
-    setText(follow, english ? "Follow First Pass" : "跟随一采");
+    setText(modelLabel, lang === "fr" ? "Modèle 2nd passage" : (lang === "en" ? "Refine Model" : "二采模型"));
+    setText(passesLabel, lang === "fr" ? "Passes" : (lang === "en" ? "Passes" : "采样轮数"));
+    setText(follow, lang === "fr" ? "Suivre 1ère passe" : (lang === "en" ? "Follow First Pass" : "跟随一采"));
 }
 
 function injectMultiPassControls(root) {
@@ -262,20 +276,24 @@ function injectMultiPassControls(root) {
     let modelSelect = root.querySelector('[data-path="global_refine.refine_model"]');
     let passesInput = root.querySelector('[data-path="global_refine.passes"]');
     if (!modelSelect) {
+        const lang = getUiLang(root);
+        const modelTxt = lang === "fr" ? "Modèle 2nd passage" : (lang === "en" ? "Refine Model" : "二采模型");
+        const followTxt = lang === "fr" ? "Suivre 1ère passe" : (lang === "en" ? "Follow First Pass" : "跟随一采");
+        const passesTxt = lang === "fr" ? "Passes" : (lang === "en" ? "Passes" : "采样轮数");
         const modelField = document.createElement("label");
         modelField.className = "mmx-post-field";
         modelField.dataset.mmxRefineModelField = "";
         modelField.innerHTML = `
-          <span data-mmx-refine-model-label>二采模型</span>
+          <span data-mmx-refine-model-label>${modelTxt}</span>
           <select data-path="global_refine.refine_model">
-            <option value="">跟随一采</option>
+            <option value="">${followTxt}</option>
           </select>`;
 
         const passesField = document.createElement("label");
         passesField.className = "mmx-post-field";
         passesField.dataset.mmxRefinePassesField = "";
         passesField.innerHTML = `
-          <span data-mmx-refine-passes-label>采样轮数</span>
+          <span data-mmx-refine-passes-label>${passesTxt}</span>
           <input type="number" min="1" max="9999" step="1" value="1" data-path="global_refine.passes">`;
 
         grid.prepend(modelField, passesField);
@@ -290,7 +308,7 @@ function injectMultiPassControls(root) {
         fetchCapabilities().then((caps) => {
             if (!modelSelect?.isConnected) return;
             const rows = Array.isArray(caps?.diffusion_models) ? caps.diffusion_models : [];
-            const markup = '<option value="">跟随一采</option>'
+            const markup = `<option value="">${getUiLang(root) === 'fr' ? 'Suivre 1ère passe' : (getUiLang(root) === 'en' ? 'Follow First Pass' : '跟随一采')}</option>`
                 + rows.map((name) => {
                     const value = String(name);
                     const escaped = value
@@ -414,9 +432,10 @@ function syncResultSelector(root, { replay = false } = {}) {
     }
     if (state.select.value !== record.selected) state.select.value = record.selected;
 
-    const english = String(root.querySelector('[data-result-tab="final"]')?.textContent || "")
-        .toLowerCase().includes("final");
-    setText(state.label, english ? "Result" : "结果");
+    const loc = String(getLocale?.() || "").toLowerCase();
+    const fr = loc.startsWith("fr");
+    const english = loc.startsWith("en") || String(root.querySelector('[data-result-tab="final"]')?.textContent || "").toLowerCase().includes("final");
+    setText(state.label, fr ? "Résultat" : (english ? "Result" : "结果"));
 
     if (replay) {
         const stored = record.variants.get(record.selected);
@@ -437,7 +456,7 @@ function enhanceResultsRoot(root) {
     ensureReportStyles();
     const label = document.createElement("span");
     label.className = "mmx-refine-result-label";
-    label.textContent = "结果";
+    label.textContent = String(getLocale?.() || "").toLowerCase().startsWith("fr") ? "Résultat" : (postprocessIsEnglish(document) ? "Result" : "结果");
     label.hidden = true;
     const select = document.createElement("select");
     select.className = "mmx-refine-result-select";
@@ -610,3 +629,11 @@ app.registerExtension({
         };
     },
 });
+
+if (typeof onLocaleChange === "function") {
+    onLocaleChange(() => {
+        document.querySelectorAll(".mmx-postprocess").forEach((root) => {
+            syncMultiPassLabels(root);
+        });
+    });
+}

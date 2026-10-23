@@ -537,6 +537,10 @@ export function mountPostprocessUI(container, store, { fetchApi, directorSize = 
             const ready = !!capabilities.dependencies?.nvidia_rtx_vsr;
             vsr.textContent = `RTX VSR: ${POST_TEXT[lang][ready ? "runtime_detected" : "missing_no_downgrade"]}`;
         }
+        const ds = root.querySelector('[data-capability="face_detector"]');
+        if (ds && ds.classList.contains("bad")) {
+            ds.textContent = POST_TEXT[lang].no_face_detector;
+        }
         render(store.get());
     };
     const render = (config) => {
@@ -603,7 +607,8 @@ export function mountPostprocessUI(container, store, { fetchApi, directorSize = 
         }
         capabilities = caps;
         const ds=root.querySelector('[data-capability="face_detector"]');
-        if(ds){ds.textContent=detectors.length?"":POST_TEXT[locale()==="en"?"en":"zh"].no_face_detector;ds.classList.toggle("bad",!detectors.length);}
+        const lKey = String(locale?.() || "").toLowerCase().startsWith("fr") ? "fr" : (locale() === "en" ? "en" : "zh");
+            if(ds){ds.textContent=detectors.length?"":POST_TEXT[lKey].no_face_detector;ds.classList.toggle("bad",!detectors.length);}
         const vsr = root.querySelector('[data-capability="nvidia_rtx_vsr"]');
         const ready = !!caps.dependencies?.nvidia_rtx_vsr;
         vsr.classList.toggle("bad", !ready);

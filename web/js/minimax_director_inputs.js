@@ -1,3 +1,4 @@
+import { getLocale } from "./minimax_i18n.js";
 import { app } from "../../scripts/app.js";
 import {
     DIRECTOR_ASSETS_BLOCKED_TYPE,
@@ -244,11 +245,15 @@ function applyExternalLocks(director, mediaGroups, promptGroups, mode) {
         const group = Number(card.dataset.segmentIndex) + 1;
         if (media.has(group)) {
             card.classList.add("mmx-external-media-locked");
-            addBadge(card, "External Media · 外部素材");
+            const _l = String(getLocale?.() || "").toLowerCase();
+            const _mTxt = _l.startsWith("fr") ? "Médias externes" : (_l.startsWith("en") ? "External Media" : "External Media · 外部素材");
+            addBadge(card, _mTxt);
         }
         if (prompts.has(group)) {
             card.classList.add("mmx-external-prompt-locked");
-            addBadge(card, "External Prompt · 外部提示词", "mmx-external-prompt-badge");
+            const _lP = String(getLocale?.() || "").toLowerCase();
+            const _pTxt = _lP.startsWith("fr") ? "Prompt externe" : (_lP.startsWith("en") ? "External Prompt" : "External Prompt · 外部提示词");
+            addBadge(card, _pTxt, "mmx-external-prompt-badge");
             card.querySelectorAll?.(".bd-batch-prompts textarea")?.forEach(disablePromptElement);
         }
     }
@@ -257,11 +262,15 @@ function applyExternalLocks(director, mediaGroups, promptGroups, mode) {
         const group = Number(card.dataset.shotIndex) + 1;
         if (media.has(group)) {
             card.classList.add("mmx-external-media-locked");
-            addBadge(card, "External Media · 外部素材");
+            const _l = String(getLocale?.() || "").toLowerCase();
+            const _mTxt = _l.startsWith("fr") ? "Médias externes" : (_l.startsWith("en") ? "External Media" : "External Media · 外部素材");
+            addBadge(card, _mTxt);
         }
         if (prompts.has(group)) {
             card.classList.add("mmx-external-prompt-locked");
-            addBadge(card, "External Prompt · 外部提示词", "mmx-external-prompt-badge");
+            const _lP = String(getLocale?.() || "").toLowerCase();
+            const _pTxt = _lP.startsWith("fr") ? "Prompt externe" : (_lP.startsWith("en") ? "External Prompt" : "External Prompt · 外部提示词");
+            addBadge(card, _pTxt, "mmx-external-prompt-badge");
         }
     }
 
@@ -286,7 +295,11 @@ function syncBlockedSockets(node, director, desired, timeline, mode) {
                 node.disconnectInput?.(index);
             }
             input.type = internalPrompt ? DIRECTOR_PROMPT_BLOCKED_TYPE : "STRING";
-            if (internalPrompt) input.label = `${spec.name}  [Director 内已有提示词]`;
+            if (internalPrompt) {
+                const _lS = String(getLocale?.() || "").toLowerCase();
+                const _tag = _lS.startsWith("fr") ? "[Prompt interne existant]" : (_lS.startsWith("en") ? "[Internal prompt exists]" : "[Director 内已有提示词]");
+                input.label = `${spec.name}  ${_tag}`;
+            }
             continue;
         }
 
@@ -298,10 +311,18 @@ function syncBlockedSockets(node, director, desired, timeline, mode) {
 
         if (spec.kind === "image") {
             input.type = internalMedia ? DIRECTOR_IMAGE_BLOCKED_TYPE : "IMAGE";
-            if (internalMedia) input.label = `${spec.name}  [Director 内已有图片]`;
+            if (internalMedia) {
+                const _lI = String(getLocale?.() || "").toLowerCase();
+                const _tagI = _lI.startsWith("fr") ? "[Image interne existante]" : (_lI.startsWith("en") ? "[Internal image exists]" : "[Director 内已有图片]");
+                input.label = `${spec.name}  ${_tagI}`;
+            }
         } else {
             input.type = internalMedia ? DIRECTOR_ASSETS_BLOCKED_TYPE : DIRECTOR_ASSETS_TYPE;
-            if (internalMedia) input.label = `${spec.name}  [Director 内已有素材]`;
+            if (internalMedia) {
+                const _lM = String(getLocale?.() || "").toLowerCase();
+                const _tagM = _lM.startsWith("fr") ? "[Média interne existant]" : (_lM.startsWith("en") ? "[Internal assets exist]" : "[Director 内已有素材]");
+                input.label = `${spec.name}  ${_tagM}`;
+            }
         }
     }
 

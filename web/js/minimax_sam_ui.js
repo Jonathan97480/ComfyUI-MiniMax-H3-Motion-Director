@@ -11,10 +11,14 @@ let scanScheduled = false;
 const TEXT = {
     en: "No compatible SAM .pt model found. Put an Ultralytics SAM/SAM2 checkpoint in ComfyUI/models/sams.",
     zh: "未找到兼容的 SAM .pt 模型。请将 Ultralytics SAM/SAM2 checkpoint 放入 ComfyUI/models/sams。",
+    fr: "Aucun modèle SAM .pt compatible trouvé. Placez un checkpoint Ultralytics SAM/SAM2 dans ComfyUI/models/sams.",
 };
 
 function language() {
-    return getLocale?.() === "en" ? "en" : "zh";
+    const l = String(getLocale?.() || "zh").toLowerCase();
+    if (l.startsWith("fr")) return "fr";
+    if (l.startsWith("en")) return "en";
+    return "zh";
 }
 
 function hasCompatibleModel(select) {

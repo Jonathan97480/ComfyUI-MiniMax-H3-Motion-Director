@@ -20,10 +20,10 @@ const ZH = {
     createSegment: "将自动创建 S{n}", itemTo: "{type} {order} → {target}", promptJoined: "多个 Prompt 会按编号顺序组合后应用。",
     firstFrame: "首帧", lastFrame: "尾帧", sourceVideo: "Source Video", refPicture: "Reference Picture",
     refAudio: "Reference Audio", refVideo: "Reference Video", picture: "Picture", segment: "S{n}",
-    categories_image: ["人物", "场景", "道具", "其他"],
-    categories_audio: ["音色", "台词", "音效", "音乐", "其他"],
-    categories_video: ["人物", "场景", "动作", "镜头", "其他"],
-    categories_prompt: ["人物", "场景", "动作", "运镜", "风格", "对白", "其他"],
+    categories_image: ["Characters", "Scenes", "Props", "Other"],
+    categories_audio: ["Voice", "Lines", "Sound FX", "Music", "Other"],
+    categories_video: ["Characters", "Scenes", "Action", "Camera", "Other"],
+    categories_prompt: ["Characters", "Scenes", "Action", "Camera", "Style", "Dialogue", "Other"],
 };
 
 const EN = {
@@ -44,17 +44,46 @@ const EN = {
     createSegment: "Will create S{n}", itemTo: "{type} {order} → {target}", promptJoined: "Multiple Prompts are joined in queue order before applying.",
     firstFrame: "First Frame", lastFrame: "Last Frame", sourceVideo: "Source Video", refPicture: "Reference Picture",
     refAudio: "Reference Audio", refVideo: "Reference Video", picture: "Picture", segment: "S{n}",
-    categories_image: ["人物", "场景", "道具", "其他"],
-    categories_audio: ["音色", "台词", "音效", "音乐", "其他"],
-    categories_video: ["人物", "场景", "动作", "镜头", "其他"],
-    categories_prompt: ["人物", "场景", "动作", "运镜", "风格", "对白", "其他"],
+    categories_image: ["Characters", "Scenes", "Props", "Other"],
+    categories_audio: ["Voice", "Lines", "Sound FX", "Music", "Other"],
+    categories_video: ["Characters", "Scenes", "Action", "Camera", "Other"],
+    categories_prompt: ["Characters", "Scenes", "Action", "Camera", "Style", "Dialogue", "Other"],
 };
 
-function dict() { return String(getLocale?.() || "zh").toLowerCase().startsWith("en") ? EN : ZH; }
+const FR = {
+    button: "Médiathèque", title: "Bibliothèque de médias", close: "Fermer", cancel: "Fermer", apply: "Appliquer", applying: "Application…",
+    image: "Images", audio: "Audio", video: "Vidéo", prompt: "Prompt", add: "Ajouter un média", search: "Rechercher…",
+    allCategories: "Tous", empty: "Aucun média pour l'instant", emptySearch: "Aucun média correspondant",
+    selected: "Sélectionné", preview: "Aperçu de l'affectation", previewEmpty: "Aucun média sélectionné", target: "Appliquer à", common: "Médias communs",
+    targetRequired: "Veuillez d'abord choisir une cible", promptCommonBlocked: "Les prompts s'appliquent uniquement aux segments, pas aux médias communs.",
+    append: "Ajouter", replace: "Remplacer", promptMode: "Mode d'application du prompt", first: "Première image", last: "Dernière image", fl2vRole: "Rôle de l'image",
+    leftRightHint: "Clic gauche : ajouter · Clic droit : annuler la dernière sélection", edit: "Modifier", delete: "Supprimer", rename: "Titre",
+    category: "Catégorie", content: "Texte du prompt", save: "Enregistrer", confirmDelete: "Supprimer « {title} » ?",
+    clearPage: "Effacer l'onglet actuel", clearAll: "Effacer toutes les sélections", addCategory: "Nouvelle sous-catégorie", renameCategory: "Renommer sous-catégorie", categoryName: "Nom de la sous-catégorie", zoom: "Agrandir",
+    upload: "Importer depuis l'ordinateur", uploading: "Enregistrement de {name}…", saved: "Enregistré", applied: "Médias appliqués au Director",
+    error: "Erreur : {message}", sourceLocalOnly: "Pour RV2V, la vidéo source doit être importée localement ; la médiathèque ne fournit que des images, de l'audio et des prompts.",
+    promptNoShot: "FL2V ne peut pas créer un plan sans image clé avec seulement un prompt.",
+    v2vNoVideo: "V2V ne peut pas créer de segment exécutable sans vidéo source.",
+    noFreeSlot: "La limite de médias pour {type} est atteinte pour cette cible ; les éléments suivants ont été ignorés.",
+    createSegment: "Créera S{n}", itemTo: "{type} {order} → {target}", promptJoined: "Les prompts multiples sont combinés dans l'ordre de la file avant application.",
+    firstFrame: "Première image", lastFrame: "Dernière image", sourceVideo: "Vidéo source", refPicture: "Image de référence",
+    refAudio: "Audio de référence", refVideo: "Vidéo de référence", picture: "Image", segment: "S{n}",
+    categories_image: ["Personnages", "Décors", "Accessoires", "Autre"],
+    categories_audio: ["Voix", "Dialogue", "Effets sonores", "Musique", "Autre"],
+    categories_video: ["Personnages", "Décors", "Action", "Plan / Caméra", "Autre"],
+    categories_prompt: ["Personnages", "Décors", "Action", "Mvt caméra", "Style", "Dialogue", "Autre"],
+};
+
+function dict() {
+    const loc = String(getLocale?.() || "zh").toLowerCase();
+    if (loc.startsWith("fr")) return FR;
+    if (loc.startsWith("en")) return EN;
+    return ZH;
+}
 
 export function mlT(key, vars = {}) {
     let value = dict()[key];
-    if (value == null) value = ZH[key] ?? key;
+    if (value == null) value = EN[key] ?? ZH[key] ?? key;
     if (Array.isArray(value)) return [...value];
     return String(value).replace(/\{(\w+)\}/g, (_, name) => String(vars[name] ?? ""));
 }

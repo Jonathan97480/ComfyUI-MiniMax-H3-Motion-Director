@@ -6,6 +6,39 @@ export const DIRECTOR_SECTION_IDS = Object.freeze([
 ]);
 
 const COPY = Object.freeze({
+    fr: {
+        sections: {
+            bd_grp_sample: "Paramètres d'échantillonnage",
+            bd_grp_motion: "Continuité entre segments",
+            mmx_postprocess_group: "Post-traitement",
+            bd_grp_perf: "Performances",
+        },
+        samplingStates: {
+            internal: "Interne",
+            external: "Externe",
+            incomplete: "Incomplet",
+        },
+        widgets: {
+            seed: "Graine (Seed)",
+            control_after_generate: "Contrôle après génération",
+            "control after generate": "Contrôle après génération",
+            steps: "Étapes d'échantillonnage",
+            sampler_name: "Échantillonneur interne",
+            scheduler: "Planificateur (Scheduler)",
+            shift_video: "Sigma Shift Vidéo",
+            shift_audio: "Sigma Shift Audio",
+            motion_context_enabled: "Motion Context",
+            context_length: "Images de contexte",
+            pin_renorm_enabled: "Verrouillage échelle latent",
+            mmx_pin_renorm_proxy: "Verrouillage échelle latent",
+            source_overlap_frames: "Pont vidéo source",
+            audio_context_enabled: "Poursuivre l'audio généré",
+            color_reanchor_enabled: "Réancrage des couleurs",
+            mmx_global_refine_proxy: "Raffinement global",
+            mmx_face_refine_proxy: "Raffinement visage",
+            clear_vram_between_segments: "Libérer VRAM entre segments",
+        },
+    },
     zh: {
         sections: {
             bd_grp_sample: "采样设置",
@@ -75,7 +108,10 @@ const COPY = Object.freeze({
 });
 
 function localeKey(locale) {
-    return String(locale || "").toLowerCase() === "en" ? "en" : "zh";
+    const l = String(locale || "").toLowerCase();
+    if (l === "fr" || l.startsWith("fr")) return "fr";
+    if (l === "en" || l.startsWith("en")) return "en";
+    return "zh";
 }
 
 export function sectionTitle(locale, sectionId) {

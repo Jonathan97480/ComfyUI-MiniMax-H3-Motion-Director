@@ -8,8 +8,10 @@ let scanScheduled = false;
 let stopLocaleSync = null;
 
 function currentLanguage(root) {
-    const locale = getLocale?.();
-    if (locale === "en" || locale === "zh") return locale;
+    const locale = String(getLocale?.() || "").toLowerCase();
+    if (locale.startsWith("fr")) return "fr";
+    if (locale.startsWith("en")) return "en";
+    if (locale.startsWith("zh")) return "zh";
     const label = root.querySelector('[data-post-text="upscale"]')?.textContent || "";
     return label.includes("放大") ? "zh" : "en";
 }
@@ -34,9 +36,10 @@ function syncRefineScheduleInputs(root) {
         denoise.removeAttribute("step");
         denoise.inputMode = "decimal";
         denoise.autocomplete = "off";
-        denoise.placeholder = zh
-            ? "例：0.25,0.15,0.1；单一数值应用全部 Pass"
-            : "e.g. 0.25,0.15,0.1; one value applies to all passes";
+        const lang = currentLanguage(root);
+        denoise.placeholder = lang === "fr"
+            ? "ex. 0.25,0.15,0.1 ; valeur unique pour toutes les passes"
+            : (zh ? "例：0.25,0.15,0.1；单一数值应用全部 Pass" : "e.g. 0.25,0.15,0.1; one value applies to all passes");
     }
 
     if (steps) {

@@ -857,7 +857,7 @@ function drawPostprocessSummary(ctx, node, width, y, height = 18) {
     ctx.font = "10px ui-sans-serif, system-ui, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    let clipped = String(state.summary || (getLocale() === "en" ? "Disabled" : "已停用"));
+    let clipped = String(state.summary || (String(getLocale?.()).startsWith("fr") ? "Désactivé" : (getLocale() === "en" ? "Disabled" : "已停用")));
     while (clipped.length > 1 && ctx.measureText(clipped).width > maxWidth) clipped = `${clipped.slice(0, -2)}…`;
     ctx.fillText(clipped, 22, y + Math.max(16, Number(height) || 18) / 2);
     ctx.restore();
@@ -5914,8 +5914,10 @@ class MiniMaxH3MotionDirectorEditor {
         this.postprocessUi?.updateLocale?.(getLocale());
         this.outputUi?.updateLocale?.(getLocale());
         this.node?.setDirtyCanvas?.(true, true);
-        this.root?.classList.toggle("locale-en", getLocale() === "en");
-        this.root?.classList.toggle("locale-zh", getLocale() !== "en");
+        const loc = String(getLocale?.() || "zh").toLowerCase();
+        this.root?.classList.toggle("locale-fr", loc.startsWith("fr"));
+        this.root?.classList.toggle("locale-en", loc.startsWith("en"));
+        this.root?.classList.toggle("locale-zh", !loc.startsWith("en") && !loc.startsWith("fr"));
         applyI18nDom(this.root);
         applyDirectorWidgetLabels(this.node);
         refreshDirectorContinuityUi(this.node, this);

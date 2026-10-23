@@ -142,7 +142,8 @@ function syncSamplingSourceOwnership(node) {
 }
 
 function syncLocalizedLabels(node) {
-    const locale = getLocale() === "en" ? "en" : "zh";
+    const l = String(getLocale?.() || "zh").toLowerCase();
+const locale = l.startsWith("fr") ? "fr" : (l.startsWith("en") ? "en" : "zh");
     const samplingState = getSamplingConnectionState(node?.inputs || []);
     let changed = false;
 
@@ -188,7 +189,7 @@ function syncOutputUi(node) {
     let changed = false;
 
     const syncGlobalRefineVisibleText = () => {
-        const label = getLocale() === "en" ? "Global Refine" : "全局精修";
+        const label = locale === "fr" ? "Raffinement global" : (locale === "en" ? "Global Refine" : "全局精修");
         let localChanged = false;
         const tab = outputUi.liveRoot?.querySelector?.('[data-live-tab="global_refine"]');
         if (tab && tab.textContent !== label) {

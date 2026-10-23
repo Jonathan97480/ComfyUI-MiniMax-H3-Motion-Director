@@ -32,7 +32,30 @@ const PANEL_CLASS = "mmx-audio-role-panel";
 const CARD_BOUND = "mmxAudioRoleBound";
 
 function words() {
-    if (getLocale() === "en") return {
+    const l = String(getLocale?.() || "zh").toLowerCase();
+    if (l.startsWith("fr")) return {
+        reference: "Référence normale",
+        audioDrive: "Pilotage audio original",
+        timeline: "Chronologie du pilotage",
+        edit: "Modifier l'audio",
+        editorTitle: "Modifier l'audio",
+        play: "Lecture",
+        pause: "Pause",
+        undo: "Annuler",
+        redo: "Rétablir",
+        cut: "Découper",
+        reset: "Réinitialiser",
+        cancel: "Annuler",
+        done: "Terminé",
+        trimStart: "Début découpe",
+        trimEnd: "Fin découpe",
+        effective: "Durée effective",
+        overlap: "Les intervalles se chevauchent. Glissez vers une plage libre.",
+        overrun: "L'audio dépasse ce segment. Déplacez-le ou raccourcissez-le.",
+        decodeFail: "Impossible de décoder cet audio pour modification.",
+        common: "Commun",
+    };
+    if (l.startsWith("en")) return {
         reference: "Normal reference",
         audioDrive: "Original Audio Drive",
         timeline: "Drive timeline",

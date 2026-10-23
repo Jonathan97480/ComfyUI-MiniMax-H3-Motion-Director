@@ -3,6 +3,84 @@ import { ResultPlaybackController } from "./minimax_output_player.mjs";
 const STYLE_ID = "mmx-output-styles";
 
 const OUTPUT_TEXT = {
+    fr: {
+        live_generation: "Génération",
+        live_global: "Raffinement global",
+        live_face: "Raffinement visage",
+
+        segment: "Segment",
+        multi: "Multi-segments",
+        final: "Résultat final",
+
+        live_waiting: "En attente de l'aperçu en direct…",
+        result_waiting: "En attente du résultat généré…",
+        idle: "En attente",
+
+        generated_segment: "Segment généré",
+        available_range: "Plage générée disponible",
+        range_start: "Segment de début",
+        range_end: "Segment de fin",
+        final_pipeline: "Résultat final du pipeline",
+
+        play: "▶ Lecture",
+        pause: "⏸ Pause",
+        volume: "Volume",
+
+        current_run: "Exécution actuelle · En attente",
+        task_detail: "Tâche / Segment / Étape / Pas",
+
+        pipeline_status: "État du pipeline",
+        pipeline_path:
+            "Génération → Raffinement global → Assemblage → Raffinement visage → Finalisation / Export",
+
+        preview_settings: "Paramètres d'aperçu",
+        director_preview: "Aperçu Director",
+        suppressed: "Aperçu ComfyUI par défaut : DÉSACTIVÉ",
+
+        preview_frames: "preview_frames",
+        preview_fps: "preview_fps",
+        max_resolution: "max_resolution",
+        jpeg_quality: "jpeg_quality",
+        preview_every: "preview_every",
+
+        save_video: "Enregistrer la vidéo",
+        auto_save: "Enregistrement automatique du résultat final",
+        output_path: "Dossier de sortie",
+        filename_prefix: "Préfixe de fichier",
+        format: "Format",
+        codec: "Codec",
+        encoding: "Encodage",
+        crf: "CRF",
+        save_button: "Enregistrer la vidéo",
+        save_not_ready: "Le résultat final n'est pas prêt",
+        save_ready: "Prêt à enregistrer",
+        save_working: "Enregistrement en cours…",
+        save_done: "Enregistré : {path}",
+        save_failed: "Échec de l'enregistrement : {error}",
+        encoding_auto: "Automatique",
+        encoding_reencode: "Ré-encoder",
+
+        final_info: "Infos du résultat final",
+        not_completed: "Non terminé",
+        report: "Rapport",
+        waiting_report: "En attente du rapport…",
+
+        overall_progress: "Progression globale",
+        stage_progress: "Progression de l'étape",
+
+        no_valid: "Aucun segment valide",
+        frame: "Image",
+        frames: "images",
+        step: "Pas",
+        segment_word: "Segment",
+
+        generation: "Génération",
+        global_refine: "Raffinement global",
+        face_refine: "Raffinement visage",
+        assemble: "Assemblage",
+        finalize: "Finalisation / Export",
+        upscale: "Upscale",
+    },
     en: {
         live_generation: "Generation",
         live_global: "Global Refine",
@@ -541,7 +619,7 @@ export function mountOutputUI(
 
     const tx = (key, values = {}) => {
         let text =
-            OUTPUT_TEXT[locale() === "en" ? "en" : "zh"][key]
+            OUTPUT_TEXT[String(locale?.() || "").startsWith("fr") ? "fr" : (locale() === "en" ? "en" : "zh")][key]
             || key;
 
         for (const [name, value] of Object.entries(values)) {

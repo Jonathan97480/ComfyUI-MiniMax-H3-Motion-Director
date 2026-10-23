@@ -34,6 +34,19 @@ const clone = (value) => JSON.parse(JSON.stringify(value));
 const inChoice = (value, choices, fallback) => choices.includes(String(value || "").toLowerCase()) ? String(value || "").toLowerCase() : fallback;
 
 const POST_TEXT = {
+    fr: {
+        global_title: "Raffinement global", face_title: "Raffinement visage", sampling: "Second échantillonnage",
+        upscale: "Mise à l'échelle (Upscale)", output_resolution: "Résolution de sortie",
+        detection_canvas: "Détection", tracking_denoise: "Raffinement",
+        stitch: "Réintégration", advanced: "Paramètres avancés", enabled: "ACTIVÉ / DÉSACTIVÉ", disabled: "Désactivé",
+        detection_note: "Choisissez un modèle de détection de visage. Réduisez à 0.35 seulement si des visages sont manqués.",
+        refine_note: "Le mode adaptatif renforce les petits visages et atténue les grands visages.",
+        stitch_note: "Le masque rectangulaire est recommandé. N'utilisez SAM que si un contour précis est nécessaire.",
+        no_face_detector: "Aucun modèle de détection de visage trouvé. face_yolov8m.pt est recommandé.",
+        runtime_detected: "Bibliothèque détectée (validée au lancement de la génération)",
+        missing_no_downgrade: "Non installé (cette étape échouera sans dégradation)",
+        lbh_note: "Director scanne automatiquement les checkpoints MiniMax H3 learned-latent compatibles dans models/latent_upscale_models. L'architecture 2D/3D est détectée depuis les poids.",
+    },
     en: {
         global_title: "Global Refine", face_title: "Face Refine", sampling: "Second Sampling",
         upscale: "Upscale", output_resolution: "Output Resolution",
@@ -63,48 +76,48 @@ const POST_TEXT = {
 };
 
 const POST_LABELS = {
-    "global_refine.denoise": ["Denoise", "降噪强度"],
-    "global_refine.steps": ["Steps (0=Auto)", "步数（0=自动）"],
-    "global_refine.seed_mode": ["Refine Randomness", "精修随机性"],
-    "global_refine.seed_offset": ["Seed Offset", "Seed 偏移"],
-    "global_refine.result_previews_enabled": ["Pass Result Previews (extra VAE decode)", "阶段结果预览（额外 VAE 解码）"],
-    "global_refine.skip_fl2v": ["Skip FL2V", "跳过 FL2V"],
-    "global_refine.upscale_method": ["Method", "放大方法"],
-    "global_refine.upscale_model": ["Model", "模型"],
-    "global_refine.latent_upscale_model": ["H3 Latent Model", "H3 Latent 模型"],
-    "global_refine.latent_upscale_precision": ["Precision", "精度"],
-    "global_refine.latent_upscale_device": ["Device", "设备"],
-    "global_refine.vsr_quality": ["VSR Quality", "VSR 质量"],
-    "global_refine.resolution_mode": ["Resolution", "分辨率模式"],
-    "global_refine.aspect": ["Aspect", "画幅比"],
-    "global_refine.megapixels": ["Megapixels", "百万像素"],
-    "global_refine.width": ["Width", "宽度"],
-    "global_refine.height": ["Height", "高度"],
-    "face_refine.detector": ["Detector Engine", "检测引擎"], "face_refine.detector_model": ["Face Detector Model", "人脸检测模型"],
-    "face_refine.confidence": ["Confidence", "置信度"], "face_refine.select": ["Target Face", "目标人脸"],
-    "face_refine.crop_factor": ["Crop Factor", "裁切倍率"], "face_refine.canvas_mode": ["Canvas Quality", "画布质量"],
-    "face_refine.canvas_size": ["Canvas Size", "画布尺寸"], "face_refine.smooth_method": ["Smooth", "平滑方法"],
-    "face_refine.smooth_window": ["Centre Window", "中心平滑窗口"], "face_refine.size_smooth_window": ["Size Window", "尺寸平滑窗口"],
-    "face_refine.size_mode": ["Size Mode", "尺寸模式"], "face_refine.adaptive": ["Adaptive Strength", "自适应强度"],
-    "face_refine.base_denoise": ["Refine Strength", "精修强度"],
-    "face_refine.strength_small_face": ["Small Face", "小脸强度"],
-    "face_refine.strength_large_face": ["Large Face", "大脸强度"], "face_refine.face_px_small": ["Face px Small", "小脸像素阈值"],
-    "face_refine.face_px_large": ["Face px Large", "大脸像素阈值"], "face_refine.mask_mode": ["Mask", "遮罩"],
-    "face_refine.paste_region": ["Paste", "回贴区域"], "face_refine.feather": ["Feather (source px)", "羽化（源画面 px）"],
-    "face_refine.colour_match": ["Colour Match", "颜色匹配"], "face_refine.blend": ["Blend", "混合"],
-    "face_refine.undetected_frames": ["Undetected", "未检测帧"], "face_refine.identity_reference": ["Identity Reference", "身份参考图"],
-    "face_refine.identity_track": ["Identity Track", "身份跟踪"], "face_refine.identity_threshold": ["Identity Threshold", "身份阈值"],
-    "face_refine.fallback_detector": ["Fallback Detector", "备用检测器"], "face_refine.fallback_head_frac": ["Fallback Head Frac", "备用头部比例"],
-    "face_refine.gamma": ["Gamma", "伽马"], "face_refine.denoise_smooth": ["Denoise Smooth", "降噪平滑"],
-    "face_refine.mask_dilation": ["Mask Dilation (canvas px)", "遮罩扩张（画布 px）"], "face_refine.feather_scales_with_crop": ["Legacy canvas feather", "旧式画布羽化"],
-    "face_refine.sam_model": ["SAM Model", "SAM 模型"], "face_refine.sam_threshold": ["SAM Threshold", "SAM 阈值"],
-    "face_refine.sam_dilation": ["SAM Dilation", "SAM 扩张"], "face_refine.sam_temporal_smooth": ["SAM Temporal", "SAM 时序平滑"],
+    "global_refine.denoise": ["Denoise", "降噪强度", "Force de débruitage"],
+    "global_refine.steps": ["Steps (0=Auto)", "步数（0=自动）", "Étapes (0=Auto)"],
+    "global_refine.seed_mode": ["Refine Randomness", "精修随机性", "Aléatoire du raffinement"],
+    "global_refine.seed_offset": ["Seed Offset", "Seed 偏移", "Décalage du Seed"],
+    "global_refine.result_previews_enabled": ["Pass Result Previews (extra VAE decode)", "阶段结果预览（额外 VAE 解码）", "Aperçus de passe (décodage VAE suppl.)"],
+    "global_refine.skip_fl2v": ["Skip FL2V", "跳过 FL2V", "Ignorer FL2V"],
+    "global_refine.upscale_method": ["Method", "放大方法", "Méthode d'agrandissement"],
+    "global_refine.upscale_model": ["Model", "模型", "Modèle"],
+    "global_refine.latent_upscale_model": ["H3 Latent Model", "H3 Latent 模型", "Modèle H3 Latent"],
+    "global_refine.latent_upscale_precision": ["Precision", "精度", "Précision"],
+    "global_refine.latent_upscale_device": ["Device", "设备", "Périphérique"],
+    "global_refine.vsr_quality": ["VSR Quality", "VSR 质量", "Qualité VSR"],
+    "global_refine.resolution_mode": ["Resolution", "分辨率模式", "Mode de résolution"],
+    "global_refine.aspect": ["Aspect", "画幅比", "Format"],
+    "global_refine.megapixels": ["Megapixels", "百万像素", "Mégapixels"],
+    "global_refine.width": ["Width", "宽度", "Largeur"],
+    "global_refine.height": ["Height", "高度", "Hauteur"],
+    "face_refine.detector": ["Detector Engine", "检测引擎", "Moteur de détection"], "face_refine.detector_model": ["Face Detector Model", "人脸检测模型", "Modèle détecteur de visage"],
+    "face_refine.confidence": ["Confidence", "置信度", "Confiance"], "face_refine.select": ["Target Face", "目标人脸", "Visage cible"],
+    "face_refine.crop_factor": ["Crop Factor", "裁切倍率", "Facteur de découpe"], "face_refine.canvas_mode": ["Canvas Quality", "画布质量", "Qualité du canevas"],
+    "face_refine.canvas_size": ["Canvas Size", "画布尺寸", "Taille du canevas"], "face_refine.smooth_method": ["Smooth", "平滑方法", "Méthode de lissage"],
+    "face_refine.smooth_window": ["Centre Window", "中心平滑窗口", "Fenêtre de centrage"], "face_refine.size_smooth_window": ["Size Window", "尺寸平滑窗口", "Fenêtre de taille"],
+    "face_refine.size_mode": ["Size Mode", "尺寸模式", "Mode de taille"], "face_refine.adaptive": ["Adaptive Strength", "自适应强度", "Force adaptative"],
+    "face_refine.base_denoise": ["Refine Strength", "精修强度", "Force de raffinement"],
+    "face_refine.strength_small_face": ["Small Face", "小脸强度", "Petits visages"],
+    "face_refine.strength_large_face": ["Large Face", "大脸强度", "Grands visages"], "face_refine.face_px_small": ["Face px Small", "小脸像素阈值", "Seuil px petit visage"],
+    "face_refine.face_px_large": ["Face px Large", "大脸像素阈值", "Seuil px grand visage"], "face_refine.mask_mode": ["Mask", "遮罩", "Masque"],
+    "face_refine.paste_region": ["Paste", "回贴区域", "Zone de réintégration"], "face_refine.feather": ["Feather (source px)", "羽化（源画面 px）", "Contour progressif (px source)"],
+    "face_refine.colour_match": ["Colour Match", "颜色匹配", "Harmonisation des couleurs"], "face_refine.blend": ["Blend", "混合", "Mélange"],
+    "face_refine.undetected_frames": ["Undetected", "未检测帧", "Images non détectées"], "face_refine.identity_reference": ["Identity Reference", "身份参考图", "Image d'identité de référence"],
+    "face_refine.identity_track": ["Identity Track", "身份跟踪", "Suivi d'identité"], "face_refine.identity_threshold": ["Identity Threshold", "身份阈值", "Seuil d'identité"],
+    "face_refine.fallback_detector": ["Fallback Detector", "备用检测器", "Détecteur de secours"], "face_refine.fallback_head_frac": ["Fallback Head Frac", "备用头部比例", "Ratio tête de secours"],
+    "face_refine.gamma": ["Gamma", "伽马", "Gamma"], "face_refine.denoise_smooth": ["Denoise Smooth", "降噪平滑", "Lissage du débruitage"],
+    "face_refine.mask_dilation": ["Mask Dilation (canvas px)", "遮罩扩张（画布 px）", "Dilatation du masque (px canevas)"], "face_refine.feather_scales_with_crop": ["Legacy canvas feather", "旧式画布羽化", "Contour proportionnel à la découpe"],
+    "face_refine.sam_model": ["SAM Model", "SAM 模型", "Modèle SAM"], "face_refine.sam_threshold": ["SAM Threshold", "SAM 阈值", "Seuil SAM"],
+    "face_refine.sam_dilation": ["SAM Dilation", "SAM 扩张", "Dilatation SAM"], "face_refine.sam_temporal_smooth": ["SAM Temporal", "SAM 时序平滑", "Lissage temporel SAM"],
 };
 
 const POST_OPTION_LABELS = {
     "global_refine.seed_mode": {
-        inherit: ["Keep original Seed (recommended)", "保持原 Seed（推荐）"],
-        offset: ["Use Seed offset", "使用 Seed 偏移"],
+        inherit: ["Keep original Seed (recommended)", "保持原 Seed（推荐）", "Garder Seed d'origine (recommandé)"],
+        offset: ["Use Seed offset", "使用 Seed 偏移", "Utiliser un décalage de Seed"],
     },
     "global_refine.upscale_method": {
         lanczos: ["Lanczos", "Lanczos"], upscale_model: ["Upscale Model", "放大模型"],
@@ -117,23 +130,23 @@ const POST_OPTION_LABELS = {
         low: ["Low", "Low"], medium: ["Medium", "Medium"], high: ["High", "High"], ultra: ["Ultra", "Ultra"],
     },
     "global_refine.resolution_mode": {
-        follow_director: ["Follow Director", "跟随 Director"],
-        aspect_megapixels: ["Aspect + Megapixels", "画幅比 + 百万像素"], custom: ["Custom", "自定义"],
+        follow_director: ["Follow Director", "跟随 Director", "Suivre Director"],
+        aspect_megapixels: ["Aspect + Megapixels", "画幅比 + 百万像素", "Format + Mégapixels"], custom: ["Custom", "自定义", "Personnalisé"],
     },
-    "face_refine.select": { largest: ["Largest", "最大脸"], most_central: ["Most central", "最靠近中心"] },
+    "face_refine.select": { largest: ["Largest", "最大脸", "Plus grand"], most_central: ["Most central", "最靠近中心", "Plus central"] },
     "face_refine.canvas_mode": {
-        manual: ["Manual", "手动"], auto_no_downscale: ["Preserve source detail", "保留原始细节"],
-        auto_capped_768: ["Auto (recommended, max 768)", "自动（推荐，上限 768）"],
+        manual: ["Manual", "手动", "Manuel"], auto_no_downscale: ["Preserve source detail", "保留原始细节", "Préserver détails source"],
+        auto_capped_768: ["Auto (recommended, max 768)", "自动（推荐，上限 768）", "Auto (recommandé, max 768)"],
     },
     "face_refine.smooth_method": {
         gaussian: ["Gaussian", "高斯"], savgol: ["Savitzky–Golay", "Savitzky–Golay"],
         moving_average: ["Moving average", "移动平均"],
     },
     "face_refine.size_mode": { adaptive: ["Adaptive", "自适应"], stable: ["Stable", "稳定"] },
-    "face_refine.mask_mode": { rect: ["Rectangle (recommended)", "矩形（推荐）"], ellipse: ["Ellipse", "椭圆"], sam: ["SAM (optional)", "SAM（可选）"] },
-    "face_refine.paste_region": { face_rect: ["Face rectangle", "人脸区域"], full_crop: ["Full crop", "完整裁切区"] },
-    "face_refine.undetected_frames": { fade: ["Fade", "淡出"], skip: ["Skip", "跳过"] },
-    "face_refine.fallback_detector": { none: ["None", "无"] },
+    "face_refine.mask_mode": { rect: ["Rectangle (recommended)", "矩形（推荐）", "Rectangle (recommandé)"], ellipse: ["Ellipse", "椭圆", "Ellipse"], sam: ["SAM (optional)", "SAM（可选）", "SAM (optionnel)"] },
+    "face_refine.paste_region": { face_rect: ["Face rectangle", "人脸区域", "Rectangle visage"], full_crop: ["Full crop", "完整裁切区", "Découpe complète"] },
+    "face_refine.undetected_frames": { fade: ["Fade", "淡出", "Fondu"], skip: ["Skip", "跳过", "Ignorer"] },
+    "face_refine.fallback_detector": { none: ["None", "无", "Aucun"] },
 };
 
 export function normalizePostprocessConfig(raw) {
@@ -241,22 +254,25 @@ export function faceRefineVisibility(config){
 
 export function globalRefineSummary(config, width = 864, height = 480, locale = "en") {
     const global = normalizePostprocessConfig(config).global_refine;
-    const zh = locale === "zh";
-    if (!global.enabled) return POST_TEXT[zh ? "zh" : "en"].disabled;
+    const l = String(locale || "").toLowerCase();
+    const fr = l.startsWith("fr");
+    const zh = l === "zh";
+    const lang = fr ? "fr" : (zh ? "zh" : "en");
+    if (!global.enabled) return POST_TEXT[lang].disabled;
     const parts = [];
     if (global.second_sampling_enabled) {
-        const steps = Number(global.steps) > 0 ? `${global.steps} ${zh ? "步" : "Steps"}` : (zh ? "自动步数" : "Auto Steps");
+        const steps = Number(global.steps) > 0 ? `${global.steps} ${fr ? "Pas" : (zh ? "步" : "Steps")}` : (fr ? "Pas Auto" : (zh ? "自动步数" : "Auto Steps"));
         const seed = global.seed_mode === "offset"
-            ? `${zh ? "Seed 偏移" : "Seed Offset"} ${Number(global.seed_offset) >= 0 ? "+" : ""}${Number(global.seed_offset)}`
-            : (zh ? "保持原 Seed" : "Keep original Seed");
-        parts.push(zh ? "二次采样 ON" : "Second Sampling ON", `D${Number(global.denoise).toFixed(2)}`, steps, seed);
-        if (global.result_previews_enabled) parts.push(zh ? "阶段预览 ON" : "Pass Previews ON");
+            ? `${fr ? "Décalage Seed" : (zh ? "Seed 偏移" : "Seed Offset")} ${Number(global.seed_offset) >= 0 ? "+" : ""}${Number(global.seed_offset)}`
+            : (fr ? "Garder Seed d'origine" : (zh ? "保持原 Seed" : "Keep original Seed"));
+        parts.push(fr ? "2nd échantillonnage ON" : (zh ? "二次采样 ON" : "Second Sampling ON"), `D${Number(global.denoise).toFixed(2)}`, steps, seed);
+        if (global.result_previews_enabled) parts.push(fr ? "Aperçus de passe ON" : (zh ? "阶段预览 ON" : "Pass Previews ON"));
     } else {
-        parts.push(zh ? "二次采样 OFF" : "Second Sampling OFF");
+        parts.push(fr ? "2nd échantillonnage OFF" : (zh ? "二次采样 OFF" : "Second Sampling OFF"));
     }
     if (global.mode === "upscale") {
         const [targetW, targetH] = resolveGlobalTarget(config, width, height);
-        let method = global.upscale_method === "upscale_model" ? (global.upscale_model || (zh ? "放大模型" : "Upscale Model")) : "Lanczos";
+        let method = global.upscale_method === "upscale_model" ? (global.upscale_model || (fr ? "Modèle Upscale" : (zh ? "放大模型" : "Upscale Model"))) : "Lanczos";
         if (global.upscale_method === "nvidia_rtx_vsr") {
             const quality = String(global.vsr_quality || "high");
             method = `RTX VSR ${quality.charAt(0).toUpperCase()}${quality.slice(1)}`;
@@ -270,12 +286,15 @@ export function globalRefineSummary(config, width = 864, height = 480, locale = 
 
 export function faceRefineSummary(config, locale = "en") {
     const face = normalizePostprocessConfig(config).face_refine;
-    const zh = locale === "zh";
-    if (!face.enabled) return POST_TEXT[zh ? "zh" : "en"].disabled;
-    const canvas=face.canvas_mode==="manual"?`${face.canvas_size}`:face.canvas_mode==="auto_capped_768"?(zh?"自动 768":"Auto 768"):(zh?"保留细节":"Preserve detail");
-    const target=face.select==="most_central"?(zh?"中心脸":"Central face"):(zh?"最大脸":"Largest face");
-    const strength=`${face.adaptive?(zh?"自适应":"Adaptive"):(zh?"固定":"Fixed")} D${Number(face.base_denoise).toFixed(2)}`;
-    const mask=face.mask_mode==="sam"?"SAM":face.mask_mode==="ellipse"?(zh?"椭圆":"Ellipse"):(zh?"矩形":"Rect");
+    const l = String(locale || "").toLowerCase();
+    const fr = l.startsWith("fr");
+    const zh = l === "zh";
+    const lang = fr ? "fr" : (zh ? "zh" : "en");
+    if (!face.enabled) return POST_TEXT[lang].disabled;
+    const canvas = face.canvas_mode === "manual" ? `${face.canvas_size}` : face.canvas_mode === "auto_capped_768" ? (fr ? "Auto 768" : (zh ? "自动 768" : "Auto 768")) : (fr ? "Détail d'origine" : (zh ? "保留细节" : "Preserve detail"));
+    const target = face.select === "most_central" ? (fr ? "Visage central" : (zh ? "中心脸" : "Central face")) : (fr ? "Plus grand visage" : (zh ? "最大脸" : "Largest face"));
+    const strength = `${face.adaptive ? (fr ? "Adaptatif" : (zh ? "自适应" : "Adaptive")) : (fr ? "Fixe" : (zh ? "固定" : "Fixed"))} D${Number(face.base_denoise).toFixed(2)}`;
+    const mask = face.mask_mode === "sam" ? "SAM" : face.mask_mode === "ellipse" ? (fr ? "Ellipse" : (zh ? "椭圆" : "Ellipse")) : (fr ? "Rectangle" : (zh ? "矩形" : "Rect"));
     return `${target} · ${canvas} · ${strength} · ${mask}`;
 }
 

@@ -116,13 +116,72 @@ const EN = Object.freeze({
     "mixed.mode.source_video": "Source Video",
 });
 
+const FR = Object.freeze({
+    "mixed.addSegment": "Ajouter un segment",
+    "mixed.runSelect": "Sélectionner pour exécution",
+    "mixed.segment": "Segment {n}",
+    "mixed.mode": "Mode de génération",
+    "mixed.prompt": "Prompt",
+    "mixed.duration": "Durée (sec)",
+    "mixed.duplicate": "Dupliquer",
+    "mixed.delete": "Supprimer",
+    "mixed.moveLeft": "Déplacer à gauche",
+    "mixed.moveRight": "Déplacer à droite",
+    "mixed.upload": "Importer",
+    "mixed.library": "Médiathèque",
+    "mixed.segmentResult": "Résultat du segment",
+    "mixed.resultAdvanced": "Avancé",
+    "mixed.resultSource": "Source",
+    "mixed.resultLast": "Dernière image",
+    "mixed.resultFrameIndex": "Index d'image",
+    "mixed.resultSummaryLast": "Segment {n} · Dernière image",
+    "mixed.resultSummaryFrame": "Segment {n} · Image {frame}",
+    "mixed.remove": "Retirer",
+    "mixed.none": "Non sélectionné",
+    "mixed.startFrame": "Première image",
+    "mixed.firstFrame": "Première image",
+    "mixed.lastFrame": "Dernière image",
+    "mixed.identity": "Images d'identité",
+    "mixed.referenceVideo": "Vidéo de référence",
+    "mixed.referenceAudio": "Audio de référence",
+    "mixed.sourceVideo": "Vidéo source",
+    "mixed.uploadSourceVideo": "Importer la vidéo source",
+    "mixed.expandMore": "Afficher plus (+{n})",
+    "mixed.collapse": "Réduire",
+    "mixed.sourceStart": "Seconde de début",
+    "mixed.sourceEnd": "Seconde de fin",
+    "mixed.sourceHint": "La vidéo source doit être importée pour ce segment. Les vidéos de la médiathèque sont des vidéos de référence uniquement.",
+    "mixed.continuity": "Continuer depuis le segment précédent",
+    "mixed.visualContext": "Continuité visuelle",
+    "mixed.audioContext": "Continuité audio",
+    "mixed.rootNoContinuity": "Le premier segment n'a pas de segment précédent.",
+    "mixed.chooseSegment": "Choisir le segment source",
+    "mixed.frame": "Image",
+    "mixed.frameLast": "Dernière image",
+    "mixed.noEarlierSegment": "Aucun segment précédent à référencer.",
+    "mixed.referenceMissing": "Le segment référencé est manquant ou n'est plus situé avant ce segment.",
+    "mixed.deleteReferenced": "D'autres segments référencent celui-ci. Le supprimer rendra ces références manquantes. Supprimer quand même ?",
+    "mixed.deleteConfirm": "Supprimer ce segment ?",
+    "mixed.uploading": "Importation de {name}…",
+    "mixed.uploadingProgress": "Importation de {name}… {percent}%",
+    "mixed.preparingMaterial": "Préparation du média : {name}…",
+    "mixed.ready": "Prêt",
+    "mixed.error": "Erreur : {message}",
+    "mixed.mode.t2v": "T2V",
+    "mixed.mode.i2v": "I2V",
+    "mixed.mode.fl2v": "FL2V",
+    "mixed.mode.r2v": "R2V",
+    "mixed.mode.source_video": "Vidéo Source",
+});
+
 function format(text, vars = {}) {
     return String(text || "").replace(/\{(\w+)\}/g, (_match, key) => String(vars[key] ?? ""));
 }
 
 export function mt(key, vars = {}) {
-    const table = getLocale() === "en" ? EN : ZH;
-    return format(table[key] ?? EN[key] ?? key, vars);
+    const loc = String(getLocale?.() || "zh").toLowerCase();
+    const table = loc.startsWith("fr") ? FR : loc.startsWith("en") ? EN : ZH;
+    return format(table[key] ?? EN[key] ?? ZH[key] ?? key, vars);
 }
 
 export function onMixedLocaleChange(fn) {

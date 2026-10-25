@@ -1,284 +1,222 @@
-# MiniMax H3 Motion Director.  [English](README.md) | [简体中文](README_zh.md)
+# MiniMax H3 Motion Director.  [Français](README.md) | [English](README_en.md) | [简体中文](README_zh.md)
 
 ![Version](https://img.shields.io/badge/version-v1.2.0-2ea44f)
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 ![ComfyUI](https://img.shields.io/badge/ComfyUI-custom%20node-6f42c1)
+![Languages](https://img.shields.io/badge/languages-FR%20%7C%20EN%20%7C%20ZH-orange)
 
-**One Director. From a single MiniMax H3 shot to a complete multi-segment video project.**
+**Un seul Director. D'un simple plan MiniMax H3 à un projet vidéo multi-segments complet.**
 
-Here is  tutorial, or you like to read the introduction first? / 下面连结是教学，或者你想先往下看看介绍?
+Voici le tutoriel ou souhaitez-vous d'abord lire la présentation ?
 
 [English](docs/USER_GUIDE.md) | [简体中文](docs/USER_GUIDE_zh.md)
 
-Build `T2V / I2V / FL2V / R2V / V2V / RV2V` shots in one production interface, mix generation methods segment by segment, carry visual and generated-audio context across shots, rerun only the segments that need work, manage reusable assets, preview the pipeline live, refine the result, and export the final video without turning the ComfyUI graph into a wall of nodes.
+Créez des plans `T2V / I2V / FL2V / R2V / V2V / RV2V` dans une interface de production unifiée, combinez les méthodes de génération segment par segment, conservez le contexte visuel et audio généré à travers les plans, relancez uniquement les segments nécessitant des retouches, gérez vos ressources réutilisables, visualisez l'avancement en direct, affinez le rendu et exportez la vidéo finale sans transformer votre flux ComfyUI en un mur infini de nœuds.
 
-> Current version: **v1.2.0** · Registry package: **1.2.0**
+> Version actuelle : **v1.2.0** · Package Registry : **1.2.0**
 
-<!-- IMAGE SLOT 1
-Place your Mixed + Selective Run screenshot here:
-docs/images/hero-mixed-selective-run.png
-Recommended source: 螢幕擷取畫面 2026-08-19 041546.png
--->
+![MiniMax H3 Motion Director — Mode Mixte](docs/images/hero-mixed-selective-run.png)
 
-![MiniMax H3 Motion Director — Mixed Mode](docs/images/hero-mixed-selective-run.png)
-
-The screenshot above shows the native **Mixed** timeline: five segments using different generation paths, per-boundary visual/audio continuity controls, and **Selective Run** enabled so only chosen segments are regenerated.
+La capture d'écran ci-dessus illustre la chronologie native du mode **Mixte** : cinq segments utilisant des méthodes de génération différentes, des contrôles de continuité visuelle/audio par transition, et l'**Exécution sélective** activée pour recalculer uniquement les segments choisis.
 
 ---
 
-## What it does
+## 🌍 Langues supportées (Multilingual Support)
 
-| Area | What Motion Director adds |
-|---|---|
-| **Standalone generation** | `T2V / I2V / FL2V / R2V / V2V / RV2V` |
-| **Mixed Mode** | Choose `T2V / I2V / FL2V / R2V / Source Video` independently for each segment |
-| **Selective Run** | Regenerate selected segments instead of rerunning the whole sequence |
-| **Cross-segment continuity** | Motion Context, Context Frames, Latent Scale Lock, generated-audio continuation, Color Re-anchor |
-| **Segment Result reuse** | Reuse a decoded frame from an earlier Mixed segment as a later I2V / FL2V input |
-| **Source-video workflow** | Dedicated V2V / RV2V handling and Source Bridge for standalone source-video boundaries |
-| **Assets** | Common References plus a persistent Material Library for images, audio, video, and prompts |
-| **Sampling** | Built-in sampling or external ComfyUI `SAMPLER + SIGMAS` |
-| **Post-processing** | Global Refine, upscale, optional NVIDIA RTX VSR / Deblur, Face Refine |
-| **Preview & output** | Director Live Preview, Segment / Multi Segment / Final Result views, final video saving |
-| **ComfyUI integration** | External `Director Inputs / Director Assets`, plus `images / audio / fps` outputs |
+Motion Director intègre un système complet de localisation multilingue pour l'ensemble de l'interface utilisateur (UI), des boîtes de dialogue, de la médiathèque et des retours de progression en direct :
 
-Motion Director is an `OUTPUT_NODE`, so it can run as the end of a workflow while still exposing its final frames, audio, and FPS to downstream ComfyUI nodes.
-
----
-
-## Live Preview
-
-Motion Director has its own live preview instead of relying only on the normal sampler preview. It can show the active generation stage while the workflow is running, including later post-processing stages.
-
-<!-- IMAGE SLOT 2
-Place your Live Preview GIF here:
-docs/images/live-preview.gif
-Recommended source: Video Project 1(1).gif
--->
-
-![MiniMax H3 Motion Director — Live Preview](docs/images/live-preview.gif)
-
----
-
-## Mixed Mode: different generation methods in one timeline
-
-A normal H3 workflow usually treats every generation as an isolated clip. Mixed Mode treats the project as a timeline instead.
-
-Example:
-
-```text
-S1  T2V
-S2  I2V
-S3  R2V
-S4  Source Video
-S5  T2V
-```
-
-Each segment has its own mode, prompt, duration or source range, and legal media inputs.
-
-### Mixed segment modes
-
-| Mixed segment mode | Runtime path | Main use |
+| Langue | Statut | Description |
 |---|---|---|
-| `T2V` | T2V | Text-driven shot |
-| `I2V` | I2V | Start from an uploaded image or earlier Segment Result |
-| `FL2V` | FL2V | Control first frame, last frame, or both |
-| `R2V` | R2V | Identity / scene / motion / voice references |
-| `Source Video` | V2V or RV2V | Use source motion, optionally with identity pictures |
+| 🇫🇷 **Français** (`fr`) | **Complet** | Interface 100% traduite en français : chronologie, contrôles, post-traitement, aperçu en direct, médiathèque et messages d'état. |
+| 🇬🇧 **English** (`en`) | **Complet** | Traduction intégrale en anglais de tous les contrôles et flux. |
+| 🇨🇳 **简体中文** (`zh`) | **Complet** | Version originale en chinois simplifié. |
 
-`Source Video` intentionally stays one Mixed mode:
+### Comment changer de langue ?
+Dans la barre d'outils supérieure de la fenêtre Director, cliquez simplement sur le bouton **🌐 Langue** pour alterner instantanément :
+$$\text{Chinois (ZH)} \longrightarrow \text{Anglais (EN)} \longrightarrow \text{Français (FR)} \longrightarrow \text{Chinois (ZH)}$$
+Le choix de langue est mémorisé automatiquement par votre navigateur.
+
+---
+
+## Fonctionnalités principales
+
+| Domaine | Ce que Motion Director apporte |
+|---|---|
+| **Génération autonome** | Modes `T2V / I2V / FL2V / R2V / V2V / RV2V` |
+| **Mode Mixte (Mixed Mode)** | Choisissez librement `T2V / I2V / FL2V / R2V / Vidéo Source` pour chaque segment |
+| **Exécution sélective (Selective Run)** | Régénérez uniquement les segments modifiés sans recalculer toute la séquence |
+| **Continuité inter-segments** | Contexte de mouvement (Motion Context), verrouillage d'échelle latente, continuité audio générée, ré-ancrage couleur |
+| **Réutilisation de résultat** | Réutilisez une image décodée d'un segment précédent comme entrée I2V ou FL2V |
+| **Flux vidéo source** | Prise en charge dédiée V2V / RV2V et pont source (Source Bridge) aux transitions |
+| **Gestion des ressources** | Références communes et Médiathèque persistante (images, audios, vidéos, prompts) |
+| **Échantillonnage** | Échantillonneur interne paramétrable ou chaîne externe ComfyUI `SAMPLER + SIGMAS` |
+| **Post-traitement** | Raffinement global (Global Refine), agrandissement (Upscale), NVIDIA RTX VSR / Deblur, Raffinement visage (Face Refine) |
+| **Aperçu et export** | Aperçu en direct (Director Live Preview), vues Segment / Multi-segments / Résultat final, enregistrement vidéo |
+| **Intégration ComfyUI** | Nœuds externes d'entrées et ressources, sorties `images / audio / fps` |
+
+Motion Director est un `OUTPUT_NODE` : il peut donc terminer un flux tout en fournissant ses images finales, son audio et sa fréquence (FPS) aux nœuds ComfyUI en aval.
+
+---
+
+## Aperçu en direct (Live Preview)
+
+Motion Director dispose de son propre système d'aperçu dynamique au lieu de dépendre uniquement de l'aperçu standard de l'échantillonneur. Il affiche l'étape active de génération pendant l'exécution, y compris les phases ultérieures de post-traitement.
+
+![MiniMax H3 Motion Director — Aperçu en direct](docs/images/live-preview.gif)
+
+---
+
+## Mode Mixte : plusieurs méthodes sur une seule chronologie
+
+Un flux H3 classique traite généralement chaque génération comme un extrait isolé. Le Mode Mixte structure votre projet comme un véritable montage vidéo.
+
+Exemple :
 
 ```text
-Source Video + 0 Identity Pictures  -> V2V
-Source Video + Identity Pictures    -> RV2V
+S1  T2V (Texte vers vidéo)
+S2  I2V (Image vers vidéo)
+S3  R2V (Sujet de référence)
+S4  Vidéo Source (V2V / RV2V)
+S5  T2V (Texte vers vidéo)
 ```
 
-The source clip is segment-local. `Start sec` and `End sec` define the source range; the selected range determines that segment's duration.
+Chaque segment dispose de son propre mode, de son invite (prompt), de sa durée ou plage source, et de ses entrées médias adaptées.
 
-### Per-boundary continuity
+### Modes des segments mixtes
 
-Continuity can be requested directly between Mixed segment cards:
+| Mode de segment | Chemin d'exécution | Utilisation principale |
+|---|---|---|
+| `T2V` | T2V | Plan généré à partir d'un prompt texte |
+| `I2V` | I2V | Départ depuis une image importée ou le résultat d'un plan précédent |
+| `FL2V` | FL2V | Contrôle précis de la première image, de la dernière, ou des deux |
+| `R2V` | R2V | Références d'identité, de décor, de mouvement ou de voix |
+| `Vidéo Source` | V2V ou RV2V | Réutilise le mouvement source, avec ou sans images d'identité |
+
+Le mode `Vidéo Source` s'adapte automatiquement :
+```text
+Vidéo Source + 0 image d'identité  -> V2V
+Vidéo Source + images d'identité    -> RV2V
+```
+
+### Continuité par transition
+
+La continuité peut être activée ou coupée individuellement entre les cartes de segments :
 
 ```text
 [S1]  S1 -> S2  [S2]  S2 -> S3  [S3]
-        visual          visual
+        visuel          visuel
         audio           audio
 ```
 
-The node-level continuity settings remain the global masters. This makes it possible to continue some boundaries while deliberately resetting others.
+Les paramètres au niveau du nœud restent les maîtres généraux, ce qui permet d'enchaîner certains plans de manière fluide tout en provoquant une coupure nette sur d'autres.
 
-### Segment Result
+### Réutilisation du résultat de segment (Segment Result)
 
-Mixed Mode can reuse a static decoded frame from an earlier generated segment:
+Le Mode Mixte permet de réutiliser une image statique décodée issue d'un segment antérieur :
+- Segment précédent ➔ dernière image
+- Segment précédent ➔ index d'image précis
 
-```text
-Earlier Segment -> last frame
-Earlier Segment -> explicit frame index
-```
+Cas d'usage classiques :
+- Segment antérieur ➔ Image de départ I2V
+- Segment antérieur ➔ Première image FL2V
+- Segment antérieur ➔ Dernière image FL2V
 
-Typical uses:
+### Exécution sélective (Selective Run)
 
-- earlier segment -> I2V start image
-- earlier segment -> FL2V first frame
-- earlier segment -> FL2V last frame
-
-A Segment Result is a static frame reference; it is separate from Motion Context, so the two mechanisms can be used together where the mode allows it.
-
-### Selective Run
-
-Long projects rarely need every shot regenerated. Enable **Selective Run**, mark only the segments that need another pass, and keep the rest of the sequence intact when cached/source results are available.
-
-This is one of the main reasons the Director exists: fixing Shot 3 should not automatically mean paying for Shots 1, 2, 4, and 5 again.
+Sur un long projet, il est rare de devoir recalculer tous les plans. Activez **« Sélectionner à exécuter »**, cochez uniquement les segments à ajuster, et conservez le reste de la séquence intacte grâce au cache. Vous gagnez un temps précieux sans recalculer les plans déjà réussis.
 
 ---
 
-## Standalone H3 modes
+## Modes H3 autonomes
 
-The same Director also supports six standalone MiniMax H3 task modes.
+Le Director prend également en charge six modes MiniMax H3 autonomes :
 
-| Mode | Main input | Typical use |
+| Mode | Entrée principale | Utilisation type |
 |---|---|---|
-| `T2V` | Prompt | Text-driven multi-shot generation |
-| `I2V` | Prompt + start image | Animate a character or scene image |
-| `FL2V` | Prompt + first/last image | Explicit start/end visual control |
-| `R2V` | Prompt + multimodal references | Character, style, motion, scene, voice, or object references |
-| `V2V` | Source Video + Prompt | Regenerate visuals while keeping source motion/content structure |
-| `RV2V` | Source Video + Prompt + references | Source motion plus identity / audio references |
+| `T2V` | Prompt | Génération multi-plans à partir de texte |
+| `I2V` | Prompt + image de départ | Animation d'un personnage ou d'un décor |
+| `FL2V` | Prompt + première / dernière image | Contrôle visuel strict du début et de la fin |
+| `R2V` | Prompt + références multimodales | Références de personnage, style, mouvement, décor ou voix |
+| `V2V` | Vidéo Source + Prompt | Régénération visuelle en préservant le mouvement source |
+| `RV2V` | Vidéo Source + Prompt + références | Mouvement source associé à des références d'identité et d'audio |
 
-For R2V, each Assets group can contain up to:
-
+Pour le mode R2V, chaque groupe de ressources peut contenir jusqu'à :
 ```text
-Picture 1-9
-Video 1-3
-Audio 1-3
+Images 1 à 9
+Vidéos 1 à 3
+Audios 1 à 3
 ```
 
-Standalone V2V / RV2V use the Director's dedicated source-video workflow. Source Bridge can rebuild a short generated transition around eligible source-video segment boundaries instead of treating the split as only a hard cut.
+---
+
+## Références communes (Common References)
+
+Les Références communes sont des médias définis au niveau du projet et partagés entre plusieurs segments. Elles sont idéales pour maintenir des personnages récurrents, des décors, des accessoires ou des voix sans avoir à les réimporter manuellement dans chaque segment.
+
+![MiniMax H3 Motion Director — Références communes](docs/images/common-references.png)
 
 ---
 
-## Common References
+## Médiathèque (Material Library)
 
-Common References are project-level media that many standalone segments can share. They are useful for recurring characters, scenes, props, reference motion, and audio without adding the same material to every segment manually.
-
-<!-- IMAGE SLOT 3
-Place your Common References screenshot here:
-docs/images/common-references.png
-Recommended source: 螢幕擷取畫面 2026-08-19 040543(1).png
--->
-
-![MiniMax H3 Motion Director — Common References](docs/images/common-references.png)
-
-Segment-specific assets remain local to that segment/group. At execution time, common and local references are combined into the reference sequence used by the current task.
-
----
-
-## Material Library
-
-The persistent **Material Library** is for media you want to reuse across shots or later projects.
-
-It can store:
-
+La **Médiathèque** persistante permet de stocker et de réutiliser vos ressources entre différents plans ou projets futurs :
 - Images
-- Audio
-- Video
-- Prompts
+- Fichiers audio
+- Vidéos
+- Invites / Prompts
 
-Images can be organized into categories such as characters, scenes, props, or other material. Search and allocation happen inside the Director UI instead of repeatedly browsing for the same files on disk.
+Les images peuvent être classées par catégories (Personnages, Décors, Accessoires, Autres). La recherche et l'assignation se font directement au sein de l'interface du Director.
 
-<!-- IMAGE SLOT 4
-Place your Material Library screenshot here:
-docs/images/material-library.png
-Recommended source: 螢幕擷取畫面 2026-08-19 035702(1).png
--->
-
-![MiniMax H3 Motion Director — Material Library](docs/images/material-library.png)
-
-In Mixed Mode, the Library targets the currently selected segment and only exposes media that are legal for that segment mode. The actual Mixed `Source Video` remains a local upload rather than a Material Library reference video.
+![MiniMax H3 Motion Director — Médiathèque](docs/images/material-library.png)
 
 ---
 
-## Post-processing
+## Post-traitement intégré
 
-The Director can continue beyond first-pass generation instead of requiring a separate post-processing graph for every project.
+Le Director intègre des étapes de finition sans nécessiter de graphe de post-traitement séparé.
 
-<!-- IMAGE SLOT 5
-Place your Postprocess screenshot here:
-docs/images/postprocess.png
-Recommended source: 螢幕擷取畫面 2026-08-19 034623(1).png
--->
+![MiniMax H3 Motion Director — Post-traitement](docs/images/postprocess.png)
 
-![MiniMax H3 Motion Director — Postprocess](docs/images/postprocess.png)
-
-### Global Refine
-
-Global Refine can run a second sampling pass and optionally upscale the segment/result before refinement.
-
-Available paths include, depending on the installed runtime and models:
-
-- normal resize/upscale processing
-- ComfyUI upscale models
-- NVIDIA RTX Video Super Resolution
+### Raffinement global (Global Refine)
+Permet une seconde passe d'échantillonnage et un agrandissement (upscale) optionnel avant raffinement :
+- Redimensionnement standard / upscale
+- Modèles d'upscale ComfyUI
+- NVIDIA RTX Video Super Resolution (VSR)
 - NVIDIA RTX Deblur
-- secondary H3 sampling/refinement
+- Second échantillonnage H3
 
-If Global Refine fails, the Director keeps the first-pass result instead of discarding the completed generation.
+Si le raffinement global échoue, le Director conserve automatiquement le résultat de la première passe.
 
-### Face Refine
-
-Face Refine provides an integrated face-repair path with:
-
-- face detection and tracking
-- crop-based H3 regeneration
-- adaptive refine strength
-- mask / stitching controls
-- color matching
-
-If no usable face is detected or Face Refine fails, the assembled result is kept as the fallback.
+### Raffinement visage (Face Refine)
+Restauration avancée des visages incluant :
+- Détection et suivi des visages
+- Régénération ciblée H3 par recadrage
+- Intensité adaptative
+- Contrôle des masques et de la fusion
+- Harmonisation colorimétrique
 
 ---
 
-## Results: Segment, Multi Segment, Final Result
+## Gestion des résultats et sorties
 
-Results are managed inside the Director rather than being reduced to one anonymous output batch.
+La page des résultats offre trois niveaux d'inspection :
+- **Segment** : examiner un segment généré individuellement.
+- **Multi-segments** : prévisualiser et exporter une plage continue de segments.
+- **Résultat final** : visualiser et enregistrer l'assemblage complet du pipeline avec son rapport détaillé.
 
-<!-- IMAGE SLOT 6
-Place your Results screenshot here:
-docs/images/results-final.png
-Recommended source: 螢幕擷取畫面 2026-08-19 035629(1).png
--->
+### Sorties du nœud ComfyUI
 
-![MiniMax H3 Motion Director — Final Result](docs/images/results-final.png)
-
-The Results page has three levels:
-
-- **Segment** — inspect one generated segment
-- **Multi Segment** — preview/export a continuous segment range
-- **Final Result** — inspect and save the complete pipeline result
-
-The Final view also exposes video save options and a Director Report containing the actual run configuration, continuity state, sampling information, and post-processing status.
-
-Public node outputs remain simple:
-
-| Output | Type | Description |
+| Sortie | Type | Description |
 |---|---|---|
-| `images` | `IMAGE` list | Final generated video frames |
-| `audio` | `AUDIO` list | Matching final audio |
-| `fps` | `FLOAT` | Final frame rate |
+| `images` | Liste `IMAGE` | Images vidéo finales générées |
+| `audio` | Liste `AUDIO` | Audio synchronisé correspondant |
+| `fps` | `FLOAT` | Fréquence d'images finale |
 
 ---
 
-## External Director Inputs / Assets
+## Entrées et ressources externes
 
-The Director is an all-in-one production interface, but it is not a closed box. Other ComfyUI nodes can still feed prompts and media into standalone modes through the external input architecture.
-
-<!-- IMAGE SLOT 7
-Place your external Inputs / Assets node screenshot here:
-docs/images/external-inputs.png
-Recommended source: 螢幕擷取畫面 2026-08-19 040419(1).png
--->
-
-![MiniMax H3 Motion Director — External Inputs and Assets](docs/images/external-inputs.png)
+Le Director s'intègre parfaitement avec le reste de votre flux ComfyUI grâce à ses nœuds d'entrées externes :
 
 ```text
 MiniMax H3 Motion Director Assets
@@ -288,110 +226,50 @@ MiniMax H3 Motion Director Inputs
 MiniMax H3 Motion Director
 ```
 
-The repository exposes three Director-related nodes:
-
-| Node | Purpose |
+| Nœud | Rôle |
 |---|---|
-| `MiniMax H3 Motion Director` | Main UI, execution, continuity, preview, post-processing, and results |
-| `MiniMax H3 Motion Director Inputs` | Dynamic Prompt / image / Assets inputs |
-| `MiniMax H3 Motion Director Assets` | Packages mode-specific media for an input group |
-
-External input shapes by standalone mode:
-
-```text
-T2V   prompt_N
-I2V   image_prompt_N + image_N
-FL2V  fl_prompt_N + fl_assets_N
-R2V   ref_prompt_N + ref_assets_N
-RV2V  rv_prompt_N + rv_assets_N
-V2V   Source Video is managed by Director
-```
-
-Mixed v1 uses its native Director timeline/media UI rather than the external group system.
-
----
-
-## Sampling and performance
-
-Motion Director can use either its internal sampler settings or an external ComfyUI sampling chain.
-
-Connect both:
-
-```text
-SAMPLER
-SIGMAS
-```
-
-and the Director uses external sampling. Otherwise it uses its internal sampler, scheduler, step count, Video Sigma Shift, and Audio Sigma Shift settings.
-
-For longer jobs, **Clear VRAM Between Segments** can reduce memory pressure by releasing models/cache between segment runs. This trades some speed for lower VRAM usage and is intended as a stability option rather than a performance boost.
+| `MiniMax H3 Motion Director` | Interface principale, exécution, prévisualisation, post-traitement et résultats |
+| `MiniMax H3 Motion Director Inputs` | Entrées dynamiques de prompts, images et groupes d'assets |
+| `MiniMax H3 Motion Director Assets` | Regroupe les médias requis par mode pour un groupe d'entrée |
 
 ---
 
 ## Installation
 
-### ComfyUI-Manager / Comfy Registry
-
-Search for:
-
-```text
-MiniMax H3 Motion Director
-```
-
-### Manual install
+### Installation manuelle
 
 ```bash
 cd ComfyUI/custom_nodes
-git clone https://github.com/j955229/ComfyUI-MiniMax-H3-Motion-Director.git
+git clone https://github.com/Jonathan97480/ComfyUI-MiniMax-H3-Motion-Director.git
 cd ComfyUI-MiniMax-H3-Motion-Director
 python -m pip install -r requirements.txt
 ```
 
-If you use a Windows portable build, run `pip` with the Python executable used by that ComfyUI installation.
+*Sur une version autonome (portable) de ComfyUI sous Windows, utilisez l'exécutable Python inclus (`python_embeded\python.exe -m pip install -r requirements.txt`).*
 
-Restart ComfyUI completely after installation. If an update changes frontend files, restart ComfyUI and hard-refresh the browser.
-
----
-
-## Requirements / compatibility
-
-Motion Director requires a **recent ComfyUI build with official MiniMax H3 support**, including the official MiniMax H3 conditioning nodes used by the current runtime.
-
-Core Python dependencies are declared in the project package/requirements files. Some post-processing features have additional optional runtime/model requirements, for example:
-
-- NVIDIA RTX VSR / Deblur requires the compatible NVIDIA VFX runtime/package and supported NVIDIA hardware
-- Face Refine detector/SAM paths require the corresponding detector/model dependencies selected in the UI
-- Upscale Model mode requires a compatible ComfyUI upscale model
-
-If a feature is optional, the Director is designed to keep the usable earlier result when that post-processing stage cannot run.
-
-> Do not load the standalone `ComfyUI-H3-Motion-Context` alongside this project. Motion Context compatibility is integrated into Motion Director.
+Redémarrez complètement ComfyUI après l'installation, puis effectuez un rafraîchissement complet du cache du navigateur (<kbd>Ctrl</kbd> + <kbd>F5</kbd>).
 
 ---
 
-## Mixed v1 notes
+## Compatibilité et prérequis
 
-- Mixed v1 manages its media through the native Director UI instead of external `Director Inputs` groups.
-- Mixed `Source Video` is local-upload only; Material Library videos are references, not the actual source-video input.
-- Source Bridge is a standalone V2V / RV2V feature and is not used by Mixed v1.
-- Segment Result references are backward-only: a later segment may reuse an earlier result, not a future result.
-- Continuity improves cross-segment handoff but does not guarantee an invisible boundary in every generation; MiniMax H3 can still introduce visual, motion, lighting, or identity drift.
+- Nécessite une version récente de ComfyUI intégrant le support officiel de **MiniMax H3**.
+- Dépendances déclarées dans `requirements.txt`.
+- Les fonctions NVIDIA RTX VSR / Deblur requièrent les cartes NVIDIA RTX compatibles et le package RTX VFX adéquat.
+- Ne chargez pas l'extension obsolète `ComfyUI-H3-Motion-Context` en parallèle (sa logique est directement intégrée dans ce nœud).
 
 ---
 
-## Credits / upstream projects
+## Crédits et remerciements
 
-Motion Director is intentionally an integrated project. It contains, modifies, or adapts code/algorithms from several existing ComfyUI H3 projects rather than pretending every component was invented independently.
-
+Ce projet adapte et intègre avec respect les travaux de plusieurs projets open-source :
 - [AIMixer / ComfyUI_MiniMaxH3_Director](https://github.com/AIMixer/ComfyUI_MiniMaxH3_Director) — Apache-2.0
 - [NikoDemon80 / ComfyUI-H3-Motion-Context](https://github.com/NikoDemon80/ComfyUI-H3-Motion-Context) — GPL-3.0
 - [Carasibana / ComfyUI-H3-FaceRefine](https://github.com/Carasibana/ComfyUI-H3-FaceRefine) — MIT
-- [Kijai / ComfyUI-KJNodes](https://github.com/kijai/ComfyUI-KJNodes) — GPL-3.0; portions of packed-latent preview / TAEHV behavior were informed by its implementation
+- [Kijai / ComfyUI-KJNodes](https://github.com/kijai/ComfyUI-KJNodes) — GPL-3.0
 
-Thanks to the upstream authors and contributors.
+Consultez les fichiers [`NOTICE`](NOTICE), [`LICENSE`](LICENSE) et le dossier [`LICENSES`](LICENSES) pour les attributions détaillées.
 
-See [`NOTICE`](NOTICE), [`LICENSE`](LICENSE), and [`LICENSES`](LICENSES) for the exact attribution and derivative-work details.
+## Licence
 
-## License
-
-This project is distributed as a whole under **GNU GPL v3.0**.
+Ce projet est distribué sous licence **GNU GPL v3.0**.

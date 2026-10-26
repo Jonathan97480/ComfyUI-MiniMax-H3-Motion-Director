@@ -306,6 +306,136 @@ async def minimax_release_final_video(request):
     return web.json_response({"ok": True})
 
 
+async def minimax_storyboard_generate(request):
+    """Generate storyboard and sync directly to Motion Director without queuing full workflow render."""
+    try:
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+
+        import json
+        from .storyboard import (
+            DEFAULT_NEGATIVE_PROMPT,
+            DEFAULT_STYLE_PROMPT,
+            build_director_timeline,
+            generate_llm_storyboard,
+            generate_local_storyboard,
+            generate_subject_reference_images,
+            parse_aspect_ratio,
+        )
+
+        story = str(body.get("story") or "").strip()
+        total_duration_sec = float(body.get("total_duration_sec") or 15.0)
+        shot_duration_sec = float(body.get("shot_duration_sec") or 3.0)
+        aspect_ratio = str(body.get("aspect_ratio") or "16:9 (864x480)")
+        director_mode = str(body.get("director_mode") or "mixed")
+        style_prompt = str(body.get("style_prompt") or DEFAULT_STYLE_PROMPT)
+        negative_prompt = str(body.get("negative_prompt") or DEFAULT_NEGATIVE_PROMPT)
+        ai_story_engine = str(body.get("ai_story_engine") or "Built-in AI Story Engine (Local / No Server needed)")
+        llm_url = str(body.get("llm_url") or "http://127.0.0.1:11434")
+        llm_model = str(body.get("llm_model") or "qwen2.5:7b")
+        image_steps = int(body.get("image_steps") or 8)
+        image_cfg = float(body.get("image_cfg") or 2.0)
+        seed = int(body.get("seed") or 0)
+        node_id = str(body.get("node_id") or "").strip()
+
+        width, height = parse_aspect_ratio(aspect_ratio)
+
+        sb_data = None
+        engine_lower = ai_story_engine.lower()
+        if "ollama" in engine_lower:
+            sb_data = generate_llm_storyboard(
+                story=story,
+                total_duration=total_duration_sec,
+                shot_duration=shot_duration_sec,
+                style_prompt=style_prompt,
+                llm_url=llm_url,
+                llm_model=llm_model,
+                api_format="ollama",
+            )
+        elif "openai" in engine_lower:
+            sb_data = generate_llm_storyboard(
+                story=story,
+                total_duration=total_duration_sec,
+                shot_duration=shot_duration_sec,
+                style_prompt=style_prompt,
+                llm_url=llm_url,
+                llm_model=llm_model,
+                api_format="openai",
+            )
+
+        if not sb_data:
+            sb_data = generate_local_storyboard(
+                story=story,
+                total_duration=total_duration_sec,
+                shot_duration=shot_duration_sec,
+                style_prompt=style_prompt,
+            )
+
+        # Generate subject references
+        batch_images, b64_list = generate_subject_reference_images(
+            sb_data.subjects,
+            width=width,
+            height=height,
+            model=None,
+            clip=None,
+            vae=None,
+            steps=image_steps,
+            cfg=image_cfg,
+            seed=seed,
+            negative_prompt=negative_prompt,
+            external_images=None,
+        )
+
+        # Build timeline dict
+        timeline_dict = build_director_timeline(
+            sb_data.scenes,
+            subjects=sb_data.subjects,
+            full_h3_prompt=sb_data.full_h3_prompt,
+            director_mode=director_mode,
+            width=width,
+            height=height,
+            fps=24.0,
+            ref_max_size=max(width, height),
+        )
+        timeline_json = json.dumps(timeline_dict, ensure_ascii=False, indent=2)
+
+        # Broadcast event to connected nodes in ComfyUI frontend
+        try:
+            from server import PromptServer
+            if PromptServer.instance:
+                PromptServer.instance.send_sync(
+                    "minimax_storyboard_generated",
+                    {
+                        "node_id": node_id,
+                        "timeline_data": timeline_json,
+                        "total_duration": total_duration_sec,
+                        "num_scenes": len(sb_data.scenes),
+                        "summary": sb_data.full_h3_prompt,
+                        "prompt": sb_data.full_h3_prompt,
+                        "subjects": [s.to_dict() for s in sb_data.subjects],
+                        "reference_images": [s.image_b64 for s in sb_data.subjects],
+                    },
+                )
+        except Exception as exc:
+            log.warning("PromptServer broadcast error: %s", exc)
+
+        return web.json_response({
+            "ok": True,
+            "timeline_data": timeline_json,
+            "timeline_dict": timeline_dict,
+            "prompt": sb_data.full_h3_prompt,
+            "summary": sb_data.full_h3_prompt,
+            "subjects": [s.to_dict() for s in sb_data.subjects],
+            "scenes": [s.to_dict() for s in sb_data.scenes],
+            "reference_images": [s.image_b64 for s in sb_data.subjects],
+        })
+    except Exception as exc:
+        log.error("Storyboard generation failed: %s", exc, exc_info=True)
+        return web.json_response({"ok": False, "error": str(exc)}, status=500)
+
+
 def register_routes() -> bool:
     """Register MiniMax H3 Motion Director HTTP routes on the ComfyUI PromptServer."""
     global _ROUTES_REGISTERED
@@ -325,6 +455,7 @@ def register_routes() -> bool:
     _register_route(routes, "GET", "/minimax/motion-director/postprocess_capabilities", minimax_postprocess_capabilities)
     _register_route(routes, "POST", "/minimax/motion-director/save_video", minimax_save_final_video)
     _register_route(routes, "POST", "/minimax/motion-director/release_video", minimax_release_final_video)
+    _register_route(routes, "POST", "/minimax/storyboard/generate", minimax_storyboard_generate)
     register_material_library_routes(routes)
     _ROUTES_REGISTERED = True
     log.info("MiniMax H3 Motion Director HTTP routes registered")

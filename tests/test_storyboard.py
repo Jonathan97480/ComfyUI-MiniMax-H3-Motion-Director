@@ -252,5 +252,38 @@ class TestStoryboardModule(unittest.TestCase):
         self.assertEqual(imgs.shape[0], 2)
 
 
+class TestStoryboardHttpRoute(unittest.IsolatedAsyncioTestCase):
+    async def test_minimax_storyboard_generate_route(self):
+        from director.http_routes import minimax_storyboard_generate
+
+        class MockRequest:
+            async def json(self):
+                return {
+                    "story": "Un pilote dans son mécha sous la pluie nocturne.",
+                    "total_duration_sec": 12.0,
+                    "shot_duration_sec": 4.0,
+                    "aspect_ratio": "16:9 (864x480)",
+                    "director_mode": "mixed",
+                    "style_prompt": "cinematic anime, 8k",
+                    "negative_prompt": "blurry",
+                    "ai_story_engine": "Built-in AI Story Engine (Local / No Server needed)",
+                    "image_steps": 4,
+                    "image_cfg": 2.0,
+                    "seed": 42,
+                    "node_id": "test_node_1",
+                }
+
+        resp = await minimax_storyboard_generate(MockRequest())
+        self.assertEqual(resp.status, 200)
+        data = json.loads(resp.text)
+        self.assertTrue(data.get("ok"))
+        self.assertIn("timeline_data", data)
+        self.assertIn("prompt", data)
+        self.assertGreaterEqual(len(data.get("scenes", [])), 2)
+        self.assertGreaterEqual(len(data.get("subjects", [])), 2)
+        self.assertEqual(len(data.get("reference_images", [])), len(data.get("subjects", [])))
+
+
+
 if __name__ == "__main__":
     unittest.main()

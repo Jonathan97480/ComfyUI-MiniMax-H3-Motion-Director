@@ -64,17 +64,20 @@ else:
         MiniMaxH3MotionDirectorAssets,
         MiniMaxH3MotionDirectorInputs,
     )
+    from .nodes.storyboard_node import MiniMaxH3StoryDirector  # noqa: E402
 
     NODE_CLASS_MAPPINGS = {
         "MiniMaxH3MotionDirector": MiniMaxH3MotionDirector,
         "MiniMaxH3MotionDirectorInputs": MiniMaxH3MotionDirectorInputs,
         "MiniMaxH3MotionDirectorAssets": MiniMaxH3MotionDirectorAssets,
+        "MiniMaxH3StoryDirector": MiniMaxH3StoryDirector,
     }
 
     NODE_DISPLAY_NAME_MAPPINGS = {
         "MiniMaxH3MotionDirector": "MiniMax H3 Motion Director",
         "MiniMaxH3MotionDirectorInputs": "MiniMax H3 Motion Director Inputs",
         "MiniMaxH3MotionDirectorAssets": "MiniMax H3 Motion Director Assets",
+        "MiniMaxH3StoryDirector": "MiniMax H3 AI Story Director 🎬",
     }
 
     WEB_DIRECTORY = "./web/js"

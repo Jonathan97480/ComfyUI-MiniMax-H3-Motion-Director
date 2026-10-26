@@ -12,6 +12,7 @@ from ..director.director_inputs import (
     pack_director_inputs_payload,
     prepare_timeline_for_director_inputs,
 )
+from ..director.storyboard import MMX_STORYBOARD
 from ..director.executor_core import execute_director_plan_core
 from ..director.execution_report import append_report_section_lines, fmt_seconds
 from ..director.postprocess_config import normalize_postprocess_config
@@ -112,6 +113,16 @@ class MiniMaxH3MotionDirector(_BaseDirector):
                 ),
             },
         )
+        optional["storyboard"] = (
+            MMX_STORYBOARD,
+            {
+                "forceInput": True,
+                "tooltip": (
+                    "AI Storyboard and Narrative Timeline. Connect MiniMax H3 AI Story Director "
+                    "to automatically populate scenes, camera motions, prompts, and reference images."
+                ),
+            },
+        )
         return schema
 
     DESCRIPTION = (
@@ -153,6 +164,7 @@ class MiniMaxH3MotionDirector(_BaseDirector):
         pin_renorm_enabled=False,
         postprocess_config="",
         director_inputs=None,
+        storyboard=None,
         prompt=None,
         extra_pnginfo=None,
         **kwargs,
@@ -166,6 +178,36 @@ class MiniMaxH3MotionDirector(_BaseDirector):
         )
 
         effective_timeline_data = timeline_data
+        if storyboard is not None:
+            if isinstance(storyboard, dict):
+                sb_json = storyboard.get("timeline_data") or storyboard.get("timeline_json")
+                if sb_json and str(sb_json).strip():
+                    effective_timeline_data = str(sb_json).strip()
+                if "width" in storyboard and storyboard["width"]:
+                    width = int(storyboard["width"])
+                if "height" in storyboard and storyboard["height"]:
+                    height = int(storyboard["height"])
+                if "total_frames" in storyboard and storyboard["total_frames"]:
+                    total_frames = int(storyboard["total_frames"])
+                if "frame_rate" in storyboard and storyboard["frame_rate"]:
+                    frame_rate = float(storyboard["frame_rate"])
+            elif isinstance(storyboard, str) and storyboard.strip():
+                effective_timeline_data = storyboard.strip()
+
+            if unique_id:
+                try:
+                    from server import PromptServer
+
+                    PromptServer.instance.send_sync(
+                        "minimax_storyboard_applied",
+                        {
+                            "node_id": str(unique_id),
+                            "timeline_data": effective_timeline_data,
+                        },
+                    )
+                except Exception:
+                    pass
+
         if not str(effective_timeline_data or "").strip():
             effective_timeline_data = default_timeline_json(
                 task_type=task_type,

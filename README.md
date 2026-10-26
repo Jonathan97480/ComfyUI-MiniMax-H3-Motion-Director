@@ -273,3 +273,28 @@ Consultez les fichiers [`NOTICE`](NOTICE), [`LICENSE`](LICENSE) et le dossier [`
 ## Licence
 
 Ce projet est distribué sous licence **GNU GPL v3.0**.
+
+
+---
+
+## 🎬 Scénariste et Storyboard IA (`MiniMax H3 AI Story Director`)
+
+Le nœud **MiniMax H3 AI Story Director** permet de créer automatiquement une vidéo complète à partir d'une simple **histoire textuelle** :
+
+1. **Récit utilisateur & Durée** : Décrivez l'histoire ou le script de votre choix et spécifiez la durée globale souhaitée (ex: 15s, 30s, 60s).
+2. **Découpage cinématographique intelligent** :
+   - Calcule automatiquement le nombre de plans et leur durée optimale (plans de 5 à 6 secondes recommandés pour MiniMax H3).
+   - Détermine la progression narrative et les valeurs de plans : *Plan d'ensemble d'exposition, plan moyen d'action, gros plan dramatique, plan en contre-plongée, plan de révélation*.
+   - Attribue les trajectoires de caméra cinématiques (*Traveling avant fluide, panoramique horizontal, grue descendante, arc orbital*).
+   - Formule les éclairages volumétriques et l'ambiance visuelle adaptés au style de l'histoire.
+3. **Moteurs d'IA pris en charge** :
+   - **Built-in AI Story Engine (Local / 100% autonome)** : Fonctionne instantanément sans nécessiter aucun serveur ni configuration externe.
+   - **Ollama (LLM Local)** : Connectez directement votre instance locale Ollama (`http://127.0.0.1:11434`) avec vos modèles préférés (`qwen2.5:7b`, `gemma2:2b`, `mistral`, etc.).
+   - **OpenAI-Compatible** : Compatible avec LM Studio, Jan, vLLM, LocalAI (`http://127.0.0.1:1234/v1`).
+4. **Génération d'images de référence pour chaque scène** :
+   - Si vous connectez un modèle de diffusion (`model`, `clip`, `vae`), le nœud génère de véritables images de référence IA pour chaque scène.
+   - Si aucun modèle de diffusion n'est connecté, le nœud produit automatiquement des **cartes de storyboard cinématographiques** stylisées avec repères visuels, cadrage et résumé de scène.
+   - Les images sont injectées directement dans la chronologie sous forme de vignettes et exportées en lot via la sortie `reference_images`.
+5. **Connexion directe au Motion Director** :
+   - Reliez simplement la sortie `storyboard` du nouveau nœud à la nouvelle entrée `storyboard` du **MiniMax H3 Motion Director**.
+   - Ouvrez la fenêtre du Director pour voir instantanément l'ensemble des scènes, durées, prompts et images de référence configurés automatiquement !

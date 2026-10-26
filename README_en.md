@@ -395,3 +395,28 @@ See [`NOTICE`](NOTICE), [`LICENSE`](LICENSE), and [`LICENSES`](LICENSES) for the
 ## License
 
 This project is distributed as a whole under **GNU GPL v3.0**.
+
+
+---
+
+## 🎬 AI Storyboard Director (`MiniMax H3 AI Story Director`)
+
+The **MiniMax H3 AI Story Director** node turns any narrative script or plot idea into a multi-shot video timeline:
+
+1. **User Story & Duration**: Describe your story and set the target video duration (e.g., 15s, 30s, 60s).
+2. **Intelligent Cinematic Breakdown**:
+   - Automatically computes the optimal number of shots and per-shot durations (5-6s per segment recommended for MiniMax H3).
+   - Determines shot progression and framing: *Wide establishing shot, medium shot, dramatic close-up, heroic low angle, reveal shot*.
+   - Assigns dynamic cinematic camera trajectories (*Smooth dolly in, horizontal tracking pan, crane down, orbiting arc*).
+   - Formulates lighting, atmosphere, and visual styling tuned to your prompt.
+3. **Supported AI Engines**:
+   - **Built-in AI Story Engine (Local / Standalone)**: Operates out of the box with zero external server dependencies.
+   - **Ollama (Local LLM)**: Connects to your local Ollama server (`http://127.0.0.1:11434`) with models like `qwen2.5:7b`, `gemma2:2b`, `mistral`, etc.
+   - **OpenAI-Compatible**: Works with LM Studio, Jan, vLLM, and LocalAI (`http://127.0.0.1:1234/v1`).
+4. **Scene Reference Image Generation**:
+   - When connected to a diffusion model (`model`, `clip`, `vae`), it synthesizes genuine keyframe reference images for each shot.
+   - When running standalone, it automatically crafts stylized cinematic storyboard cards with framing guides, camera cues, and scene breakdowns.
+   - Images are embedded directly into timeline thumbnails and exposed as a batch on `reference_images`.
+5. **Direct Connection to Motion Director**:
+   - Connect `storyboard` output directly to the `storyboard` socket on **MiniMax H3 Motion Director**.
+   - Open the Director modal to view all generated scenes, prompts, camera directions, and visual references ready to run!

@@ -2142,7 +2142,7 @@
         }
       ],
       "outputs": [],
-      "title": "Aperçu Références / Storyboard Cards"
+      "title": "Aperçu Références (<Picture 1> Sujet, <Picture 2> Décor)"
     },
     {
       "id": 103,
@@ -2159,9 +2159,9 @@
       "order": 1,
       "mode": 0,
       "widgets_values": [
-        "# 🎬 MiniMax H3 AI Story Director\n\nCe workflow permet de générer une vidéo complète à partir d'une simple **histoire ou scénario** :\n\n1. **Décrivez votre histoire** dans le nœud *MiniMax H3 AI Story Director*.\n2. **Indiquez la durée totale** souhaitée (ex: 15s, 30s, 60s).\n3. **Choisissez le moteur** :\n   - *Built-in AI Story Engine* : 100% local, autonome, sans serveur externe.\n   - *Ollama* ou *OpenAI-Compatible* : connectez votre LLM local (Qwen, Mistral, Gemma).\n4. Le nœud découpe l'histoire en scènes cinématographiques, attribue les mouvements de caméra, génère les images de référence et **remplit automatiquement le Motion Director**.\n5. Cliquez sur le nœud **MiniMax H3 Motion Director** pour ouvrir et admirer le plan multi-scènes !\n"
+        "# 🎬 MiniMax H3 AI Story Director (Cohérence Multi-Sujets)\n\nCe workflow génère une vidéo complète **visuellement et narrativement cohérente** grâce au système natif Multi-Sujets de MiniMax H3 :\n\n1. **Décrivez votre histoire** ou collez un scénario structuré dans *MiniMax H3 AI Story Director*.\n2. **Cohérence Visuelle Garantie** :\n   - Le nœud extrait le **Personnage Principal** (<Subject 1>) et génère sa fiche de référence (<Picture 1>).\n   - Le nœud extrait le **Décor / Environnement** (<Subject 2>) et génère son agencement architectural (<Picture 2>).\n   - MiniMax H3 verrouille l'identité du personnage, ses vêtements et l'aménagement du lieu à travers **tous les plans et raccords caméra**.\n3. **Moteur Narratif** :\n   - *Built-in AI Story Engine* : 100% local, autonome, sans serveur externe.\n   - *Ollama* ou *OpenAI-Compatible* : connectez votre LLM local (Qwen, Mistral, Gemma).\n4. Le prompt généré applique la syntaxe cinématique native de MiniMax H3 avec découpage horodaté ([Shot 1], At approximately 00:03.000...), ambiance sonore et analyse de rétention."
       ],
-      "title": "Guide : Storyboard & Scénario IA"
+      "title": "Guide : Storyboard & Cohérence IA"
     },
     {
       "id": 104,

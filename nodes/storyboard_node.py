@@ -18,11 +18,16 @@ try:
         DEFAULT_NEGATIVE_PROMPT,
         DEFAULT_STYLE_PROMPT,
         MMX_STORYBOARD,
+        StoryboardData,
+        StoryboardSubject,
         build_director_timeline,
         format_script_summary,
         generate_llm_scenes,
+        generate_llm_storyboard,
         generate_local_scenes,
+        generate_local_storyboard,
         generate_scene_reference_images,
+        generate_subject_reference_images,
         parse_aspect_ratio,
     )
 except (ImportError, ValueError):
@@ -31,11 +36,16 @@ except (ImportError, ValueError):
         DEFAULT_NEGATIVE_PROMPT,
         DEFAULT_STYLE_PROMPT,
         MMX_STORYBOARD,
+        StoryboardData,
+        StoryboardSubject,
         build_director_timeline,
         format_script_summary,
         generate_llm_scenes,
+        generate_llm_storyboard,
         generate_local_scenes,
+        generate_local_storyboard,
         generate_scene_reference_images,
+        generate_subject_reference_images,
         parse_aspect_ratio,
     )
 
@@ -274,41 +284,44 @@ class MiniMaxH3StoryDirector:
             height,
         )
 
-        # 1. Narrative scene generation
-        scenes = None
+        # 1. Narrative decomposition and multi-subject structured generation
+        sb_data = None
         engine_lower = str(ai_story_engine or "").lower()
         if "ollama" in engine_lower:
-            scenes = generate_llm_scenes(
+            sb_data = generate_llm_storyboard(
                 story=story,
-                num_scenes=num_scenes,
                 total_duration=target_duration,
+                shot_duration=target_shot,
                 style_prompt=style_prompt,
                 llm_url=llm_url,
                 llm_model=llm_model,
                 api_format="ollama",
             )
         elif "openai" in engine_lower:
-            scenes = generate_llm_scenes(
+            sb_data = generate_llm_storyboard(
                 story=story,
-                num_scenes=num_scenes,
                 total_duration=target_duration,
+                shot_duration=target_shot,
                 style_prompt=style_prompt,
                 llm_url=llm_url,
                 llm_model=llm_model,
                 api_format="openai",
             )
 
-        if not scenes:
-            scenes = generate_local_scenes(
+        if not sb_data:
+            sb_data = generate_local_storyboard(
                 story=story,
-                num_scenes=num_scenes,
                 total_duration=target_duration,
+                shot_duration=target_shot,
                 style_prompt=style_prompt,
             )
 
-        # 2. Reference image generation for each scene
-        batch_images, b64_list = generate_scene_reference_images(
-            scenes,
+        scenes = sb_data.scenes
+        subjects = sb_data.subjects
+
+        # 2. Canonical Reference Image Generation for each Subject (<Picture 1>, <Picture 2>)
+        batch_images, b64_list = generate_subject_reference_images(
+            subjects,
             width=width,
             height=height,
             model=model,
@@ -324,6 +337,8 @@ class MiniMaxH3StoryDirector:
         # 3. Assemble Director Timeline JSON
         timeline_dict = build_director_timeline(
             scenes,
+            subjects=subjects,
+            full_h3_prompt=sb_data.full_h3_prompt,
             director_mode=director_mode,
             width=width,
             height=height,
@@ -332,8 +347,8 @@ class MiniMaxH3StoryDirector:
         )
         timeline_json = json.dumps(timeline_dict, ensure_ascii=False, indent=2)
 
-        # 4. Format Human-Readable Summary
-        script_summary = format_script_summary(scenes, target_duration)
+        # 4. Format Human-Readable Summary (MiniMax H3 Native Structured Prompt)
+        script_summary = sb_data.full_h3_prompt
 
         # 5. Build MMX_STORYBOARD payload
         total_frames = int(timeline_dict.get("totalFrames") or round(target_duration * 24.0))
@@ -349,9 +364,11 @@ class MiniMaxH3StoryDirector:
             "timeline_data": timeline_json,
             "timeline_json": timeline_json,
             "timeline_dict": timeline_dict,
+            "subjects": [s.to_dict() for s in subjects],
             "scenes": [s.to_dict() for s in scenes],
             "images": batch_images,
             "script_summary": script_summary,
+            "prompt": sb_data.full_h3_prompt,
         }
 
         # 6. Push UI update event to connected Director nodes

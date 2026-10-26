@@ -108,6 +108,14 @@ class MiniMaxH3StoryDirector:
                         "tooltip": "Style visuel, rendu, photographie et direction artistique appliqués à chaque scène.",
                     },
                 ),
+                "negative_prompt": (
+                    "STRING",
+                    {
+                        "multiline": True,
+                        "default": DEFAULT_NEGATIVE_PROMPT,
+                        "tooltip": "Prompt négatif pour la génération d'images de référence.",
+                    },
+                ),
                 "ai_story_engine": (
                     [
                         "Built-in AI Story Engine (Local / No Server needed)",
@@ -131,6 +139,26 @@ class MiniMaxH3StoryDirector:
                     {
                         "default": "qwen2.5:7b",
                         "tooltip": "Nom du modèle local (ex: qwen2.5:7b, gemma2:2b, mistral, llama3, etc.).",
+                    },
+                ),
+                "image_steps": (
+                    "INT",
+                    {
+                        "default": 20,
+                        "min": 1,
+                        "max": 100,
+                        "step": 1,
+                        "tooltip": "Nombre d'étapes d'échantillonnage pour les images de référence générées.",
+                    },
+                ),
+                "image_cfg": (
+                    "FLOAT",
+                    {
+                        "default": 6.5,
+                        "min": 0.5,
+                        "max": 20.0,
+                        "step": 0.1,
+                        "tooltip": "Guidance scale (CFG) pour les images de référence.",
                     },
                 ),
                 "seed": (
@@ -163,38 +191,10 @@ class MiniMaxH3StoryDirector:
                         "tooltip": "Optionnel: VAE pour décoder les images de référence générées.",
                     },
                 ),
-                "image_steps": (
-                    "INT",
-                    {
-                        "default": 20,
-                        "min": 1,
-                        "max": 100,
-                        "step": 1,
-                        "tooltip": "Nombre d'étapes d'échantillonnage pour les images de référence générées.",
-                    },
-                ),
-                "image_cfg": (
-                    "FLOAT",
-                    {
-                        "default": 6.5,
-                        "min": 0.5,
-                        "max": 20.0,
-                        "step": 0.1,
-                        "tooltip": "Guidance scale (CFG) pour les images de référence.",
-                    },
-                ),
                 "external_images": (
                     "IMAGE",
                     {
                         "tooltip": "Optionnel: Lot d'images pré-existantes à utiliser comme références de scènes.",
-                    },
-                ),
-                "negative_prompt": (
-                    "STRING",
-                    {
-                        "multiline": True,
-                        "default": DEFAULT_NEGATIVE_PROMPT,
-                        "tooltip": "Prompt négatif pour la génération d'images de référence.",
                     },
                 ),
             },
@@ -221,24 +221,51 @@ class MiniMaxH3StoryDirector:
         aspect_ratio: str,
         director_mode: str,
         style_prompt: str,
-        ai_story_engine: str,
-        llm_url: str,
-        llm_model: str,
-        seed: int,
+        negative_prompt: str = DEFAULT_NEGATIVE_PROMPT,
+        ai_story_engine: str = "Built-in AI Story Engine (Local / No Server needed)",
+        llm_url: str = "http://127.0.0.1:11434",
+        llm_model: str = "qwen2.5:7b",
+        image_steps: int = 20,
+        image_cfg: float = 6.5,
+        seed: int = 0,
+        control_after_generate: str = "fixed",
         model=None,
         clip=None,
         vae=None,
-        image_steps: int = 20,
-        image_cfg: float = 6.5,
         external_images: torch.Tensor | None = None,
-        negative_prompt: str = DEFAULT_NEGATIVE_PROMPT,
         unique_id: str | None = None,
+        **kwargs,
     ):
-        target_duration = max(2.0, float(total_duration_sec or 15.0))
-        target_shot = max(1.5, float(shot_duration_sec or 5.0))
-        num_scenes = max(1, int(round(target_duration / target_shot)))
+        # Defensive type coercion for robustness against any UI widget mismatch
+        try:
+            target_duration = max(2.0, float(total_duration_sec))
+        except (ValueError, TypeError):
+            target_duration = 15.0
 
+        try:
+            target_shot = max(1.5, float(shot_duration_sec))
+        except (ValueError, TypeError):
+            target_shot = 5.0
+
+        try:
+            steps_val = max(1, int(image_steps))
+        except (ValueError, TypeError):
+            steps_val = 20
+
+        try:
+            cfg_val = max(0.1, float(image_cfg))
+        except (ValueError, TypeError):
+            cfg_val = 6.5
+
+        try:
+            seed_val = int(seed)
+        except (ValueError, TypeError):
+            seed_val = 0
+
+        neg_prompt_str = str(negative_prompt or DEFAULT_NEGATIVE_PROMPT)
+        num_scenes = max(1, int(round(target_duration / target_shot)))
         width, height = parse_aspect_ratio(aspect_ratio)
+
         log.info(
             "MiniMax H3 Story Director: Generating storyboard for %d scenes (total %.1fs, %dx%d)",
             num_scenes,
@@ -249,7 +276,8 @@ class MiniMaxH3StoryDirector:
 
         # 1. Narrative scene generation
         scenes = None
-        if "ollama" in ai_story_engine.lower():
+        engine_lower = str(ai_story_engine or "").lower()
+        if "ollama" in engine_lower:
             scenes = generate_llm_scenes(
                 story=story,
                 num_scenes=num_scenes,
@@ -259,7 +287,7 @@ class MiniMaxH3StoryDirector:
                 llm_model=llm_model,
                 api_format="ollama",
             )
-        elif "openai" in ai_story_engine.lower():
+        elif "openai" in engine_lower:
             scenes = generate_llm_scenes(
                 story=story,
                 num_scenes=num_scenes,
@@ -286,10 +314,10 @@ class MiniMaxH3StoryDirector:
             model=model,
             clip=clip,
             vae=vae,
-            steps=image_steps,
-            cfg=image_cfg,
-            seed=seed,
-            negative_prompt=negative_prompt,
+            steps=steps_val,
+            cfg=cfg_val,
+            seed=seed_val,
+            negative_prompt=neg_prompt_str,
             external_images=external_images,
         )
 

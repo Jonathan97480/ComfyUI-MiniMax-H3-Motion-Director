@@ -2102,19 +2102,20 @@
         }
       ],
       "widgets_values": [
-        "Un chevalier cyberpunk explore les ruelles d'une ville néon sous la pluie battante. Il rencontre un renard holographique lumineux qui le guide vers une porte secrète dans un temple antique futuriste.",
+        "Un chevalier cyberpunk explore les ruelles d'une ville neon sous la pluie battante. Il rencontre un renard holographique lumineux qui le guide vers une porte secrete dans un temple antique futuriste.",
         15.0,
         5.0,
         "16:9 (864x480)",
         "mixed",
         "Cinematic lighting, photorealistic 8k, Unreal Engine 5 render, anamorphic lens flare, sharp focus, masterpiece, highly detailed, award-winning cinematography",
+        "blurry, low quality, distorted, deformed faces, bad anatomy, text, watermark",
         "Built-in AI Story Engine (Local / No Server needed)",
         "http://127.0.0.1:11434",
         "qwen2.5:7b",
-        42,
         20,
         6.5,
-        "blurry, low quality, distorted, deformed faces, bad anatomy, text, watermark"
+        42,
+        "fixed"
       ],
       "title": "MiniMax H3 AI Story Director 🎬"
     },

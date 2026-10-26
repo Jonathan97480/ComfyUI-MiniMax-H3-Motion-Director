@@ -110,10 +110,14 @@ class TestStoryboardModule(unittest.TestCase):
             aspect_ratio="16:9 (864x480)",
             director_mode="mixed",
             style_prompt="8k, masterpiece",
+            negative_prompt="blurry, text",
             ai_story_engine="Built-in AI Story Engine (Local / No Server needed)",
             llm_url="http://127.0.0.1:11434",
             llm_model="qwen2.5:7b",
+            image_steps=20,
+            image_cfg=6.5,
             seed=123,
+            control_after_generate="fixed",
         )
         self.assertIsInstance(sb, dict)
         self.assertEqual(sb["version"], 1)
@@ -121,6 +125,28 @@ class TestStoryboardModule(unittest.TestCase):
         self.assertEqual(imgs.shape, (2, 480, 864, 3))
         self.assertIn("timelineMode", t_json)
         self.assertIn("SCÉNARIO", summary)
+
+    def test_defensive_coercion(self):
+        """Test that invalid types for numeric widgets (e.g. string for cfg) are gracefully coerced."""
+        node = MiniMaxH3StoryDirector()
+        sb, t_json, imgs, summary = node.execute(
+            story="Test story",
+            total_duration_sec="10.0",  # String instead of float
+            shot_duration_sec="5.0",    # String instead of float
+            aspect_ratio="16:9 (864x480)",
+            director_mode="mixed",
+            style_prompt="8k",
+            negative_prompt="blurry",
+            ai_story_engine="Built-in AI Story Engine (Local / No Server needed)",
+            llm_url="http://127.0.0.1:11434",
+            llm_model="qwen2.5:7b",
+            image_steps="invalid_steps", # Corrupted string
+            image_cfg="invalid_cfg",     # Corrupted string (like negative prompt)
+            seed="123",
+            control_after_generate="fixed",
+        )
+        self.assertIsInstance(sb, dict)
+        self.assertEqual(len(sb["scenes"]), 2)
 
 
 if __name__ == "__main__":

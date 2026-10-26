@@ -1,8 +1,8 @@
 {
   "id": "67361b43-eca6-4962-b931-c3950df2f6a7",
   "revision": 0,
-  "last_node_id": 25,
-  "last_link_id": 36,
+  "last_node_id": 107,
+  "last_link_id": 39,
   "nodes": [
     {
       "id": "um",
@@ -2045,21 +2045,21 @@
         {
           "name": "model",
           "type": "MODEL",
-          "link": null,
+          "link": 37,
           "shape": 7,
           "localized_name": "model"
         },
         {
           "name": "clip",
           "type": "CLIP",
-          "link": null,
+          "link": 38,
           "shape": 7,
           "localized_name": "clip"
         },
         {
           "name": "vae",
           "type": "VAE",
-          "link": null,
+          "link": 39,
           "shape": 7,
           "localized_name": "vae"
         },
@@ -2112,8 +2112,8 @@
         "Built-in AI Story Engine (Local / No Server needed)",
         "http://127.0.0.1:11434",
         "qwen2.5:7b",
-        20,
-        6.5,
+        8,
+        2.0,
         42,
         "fixed"
       ],
@@ -2162,6 +2162,210 @@
         "# 🎬 MiniMax H3 AI Story Director\n\nCe workflow permet de générer une vidéo complète à partir d'une simple **histoire ou scénario** :\n\n1. **Décrivez votre histoire** dans le nœud *MiniMax H3 AI Story Director*.\n2. **Indiquez la durée totale** souhaitée (ex: 15s, 30s, 60s).\n3. **Choisissez le moteur** :\n   - *Built-in AI Story Engine* : 100% local, autonome, sans serveur externe.\n   - *Ollama* ou *OpenAI-Compatible* : connectez votre LLM local (Qwen, Mistral, Gemma).\n4. Le nœud découpe l'histoire en scènes cinématographiques, attribue les mouvements de caméra, génère les images de référence et **remplit automatiquement le Motion Director**.\n5. Cliquez sur le nœud **MiniMax H3 Motion Director** pour ouvrir et admirer le plan multi-scènes !\n"
       ],
       "title": "Guide : Storyboard & Scénario IA"
+    },
+    {
+      "id": 104,
+      "type": "UNETLoader",
+      "pos": [
+        -690,
+        200
+      ],
+      "size": [
+        420,
+        84
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "unet_name",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "weight_dtype",
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "widget": {
+            "name": "weight_dtype"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "MODEL",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            37
+          ]
+        }
+      ],
+      "title": "Modèle Image - Z-Image Turbo / SDXL",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "UNETLoader",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "z_image_turbo_bf16.safetensors",
+        "default"
+      ],
+      "color": "#140A1FFF",
+      "bgcolor": "#27133EFF"
+    },
+    {
+      "id": 105,
+      "type": "CLIPLoader",
+      "pos": [
+        -690,
+        340
+      ],
+      "size": [
+        420,
+        106
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip_name",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "type",
+          "name": "type",
+          "type": "COMBO",
+          "widget": {
+            "name": "type"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "device",
+          "name": "device",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "device"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "CLIP",
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            38
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "CLIPLoader",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "qwen_3_4b.safetensors",
+        "lumina2",
+        "default"
+      ],
+      "color": "#746101FF",
+      "bgcolor": "#937B01FF"
+    },
+    {
+      "id": 106,
+      "type": "VAELoader",
+      "pos": [
+        -690,
+        510
+      ],
+      "size": [
+        420,
+        58
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VAE",
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            39
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "VAELoader",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "ae.safetensors"
+      ],
+      "color": "#A74646FF",
+      "bgcolor": "#C65353FF"
+    },
+    {
+      "id": 107,
+      "type": "MarkdownNote",
+      "pos": [
+        -690,
+        630
+      ],
+      "size": [
+        420,
+        380
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "widgets_values": [
+        "# 🎨 Modèles Référence Image (Z-Image Turbo)\n\nCe groupe génère les **vraies images de référence IA** (décors, personnages, cadrage) pour chaque plan du Story Director :\n\n- **Diffusion** : `z_image_turbo_bf16.safetensors`\n- **CLIP** : `qwen_3_4b.safetensors` (type `lumina2`)\n- **VAE** : `ae.safetensors`\n\n> **Paramètres recommandés pour Z-Image Turbo** :\n> - Steps : **8**\n> - CFG : **2.0**\n\n*(Optionnel)* Vous pouvez brancher n'importe quel modèle SDXL / Flux ou un CheckpointLoader standard."
+      ],
+      "title": "Guide : Modèles Référence Image"
     }
   ],
   "links": [
@@ -2380,6 +2584,30 @@
       102,
       0,
       "IMAGE"
+    ],
+    [
+      37,
+      104,
+      0,
+      101,
+      0,
+      "MODEL"
+    ],
+    [
+      38,
+      105,
+      0,
+      101,
+      1,
+      "CLIP"
+    ],
+    [
+      39,
+      106,
+      0,
+      101,
+      2,
+      "VAE"
     ]
   ],
   "groups": [
@@ -2465,6 +2693,30 @@
         1488
       ],
       "color": "#0A528AFF",
+      "flags": {}
+    },
+    {
+      "id": 8,
+      "title": "Image Ref Models (Z-Image Turbo / SDXL)",
+      "bounding": [
+        -720,
+        0,
+        480,
+        1488
+      ],
+      "color": "#1a2e3b",
+      "flags": {}
+    },
+    {
+      "id": 9,
+      "title": "AI Story Director (Script & Références)",
+      "bounding": [
+        -220,
+        0,
+        490,
+        1488
+      ],
+      "color": "#2a1e3b",
       "flags": {}
     }
   ],

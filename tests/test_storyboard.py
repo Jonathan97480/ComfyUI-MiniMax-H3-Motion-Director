@@ -22,7 +22,7 @@ from director.storyboard import (
     generate_local_scenes,
     generate_scene_reference_images,
     parse_aspect_ratio,
-    render_storyboard_card,
+    render_storyboard_visual_concept,
 )
 from nodes.storyboard_node import MiniMaxH3StoryDirector
 
@@ -55,23 +55,22 @@ class TestStoryboardModule(unittest.TestCase):
         )
         self.assertEqual(len(scenes), 3)
         self.assertEqual(scenes[0].duration, 5.0)
-        self.assertFalse(scenes[0].continuity_visual)  # First scene has no predecessor
-        self.assertTrue(scenes[1].continuity_visual)   # Next scenes chain continuity
+        self.assertFalse(scenes[0].continuity_visual)
+        self.assertTrue(scenes[1].continuity_visual)
         self.assertTrue(scenes[2].continuity_visual)
         self.assertTrue(len(scenes[0].full_prompt) > 20)
+        self.assertTrue(len(scenes[0].image_prompt) > 20)
 
-    def test_render_storyboard_card(self):
-        tensor = render_storyboard_card(
+    def test_render_storyboard_visual_concept(self):
+        tensor = render_storyboard_visual_concept(
             scene_num=1,
             total_scenes=3,
             title="Plan 1 : Exposition",
-            duration=5.0,
-            shot_type="Wide Establishing Shot",
-            camera_motion="Slow Dolly In",
-            lighting="Neon Cyan",
-            story_snippet="A lone ninja enters the flying fortress",
+            story_snippet="A cybernetic knight explores rain-slicked neon streets",
+            lighting="Volumetric cyan and magenta neon",
             width=864,
             height=480,
+            seed=42,
         )
         self.assertEqual(tensor.shape, (1, 480, 864, 3))
         self.assertTrue(torch.is_floating_point(tensor))
@@ -85,7 +84,6 @@ class TestStoryboardModule(unittest.TestCase):
             total_duration=10.0,
             style_prompt="photorealistic",
         )
-        # Assign dummy base64
         scenes[0].image_b64 = "data:image/jpeg;base64,abc"
         scenes[1].image_b64 = "data:image/jpeg;base64,def"
 
@@ -127,12 +125,11 @@ class TestStoryboardModule(unittest.TestCase):
         self.assertIn("SCÉNARIO", summary)
 
     def test_defensive_coercion(self):
-        """Test that invalid types for numeric widgets (e.g. string for cfg) are gracefully coerced."""
         node = MiniMaxH3StoryDirector()
         sb, t_json, imgs, summary = node.execute(
             story="Test story",
-            total_duration_sec="10.0",  # String instead of float
-            shot_duration_sec="5.0",    # String instead of float
+            total_duration_sec="10.0",
+            shot_duration_sec="5.0",
             aspect_ratio="16:9 (864x480)",
             director_mode="mixed",
             style_prompt="8k",
@@ -140,8 +137,8 @@ class TestStoryboardModule(unittest.TestCase):
             ai_story_engine="Built-in AI Story Engine (Local / No Server needed)",
             llm_url="http://127.0.0.1:11434",
             llm_model="qwen2.5:7b",
-            image_steps="invalid_steps", # Corrupted string
-            image_cfg="invalid_cfg",     # Corrupted string (like negative prompt)
+            image_steps="invalid_steps",
+            image_cfg="invalid_cfg",
             seed="123",
             control_after_generate="fixed",
         )

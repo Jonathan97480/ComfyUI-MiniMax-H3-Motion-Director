@@ -152,6 +152,34 @@ function findConnectedDirectors(storyNode, autoConnect = true) {
     return directors;
 }
 
+export function findConnectedStoryNode(directorNode) {
+    if (!directorNode) return null;
+    const graph = directorNode.graph || app?.graph;
+    if (!graph) return null;
+
+    // 1. Direct incoming link
+    for (const input of directorNode.inputs || []) {
+        if (input?.link == null) continue;
+        const link = graph.links?.[input.link] || (typeof graph.links?.find === "function" ? graph.links.find((l) => l && (l.id === input.link || l[0] === input.link)) : null);
+        if (!link) continue;
+        const origId = link.origin_id ?? link[1];
+        const origNode = graph.getNodeById?.(origId);
+        if (origNode && String(origNode.comfyClass || origNode.type || "").includes(STORY_DIRECTOR_CLASS)) {
+            return origNode;
+        }
+    }
+
+    // 2. Check all nodes in graph
+    if (graph._nodes) {
+        const storyNodes = graph._nodes.filter((n) =>
+            String(n.comfyClass || n.type || "").includes(STORY_DIRECTOR_CLASS)
+        );
+        if (storyNodes.length > 0) return storyNodes[0];
+    }
+    return null;
+}
+globalThis.__MMX_FIND_STORY_NODE__ = findConnectedStoryNode;
+
 function updateDirectorTaskType(directorNode, requestedMode) {
     if (!directorNode || !requestedMode) return;
     const taskWidget = (directorNode.widgets || []).find((w) => w?.name === "task_type");
@@ -204,8 +232,18 @@ function updateDirectorTaskType(directorNode, requestedMode) {
     }
 }
 
-function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDuration, directorMode) {
+function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDuration, directorMode, storyNode) {
     if (!directorNode || !timelineJson) return false;
+
+    // Keep storyNode properties synchronized so they survive page reload (F5)
+    const story = storyNode || globalThis.__MMX_FIND_STORY_NODE__?.(directorNode);
+    if (story) {
+        if (!story.properties) story.properties = {};
+        story.properties.lastGeneratedTimeline = timelineJson;
+        story.properties.lastGeneratedPrompt = prompt || story.properties.lastGeneratedPrompt || "";
+        story._lastGeneratedTimeline = timelineJson;
+        story._lastGeneratedPrompt = prompt || story._lastGeneratedPrompt || "";
+    }
 
     let parsed = null;
     try { parsed = JSON.parse(timelineJson); } catch (e) {}
@@ -312,6 +350,7 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
                 }
             }
 
+            const prevMode = ed._directorMode || "video";
             const targetMode = isMixed
                 ? "mixed"
                 : getDirectorMode(modeClean || ed.taskTypeWidget?.value || "r2v");
@@ -333,7 +372,7 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
 
             ed.populateTaskSelect?.(ed.globalTask, ed.taskTypeWidget?.value);
             ed.ensureContextLinks?.();
-            ed.applyTaskLayout?.("video");
+            ed.applyTaskLayout?.(prevMode);
             ed.setEditMode?.(ed.timeline?.editMode || "global");
             ed.selectedIndex = 0;
             ed.updateSelectionUI?.();
@@ -342,7 +381,7 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
             ed.syncExternalGroupsTimeline?.();
             ed.scheduleRender?.();
 
-            if (mode === "mixed") {
+            if (targetMode === "mixed") {
                 if (ed._mixedController && ed.mixedTimeline) {
                     try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
                 }
@@ -351,7 +390,7 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
             }
 
             if (ed._directorModalController?.isOpen) {
-                if (mode === "mixed" && ed._mixedController && ed.mixedTimeline) {
+                if (targetMode === "mixed" && ed._mixedController && ed.mixedTimeline) {
                     try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
                 } else if (ed.isImageBatch?.()) {
                     ed.renderImageBatchGroups?.();
@@ -380,8 +419,17 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
     return true;
 }
 
-function openDirectorModal(directorNode) {
+function openDirectorModal(directorNode, storyNode) {
     if (!directorNode) return false;
+
+    // Check if storyNode has a generated timeline to apply first
+    const story = storyNode || globalThis.__MMX_FIND_STORY_NODE__?.(directorNode);
+    const lastTimeline = story?.properties?.lastGeneratedTimeline || story?._lastGeneratedTimeline;
+    if (lastTimeline) {
+        const lastPrompt = story?.properties?.lastGeneratedPrompt || story?._lastGeneratedPrompt || "";
+        const dirMode = (story?.widgets || []).find((w) => w?.name === "director_mode")?.value || "r2v";
+        applyTimelineToDirector(directorNode, lastTimeline, lastPrompt, null, dirMode, story);
+    }
 
     if (!directorNode._minimaxEditor && typeof globalThis.__MMX_INIT_DIRECTOR_EDITOR__ === "function") {
         try {
@@ -413,6 +461,7 @@ function openDirectorModal(directorNode) {
                 } else {
                     const taskKey = resolveTaskKey(parsed?.global?.taskType || ed.taskTypeWidget?.value || "");
                     const targetMode = getDirectorMode(taskKey || parsed?.timelineMode || "r2v");
+                    const prevMode = ed._directorMode || "video";
                     ed._directorMode = targetMode;
                     if (targetMode === "prompt_batch" || targetMode === "image_batch") {
                         if (ed.timeline) {
@@ -425,7 +474,7 @@ function openDirectorModal(directorNode) {
                     if (ed.globalTask) ed.globalTask.value = taskKey;
                     if (ed.taskTypeWidget) ed.taskTypeWidget.value = taskKey;
                     ed.populateTaskSelect?.(ed.globalTask, taskKey);
-                    ed.applyTaskLayout?.("video");
+                    ed.applyTaskLayout?.(prevMode);
                     if (ed.isImageBatch?.()) {
                         ed.renderImageBatchGroups?.();
                     }
@@ -598,11 +647,16 @@ async function triggerStoryboardGeneration(storyNode, btnWidget) {
             storyNode._lastGeneratedPrompt = data.prompt;
             storyNode._lastGeneratedSubjects = data.subjects;
             storyNode._lastGeneratedScenes = data.scenes;
+            if (!storyNode.properties) storyNode.properties = {};
+            storyNode.properties.lastGeneratedTimeline = data.timeline_data;
+            storyNode.properties.lastGeneratedPrompt = data.prompt;
+            storyNode.properties.lastGeneratedSubjects = data.subjects;
+            storyNode.properties.lastGeneratedScenes = data.scenes;
 
             const directors = findConnectedDirectors(storyNode, true);
             let syncCount = 0;
             for (const dir of directors) {
-                if (applyTimelineToDirector(dir, data.timeline_data, data.prompt, totalDuration, directorMode)) {
+                if (applyTimelineToDirector(dir, data.timeline_data, data.prompt, totalDuration, directorMode, storyNode)) {
                     syncCount++;
                 }
             }
@@ -666,7 +720,7 @@ function ensureStoryDirectorWidgets(node) {
                     alert(t("syncNoTarget"));
                     return;
                 }
-                const success = openDirectorModal(directors[0]);
+                const success = openDirectorModal(directors[0], node);
                 if (!success) {
                     alert(t("noDirectorOpened"));
                 }
@@ -744,6 +798,17 @@ app.registerExtension({
                 if (storyNode) {
                     storyNode._lastGeneratedTimeline = detail.timeline_data;
                     storyNode._lastGeneratedPrompt = detail.prompt;
+                    if (!storyNode.properties) storyNode.properties = {};
+                    storyNode.properties.lastGeneratedTimeline = detail.timeline_data;
+                    storyNode.properties.lastGeneratedPrompt = detail.prompt;
+                    if (detail.subjects) {
+                        storyNode.properties.lastGeneratedSubjects = detail.subjects;
+                        storyNode._lastGeneratedSubjects = detail.subjects;
+                    }
+                    if (detail.scenes) {
+                        storyNode.properties.lastGeneratedScenes = detail.scenes;
+                        storyNode._lastGeneratedScenes = detail.scenes;
+                    }
                     targetDirectors = findConnectedDirectors(storyNode, true);
 
                     // Reset button label on the story node if it was busy

@@ -1422,27 +1422,33 @@ def build_director_timeline(
     if subjects:
         for subj in subjects:
             if subj.image_b64 or getattr(subj, "image_file", ""):
-                idx = subj.index - 1
+                idx = len(ref_pictures)
                 ref_pictures.append({
                     "index": idx,
                     "slot": idx,
                     "imageFile": getattr(subj, "image_file", "") or "",
-                    "imageB64": subj.image_b64,
+                    "fileName": getattr(subj, "image_file", "") or "",
+                    "imageB64": subj.image_b64 or "",
                     "assetId": f"subject-{subj.index}",
                     "name": subj.name,
+                    "type": "input",
                 })
-    elif scenes:
+    if scenes:
         for s in scenes:
             if s.image_b64 or getattr(s, "image_file", ""):
-                idx = s.index - 1
-                ref_pictures.append({
-                    "index": idx,
-                    "slot": idx,
-                    "imageFile": getattr(s, "image_file", "") or "",
-                    "imageB64": s.image_b64 or "",
-                    "assetId": f"scene-{s.index}",
-                    "name": s.title or f"Plan {s.index}",
-                })
+                scene_name = s.title or f"Plan {s.index}"
+                if not any(r.get("name") == scene_name for r in ref_pictures):
+                    idx = len(ref_pictures)
+                    ref_pictures.append({
+                        "index": idx,
+                        "slot": idx,
+                        "imageFile": getattr(s, "image_file", "") or "",
+                        "fileName": getattr(s, "image_file", "") or "",
+                        "imageB64": s.image_b64 or "",
+                        "assetId": f"scene-{s.index}",
+                        "name": scene_name,
+                        "type": "input",
+                    })
 
     effective_prompt = full_h3_prompt or (scenes[0].full_prompt if scenes else "")
 
@@ -1518,9 +1524,11 @@ def build_director_timeline(
                     "index": len(seg_refs),
                     "slot": len(seg_refs),
                     "imageFile": getattr(s, "image_file", "") or "",
+                    "fileName": getattr(s, "image_file", "") or "",
                     "imageB64": s.image_b64 or "",
                     "assetId": f"segment-s{s.index - 1}-scene-{s.index}",
                     "name": scene_name,
+                    "type": "input",
                 })
         std_segments.append(
             {

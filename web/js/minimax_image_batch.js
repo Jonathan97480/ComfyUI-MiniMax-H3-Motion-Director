@@ -463,7 +463,17 @@ function viewUrl(imageFile) {
     const norm = String(imageFile || "").replace(/\\/g, "/");
     const slash = norm.lastIndexOf("/");
     const filename = slash >= 0 ? norm.slice(slash + 1) : norm;
-    const subfolder = slash >= 0 ? norm.slice(0, slash) : "";
+    let subfolder = slash >= 0 ? norm.slice(0, slash) : "";
+    if (subfolder.includes(":") || subfolder.toLowerCase().includes("/input")) {
+        const inputIdx = norm.toLowerCase().lastIndexOf("/input/");
+        if (inputIdx >= 0) {
+            const rel = norm.slice(inputIdx + 7);
+            const relSlash = rel.lastIndexOf("/");
+            subfolder = relSlash >= 0 ? rel.slice(0, relSlash) : "";
+        } else {
+            subfolder = "";
+        }
+    }
     const params = new URLSearchParams({ filename, type: "input" });
     if (subfolder) params.set("subfolder", subfolder);
     return api.apiURL(`/view?${params.toString()}`);
@@ -628,7 +638,8 @@ export function normalizeImageBatchSegments(editor) {
     const defSec = defaultDurationSec(taskKey);
     let start = 0;
     const fixed = [];
-    for (const seg of editor.timeline.segments) {
+    for (let segIdx = 0; segIdx < editor.timeline.segments.length; segIdx++) {
+        const seg = editor.timeline.segments[segIdx];
         let fc = 1;
         let durationSec;
         if (isVideo) {
@@ -638,6 +649,11 @@ export function normalizeImageBatchSegments(editor) {
             );
             fc = resolved.frames;
             durationSec = resolved.durationSec;
+        }
+        if (taskKey === "r2v" && Array.isArray(seg.refs)) {
+            for (const r of seg.refs) {
+                resolveRefMediaFromContext(r, r.index ?? r.slot, segIdx, editor);
+            }
         }
         fixed.push({
             ...seg,
@@ -659,8 +675,16 @@ export function normalizeImageBatchSegments(editor) {
     }
     if (!fixed.length) fixed.push(newBatchSegment({ durationSec: defSec }));
     editor.timeline.segments = fixed;
-    if (taskKey === "r2v") ensureR2vReferenceAssetSchema(editor.timeline);
-    else ensureReferenceAssetSchema(editor.timeline);
+    if (taskKey === "r2v") {
+        if (Array.isArray(editor.timeline.r2vCommon?.refs)) {
+            for (const r of editor.timeline.r2vCommon.refs) {
+                resolveRefMediaFromContext(r, r.index ?? r.slot, -1, editor);
+            }
+        }
+        ensureR2vReferenceAssetSchema(editor.timeline);
+    } else {
+        ensureReferenceAssetSchema(editor.timeline);
+    }
     editor.timeline.totalFrames = start || fixed[0].frameCount;
 }
 
@@ -992,7 +1016,8 @@ function r2vSlotLabel(editor, index, kind, slot, ref, file) {
     const asset = referenceAssetStates(editor.timeline.r2vCommon || {}, seg)
         .find((item) => item.kind === kind && item.assetId === ref.assetId);
     const name = fileBaseName(file || ref?.imageFile || ref?.videoFile || ref?.audioFile || ref?.fileName || "");
-    const fallback = name || ref?.name || (ref?.assetId ? String(ref.assetId).replace("-", " ") : "") || t(`batch.r2v.assetKind.${kind}`);
+    const isRawUuid = ref?.assetId && /^[a-f0-9-]{32,}$/i.test(String(ref.assetId).replace(/^.*-(picture|video|audio)-/, ""));
+    const fallback = name || ref?.name || (!isRawUuid && ref?.assetId ? String(ref.assetId).replace("-", " ") : "") || t(local ? `batch.r2v.localSlot.${kind}` : `batch.r2v.commonSlot.${kind}`, { n: slot + 1 });
     return asset
         ? formatR2vAssetStatusLabel({ ...asset, name: fallback }, t("batch.r2v.disabled"))
         : fallback;
@@ -1230,7 +1255,13 @@ function appendR2vAssetSections(assets, seg, index, editor) {
     };
 
     for (let i = 0; i < R2V_PICTURE_SLOTS; i++) {
-        const ref = (seg.refs || []).find((r) => Number(r.index ?? r.slot) === i);
+        let ref = (seg.refs || []).find((r) => Number(r.index ?? r.slot) === i);
+        if (!ref && seg.useCommonAssets !== false && !(seg.excludedCommonAssetIds || []).includes(`common-picture-${i + 1}`)) {
+            const commonRef = (editor.timeline?.r2vCommon?.refs || []).find((c) => Number(c.index ?? c.slot) === i && (c.imageFile || c.imageB64));
+            if (commonRef) {
+                ref = { ...commonRef, slot: i, index: i };
+            }
+        }
         const slot = document.createElement("div");
         slot.className = "bd-batch-ref";
         if (i >= visible) slot.classList.add("bd-r2v-pic-hidden");
@@ -1422,7 +1453,71 @@ function renderR2vCommonPopoverContent(body, editor) {
     });
 }
 
+function resolveRefMediaFromContext(ref, slot, index, editor) {
+    if (!editor?.timeline) return ref;
+    const targetRef = ref ? { ...ref } : { index: slot, slot: slot };
+    if (targetRef.imageFile || targetRef.imageB64) return targetRef;
+
+    // 1. Check r2vCommon.refs
+    const commonRefs = editor.timeline.r2vCommon?.refs || [];
+    let match = commonRefs.find((c) => (c?.imageFile || c?.imageB64) && (
+        Number(c.index ?? c.slot) === slot ||
+        (c.assetId && c.assetId === targetRef.assetId) ||
+        (c.name && targetRef.name && c.name.toLowerCase() === targetRef.name.toLowerCase())
+    ));
+
+    // 2. Check global.refs
+    if (!match) {
+        const globalRefs = editor.timeline.global?.refs || [];
+        match = globalRefs.find((g) => (g?.imageFile || g?.imageB64) && (
+            Number(g.index ?? g.slot) === slot ||
+            (g.assetId && g.assetId === targetRef.assetId) ||
+            (g.name && targetRef.name && g.name.toLowerCase() === targetRef.name.toLowerCase())
+        ));
+    }
+
+    // 3. Check all segments
+    if (!match && Array.isArray(editor.timeline.segments)) {
+        for (const seg of editor.timeline.segments) {
+            match = (seg?.refs || []).find((s) => (s?.imageFile || s?.imageB64) && (
+                Number(s.index ?? s.slot) === slot ||
+                (s.assetId && s.assetId === targetRef.assetId)
+            ));
+            if (match) break;
+        }
+    }
+
+    // 4. Check connected StoryDirector node
+    if (!match) {
+        const storyNode = globalThis.__MMX_FIND_STORY_NODE__?.(editor.node);
+        const subjects = storyNode?.properties?.lastGeneratedSubjects
+            || storyNode?._lastGeneratedSubjects
+            || [];
+        const subj = subjects.find((s) => (s?.image_file || s?.image_b64) && (
+            Number(s.index) === (slot + 1) ||
+            (s.name && targetRef.name && s.name.toLowerCase() === targetRef.name.toLowerCase())
+        ));
+        if (subj) {
+            match = {
+                imageFile: subj.image_file || "",
+                imageB64: subj.image_b64 || "",
+                name: subj.name || "",
+            };
+        }
+    }
+
+    if (match) {
+        targetRef.imageFile = match.imageFile || match.fileName || targetRef.imageFile || "";
+        targetRef.imageB64 = match.imageB64 || targetRef.imageB64 || "";
+        targetRef.fileName = match.fileName || targetRef.imageFile || "";
+        if (!targetRef.name && match.name) targetRef.name = match.name;
+    }
+
+    return targetRef;
+}
+
 function renderR2vRefSlot(el, ref, slot, index, editor) {
+    ref = resolveRefMediaFromContext(ref, slot, index, editor);
     const imgSrc = ref?.imageB64 || ref?.imageFile || "";
     const label = r2vSlotLabel(editor, index, "picture", slot, ref, imgSrc);
     const has = !!(ref?.imageFile || ref?.imageB64);
@@ -1431,8 +1526,16 @@ function renderR2vRefSlot(el, ref, slot, index, editor) {
     el.title = t("ref.clickUploadMove", { label });
     if (has) {
         const img = document.createElement("img");
-        img.src = ref.imageB64 || viewUrl(ref.imageFile);
+        const src = ref.imageB64 || viewUrl(ref.imageFile);
+        img.src = src;
         img.draggable = false;
+        if (ref.imageFile && ref.imageB64) {
+            img.onerror = () => {
+                if (img.src !== ref.imageB64) {
+                    img.src = ref.imageB64;
+                }
+            };
+        }
         el.appendChild(img);
         const dot = document.createElement("span");
         dot.className = "dot";
@@ -1455,6 +1558,7 @@ function renderR2vRefSlot(el, ref, slot, index, editor) {
 }
 
 function renderRefSlot(el, ref, slot, index, editor) {
+    ref = resolveRefMediaFromContext(ref, slot, index, editor);
     const label = refImageLabel(slot);
     const has = !!(ref?.imageFile || ref?.imageB64);
     el.classList.toggle("has-img", has);
@@ -1462,8 +1566,16 @@ function renderRefSlot(el, ref, slot, index, editor) {
     el.title = t("ref.clickUploadMove", { label });
     if (has) {
         const img = document.createElement("img");
-        img.src = ref.imageB64 || viewUrl(ref.imageFile);
+        const src = ref.imageB64 || viewUrl(ref.imageFile);
+        img.src = src;
         img.draggable = false;
+        if (ref.imageFile && ref.imageB64) {
+            img.onerror = () => {
+                if (img.src !== ref.imageB64) {
+                    img.src = ref.imageB64;
+                }
+            };
+        }
         el.appendChild(img);
         const x = document.createElement("span");
         x.className = "x";

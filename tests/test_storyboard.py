@@ -377,6 +377,72 @@ class TestStoryboardHttpRoute(unittest.IsolatedAsyncioTestCase):
         self.assertGreaterEqual(len(data.get("subjects", [])), 2)
         self.assertEqual(len(data.get("reference_images", [])), len(data.get("subjects", [])))
 
+    def test_build_director_timeline_file_and_persistence(self):
+        from director.storyboard import StoryboardSubject, StoryboardScene, build_director_timeline
+
+        subjects = [
+            StoryboardSubject(
+                index=1,
+                name="Cyberpunk Knight",
+                category="character",
+                definition="A knight in neon armor",
+                retention="fully_preserved",
+                image_prompt="A cyberpunk knight",
+                image_b64="data:image/png;base64,fake1",
+                image_file="story_ref_1_cyberpunk_knight.png",
+            ),
+            StoryboardSubject(
+                index=2,
+                name="Neon Cyberpunk Alley",
+                category="environment",
+                definition="A neon alley in rain",
+                retention="fully_preserved",
+                image_prompt="A neon alley",
+                image_b64="data:image/png;base64,fake2",
+                image_file="story_ref_2_neon_cyberpunk_alley.png",
+            ),
+        ]
+        scenes = [
+            StoryboardScene(
+                index=1,
+                title="Scene 1",
+                duration=4.0,
+                shot_type="Medium shot",
+                camera_motion="Static",
+                lighting="Neon",
+                visual_prompt="Knight enters alley",
+                full_prompt="Knight enters alley",
+                image_file="story_ref_scene_1.png",
+                image_b64="data:image/png;base64,scene1",
+            ),
+            StoryboardScene(
+                index=2,
+                title="Scene 2",
+                duration=4.0,
+                shot_type="Close-up",
+                camera_motion="Pan right",
+                lighting="Moody",
+                visual_prompt="Knight draws sword",
+                full_prompt="Knight draws sword",
+            ),
+        ]
+
+        timeline = build_director_timeline(scenes, subjects=subjects, director_mode="r2v")
+        self.assertEqual(timeline["timelineMode"], "prompt_batch")
+        self.assertEqual(timeline["editMode"], "segment")
+        self.assertIn("r2vCommon", timeline)
+        common_refs = timeline["r2vCommon"]["refs"]
+        self.assertGreaterEqual(len(common_refs), 2)
+        self.assertEqual(common_refs[0]["imageFile"], "story_ref_1_cyberpunk_knight.png")
+        self.assertEqual(common_refs[0]["fileName"], "story_ref_1_cyberpunk_knight.png")
+        self.assertEqual(common_refs[0]["type"], "input")
+
+        # Segments have refs with files
+        seg0_refs = timeline["segments"][0]["refs"]
+        self.assertGreaterEqual(len(seg0_refs), 2)
+        self.assertEqual(seg0_refs[0]["imageFile"], "story_ref_1_cyberpunk_knight.png")
+        self.assertEqual(seg0_refs[0]["fileName"], "story_ref_1_cyberpunk_knight.png")
+        self.assertEqual(seg0_refs[0]["type"], "input")
 
 
 if __name__ == "__main__":

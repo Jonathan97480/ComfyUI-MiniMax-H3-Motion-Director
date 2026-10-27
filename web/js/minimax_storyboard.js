@@ -200,7 +200,10 @@ function updateDirectorTaskType(directorNode, requestedMode) {
 function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDuration, directorMode) {
     if (!directorNode || !timelineJson) return false;
 
-    const modeClean = String(directorMode || "mixed").toLowerCase().trim();
+    let parsed = null;
+    try { parsed = JSON.parse(timelineJson); } catch (e) {}
+    const isMixed = (parsed && String(parsed.timelineMode || "").toLowerCase() === "mixed") || String(directorMode).toLowerCase() === "mixed";
+    const modeClean = isMixed ? "mixed" : String(directorMode || "mixed").toLowerCase().trim();
 
     // Ensure editor is instantiated if node hasn't been mounted yet
     if (!directorNode._minimaxEditor && typeof globalThis.__MMX_INIT_DIRECTOR_EDITOR__ === "function") {

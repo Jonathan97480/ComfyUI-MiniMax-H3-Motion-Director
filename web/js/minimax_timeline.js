@@ -2347,17 +2347,30 @@ class MiniMaxH3MotionDirectorEditor {
                             let parsed = null;
                             try { parsed = JSON.parse(raw); } catch (e) {}
 
-                            if (parsed && String(parsed.timelineMode || "").toLowerCase() === "mixed") {
+                            const isMixedTimeline = parsed && String(parsed.timelineMode || "").toLowerCase() === "mixed";
+                            if (isMixedTimeline) {
                                 this.mixedTimeline = normalizeMixedTimeline(parsed);
                                 if (this.node?.id != null) this.mixedTimeline.nodeId = String(this.node.id);
                                 if (this._mixedController) {
                                     this._mixedController.setState(this.mixedTimeline);
                                 }
+                                this._directorMode = "mixed";
+                                if (this.taskTypeWidget) {
+                                    const opts = this.taskTypeWidget.options?.values || [];
+                                    const mixedOpt = opts.find((opt) => String(opt).toLowerCase().includes("mixed")) || "mixed";
+                                    this.taskTypeWidget.value = mixedOpt;
+                                }
+                                if (this.globalTask) {
+                                    const opts = this.globalTask.options || [];
+                                    const mixedOpt = Array.from(opts).find((opt) => String(opt.value || opt).toLowerCase().includes("mixed"))?.value || "mixed";
+                                    this.globalTask.value = mixedOpt;
+                                }
+                            } else {
+                                this._directorMode = this.getDirectorMode();
                             }
 
                             this.ensureContextLinks?.();
                             this.syncFrameRateUI?.(this.timeline?.frameRate || initFps);
-                            this._directorMode = this.getDirectorMode();
                             this.applyTaskLayout(this._directorMode);
                             this.populateTaskSelect?.(this.globalTask, this.taskTypeWidget?.value);
                             this.updateSelectionUI?.();
@@ -4142,6 +4155,12 @@ class MiniMaxH3MotionDirectorEditor {
                     this.mixedTimeline = normalizeMixedTimeline(parsed);
                     if (this.node?.id != null) this.mixedTimeline.nodeId = String(this.node.id);
                     this._mixedLoadedFromSerialized = true;
+                    this._directorMode = "mixed";
+                    if (this.taskTypeWidget) {
+                        const opts = this.taskTypeWidget.options?.values || [];
+                        const mixedOpt = opts.find((opt) => String(opt).toLowerCase().includes("mixed")) || "mixed";
+                        this.taskTypeWidget.value = mixedOpt;
+                    }
                     if (this._mixedController) {
                         try { this._mixedController.setState(this.mixedTimeline); } catch (e) {}
                     }
@@ -11254,7 +11273,24 @@ app.registerExtension({
                 ed.timeline = ed._loadNativeTimelineState(ed.timelineWidget?.value, initTotal, initFps);
                 ed.ensureContextLinks();
                 ed.syncFrameRateUI(ed.timeline.frameRate);
-                ed._directorMode = ed.getDirectorMode();
+                let parsedInit = null;
+                try { parsedInit = JSON.parse(ed.timelineWidget?.value || "{}"); } catch (e) {}
+                const isMixedTimelineInit = parsedInit && String(parsedInit.timelineMode || "").toLowerCase() === "mixed";
+                if (isMixedTimelineInit) {
+                    ed._directorMode = "mixed";
+                    if (ed.taskTypeWidget) {
+                        const opts = ed.taskTypeWidget.options?.values || [];
+                        const mixedOpt = opts.find((opt) => String(opt).toLowerCase().includes("mixed")) || "mixed";
+                        ed.taskTypeWidget.value = mixedOpt;
+                    }
+                    if (ed.globalTask) {
+                        const opts = ed.globalTask.options || [];
+                        const mixedOpt = Array.from(opts).find((opt) => String(opt.value || opt).toLowerCase().includes("mixed"))?.value || "mixed";
+                        ed.globalTask.value = mixedOpt;
+                    }
+                } else {
+                    ed._directorMode = ed.getDirectorMode();
+                }
                 if (ed._directorMode === "mixed") {
                     // Mixed owns editor.mixedTimeline; legacy normalizers intentionally do nothing here.
                 } else if (ed._directorMode === "video") {

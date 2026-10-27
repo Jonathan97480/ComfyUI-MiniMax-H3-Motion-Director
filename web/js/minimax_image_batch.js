@@ -451,6 +451,15 @@ function relPath(upload) {
 }
 
 function viewUrl(imageFile) {
+    if (!imageFile) return "";
+    if (typeof imageFile === "string" && (
+        imageFile.startsWith("data:") ||
+        imageFile.startsWith("blob:") ||
+        imageFile.startsWith("http://") ||
+        imageFile.startsWith("https://")
+    )) {
+        return imageFile;
+    }
     const norm = String(imageFile || "").replace(/\\/g, "/");
     const slash = norm.lastIndexOf("/");
     const filename = slash >= 0 ? norm.slice(slash + 1) : norm;
@@ -980,8 +989,8 @@ function r2vSlotLabel(editor, index, kind, slot, ref, file) {
     };
     const asset = referenceAssetStates(editor.timeline.r2vCommon || {}, seg)
         .find((item) => item.kind === kind && item.assetId === ref.assetId);
-    const name = fileBaseName(file || ref.imageFile || ref.videoFile || ref.audioFile || ref.fileName || "");
-    const fallback = name || t(`batch.r2v.assetKind.${kind}`);
+    const name = fileBaseName(file || ref?.imageFile || ref?.videoFile || ref?.audioFile || ref?.fileName || "");
+    const fallback = name || ref?.name || (ref?.assetId ? String(ref.assetId).replace("-", " ") : "") || t(`batch.r2v.assetKind.${kind}`);
     return asset
         ? formatR2vAssetStatusLabel({ ...asset, name: fallback }, t("batch.r2v.disabled"))
         : fallback;
@@ -1412,14 +1421,15 @@ function renderR2vCommonPopoverContent(body, editor) {
 }
 
 function renderR2vRefSlot(el, ref, slot, index, editor) {
-    const label = r2vSlotLabel(editor, index, "picture", slot, ref, ref?.imageFile);
-    const has = !!ref?.imageFile;
+    const imgSrc = ref?.imageB64 || ref?.imageFile || "";
+    const label = r2vSlotLabel(editor, index, "picture", slot, ref, imgSrc);
+    const has = !!(ref?.imageFile || ref?.imageB64);
     el.classList.toggle("has-img", has);
     el.innerHTML = "";
     el.title = t("ref.clickUploadMove", { label });
     if (has) {
         const img = document.createElement("img");
-        img.src = viewUrl(ref.imageFile);
+        img.src = ref.imageB64 || viewUrl(ref.imageFile);
         img.draggable = false;
         el.appendChild(img);
         const dot = document.createElement("span");
@@ -1431,7 +1441,7 @@ function renderR2vRefSlot(el, ref, slot, index, editor) {
         el.appendChild(cap);
         const x = document.createElement("span");
         x.className = "x";
-        x.textContent = "×";
+        x.textContent = "\u00d7";
         x.onclick = (e) => { e.stopPropagation(); removeSegRef(editor, index, slot); };
         el.appendChild(x);
     } else {
@@ -1442,28 +1452,20 @@ function renderR2vRefSlot(el, ref, slot, index, editor) {
     }
 }
 
-function renderSourceSlot(el, imageFile) {
-    el.classList.toggle("has-img", !!imageFile);
-    if (imageFile) {
-        el.innerHTML = `<img src="${viewUrl(imageFile)}" alt="">`;
-    } else {
-        el.textContent = t("batch.uploadSource");
-    }
-}
-
 function renderRefSlot(el, ref, slot, index, editor) {
     const label = refImageLabel(slot);
-    el.classList.toggle("has-img", !!ref?.imageFile);
+    const has = !!(ref?.imageFile || ref?.imageB64);
+    el.classList.toggle("has-img", has);
     el.innerHTML = "";
     el.title = t("ref.clickUploadMove", { label });
-    if (ref?.imageFile) {
+    if (has) {
         const img = document.createElement("img");
-        img.src = viewUrl(ref.imageFile);
+        img.src = ref.imageB64 || viewUrl(ref.imageFile);
         img.draggable = false;
         el.appendChild(img);
         const x = document.createElement("span");
         x.className = "x";
-        x.textContent = "×";
+        x.textContent = "\u00d7";
         x.onclick = (e) => { e.stopPropagation(); removeSegRef(editor, index, slot); };
         el.appendChild(x);
     } else {

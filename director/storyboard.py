@@ -1392,6 +1392,8 @@ def build_director_timeline(
     ref_max_size: int = 864,
 ) -> dict[str, Any]:
     """Assemble a compliant MiniMax H3 Motion Director timeline specification using canonical references."""
+    import copy
+
     total_frames = sum(max(5, int(round(s.duration * fps))) for s in scenes)
 
     # Reference pictures from subjects or scenes
@@ -1399,18 +1401,24 @@ def build_director_timeline(
     if subjects:
         for subj in subjects:
             if subj.image_b64:
+                idx = subj.index - 1
                 ref_pictures.append({
-                    "index": subj.index - 1,
+                    "index": idx,
+                    "slot": idx,
                     "imageB64": subj.image_b64,
                     "assetId": f"subject-{subj.index}",
+                    "name": subj.name,
                 })
     elif scenes:
         for s in scenes:
             if s.image_b64:
+                idx = s.index - 1
                 ref_pictures.append({
-                    "index": s.index - 1,
+                    "index": idx,
+                    "slot": idx,
                     "imageB64": s.image_b64,
                     "assetId": f"scene-{s.index}",
+                    "name": s.title or f"Plan {s.index}",
                 })
 
     effective_prompt = full_h3_prompt or (scenes[0].full_prompt if scenes else "")
@@ -1425,8 +1433,8 @@ def build_director_timeline(
                 "duration": float(s.duration),
                 "inputs": {
                     "resultRefs": [],
-                    "pictures": ref_pictures,
-                    "identityPictures": ref_pictures,
+                    "pictures": [copy.deepcopy(r) for r in ref_pictures],
+                    "identityPictures": [copy.deepcopy(r) for r in ref_pictures],
                     "startFrame": {
                         "imageB64": s.image_b64 or (ref_pictures[0]["imageB64"] if ref_pictures else ""),
                     },
@@ -1459,7 +1467,7 @@ def build_director_timeline(
             "global": {
                 "taskType": "r2v",
                 "prompt": effective_prompt,
-                "refs": ref_pictures,
+                "refs": [copy.deepcopy(r) for r in ref_pictures],
             },
             "segments": mixed_segments,
         }
@@ -1476,9 +1484,14 @@ def build_director_timeline(
                 "id": f"s{s.index - 1}",
                 "start": cursor,
                 "length": seg_frames,
+                "durationSec": float(s.duration),
+                "frameCount": seg_frames,
                 "prompt": s.full_prompt,
+                "negativePrompt": "",
                 "taskType": task_key,
-                "refs": ref_pictures,
+                "refs": [copy.deepcopy(r) for r in ref_pictures],
+                "useCommonAssets": True,
+                "excludedCommonAssetIds": [],
                 "referenceVideo": {},
             }
         )
@@ -1506,10 +1519,12 @@ def build_director_timeline(
         "global": {
             "taskType": task_key,
             "prompt": effective_prompt,
-            "refs": ref_pictures,
+            "refs": [copy.deepcopy(r) for r in ref_pictures],
         },
         "r2vCommon": {
-            "refs": ref_pictures,
+            "refs": [copy.deepcopy(r) for r in ref_pictures],
+            "refVideos": [],
+            "refAudios": [],
         },
         "segments": std_segments,
     }

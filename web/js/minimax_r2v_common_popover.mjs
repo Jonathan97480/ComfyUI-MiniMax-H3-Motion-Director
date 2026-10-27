@@ -3,7 +3,7 @@ const SECTION_DEFS = Object.freeze([
         kind: "picture",
         field: "refs",
         max: 9,
-        hasMedia: (item) => !!item?.imageFile,
+        hasMedia: (item) => !!(item?.imageFile || item?.imageB64),
     },
     {
         kind: "video",

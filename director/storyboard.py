@@ -90,6 +90,7 @@ class StoryboardSubject:
     image_prompt: str
     image_tensor: torch.Tensor | None = None
     image_b64: str = ""
+    image_file: str = ""
 
     @property
     def subject_tag(self) -> str:
@@ -110,6 +111,7 @@ class StoryboardSubject:
             "retention": self.retention,
             "image_prompt": self.image_prompt,
             "image_b64": self.image_b64,
+            "image_file": self.image_file,
         }
 
 
@@ -130,6 +132,7 @@ class StoryboardScene:
     continuity_audio: bool = True
     image_tensor: torch.Tensor | None = None
     image_b64: str = ""
+    image_file: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -147,6 +150,7 @@ class StoryboardScene:
             "continuity_visual": self.continuity_visual,
             "continuity_audio": self.continuity_audio,
             "image_b64": self.image_b64,
+            "image_file": self.image_file,
         }
 
 
@@ -1328,6 +1332,22 @@ def generate_subject_reference_images(
         subj.image_tensor = img_tensor
         b64_str = tensor_to_b64_jpeg(img_tensor)
         subj.image_b64 = b64_str
+
+        # Save reference image to ComfyUI input folder for persistent file loading and preview in Director
+        try:
+            import folder_paths
+            input_dir = folder_paths.get_input_directory()
+            safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', subj.name).strip('_').lower() or f"subj_{subj.index}"
+            fname = f"story_ref_{subj.index}_{safe_name}.png"
+            fpath = os.path.join(input_dir, fname)
+            t_slice = img_tensor[0] if img_tensor.ndim == 4 else img_tensor
+            arr = (t_slice.detach().cpu().clamp(0.0, 1.0).numpy() * 255.0).astype(np.uint8)
+            Image.fromarray(arr, mode="RGB").save(fpath, format="PNG")
+            subj.image_file = fname
+            log.info("Story Director: Saved reference image to %s", fpath)
+        except Exception as save_exc:
+            log.debug("Notice: Could not save reference image to input folder: %s", save_exc)
+            subj.image_file = ""
         generated_tensors.append(img_tensor)
         b64_list.append(b64_str)
 
@@ -1377,6 +1397,7 @@ def generate_scene_reference_images(
     for i, s in enumerate(scenes):
         s.image_tensor = dummy_subjects[i].image_tensor
         s.image_b64 = dummy_subjects[i].image_b64
+        s.image_file = getattr(dummy_subjects[i], "image_file", "")
     return batch_tensor, b64_list
 
 
@@ -1400,23 +1421,25 @@ def build_director_timeline(
     ref_pictures: list[dict[str, Any]] = []
     if subjects:
         for subj in subjects:
-            if subj.image_b64:
+            if subj.image_b64 or getattr(subj, "image_file", ""):
                 idx = subj.index - 1
                 ref_pictures.append({
                     "index": idx,
                     "slot": idx,
+                    "imageFile": getattr(subj, "image_file", "") or "",
                     "imageB64": subj.image_b64,
                     "assetId": f"subject-{subj.index}",
                     "name": subj.name,
                 })
     elif scenes:
         for s in scenes:
-            if s.image_b64:
+            if s.image_b64 or getattr(s, "image_file", ""):
                 idx = s.index - 1
                 ref_pictures.append({
                     "index": idx,
                     "slot": idx,
-                    "imageB64": s.image_b64,
+                    "imageFile": getattr(s, "image_file", "") or "",
+                    "imageB64": s.image_b64 or "",
                     "assetId": f"scene-{s.index}",
                     "name": s.title or f"Plan {s.index}",
                 })
@@ -1436,6 +1459,7 @@ def build_director_timeline(
                     "pictures": [copy.deepcopy(r) for r in ref_pictures],
                     "identityPictures": [copy.deepcopy(r) for r in ref_pictures],
                     "startFrame": {
+                        "imageFile": getattr(s, "image_file", "") or (ref_pictures[0]["imageFile"] if ref_pictures else ""),
                         "imageB64": s.image_b64 or (ref_pictures[0]["imageB64"] if ref_pictures else ""),
                     },
                 },
@@ -1481,15 +1505,23 @@ def build_director_timeline(
 
     for s in scenes:
         seg_frames = max(5, int(round(s.duration * fps)))
-        seg_local_refs: list[dict[str, Any]] = []
-        if s.image_b64 and not subjects:
-            seg_local_refs.append({
-                "index": 0,
-                "slot": 0,
-                "imageB64": s.image_b64,
-                "assetId": f"scene-{s.index}",
-                "name": s.title or f"Plan {s.index}",
-            })
+        seg_refs: list[dict[str, Any]] = []
+        for r in ref_pictures:
+            r_copy = copy.deepcopy(r)
+            r_copy["assetId"] = f"segment-s{s.index - 1}-picture-{r['index'] + 1}"
+            seg_refs.append(r_copy)
+
+        if s.image_b64 or getattr(s, "image_file", ""):
+            scene_name = s.title or f"Plan {s.index}"
+            if not any(r.get("name") == scene_name for r in seg_refs):
+                seg_refs.append({
+                    "index": len(seg_refs),
+                    "slot": len(seg_refs),
+                    "imageFile": getattr(s, "image_file", "") or "",
+                    "imageB64": s.image_b64 or "",
+                    "assetId": f"segment-s{s.index - 1}-scene-{s.index}",
+                    "name": scene_name,
+                })
         std_segments.append(
             {
                 "id": f"s{s.index - 1}",
@@ -1500,7 +1532,7 @@ def build_director_timeline(
                 "prompt": s.full_prompt,
                 "negativePrompt": "",
                 "taskType": task_key,
-                "refs": seg_local_refs if subjects else [copy.deepcopy(r) for r in ref_pictures],
+                "refs": seg_refs,
                 "useCommonAssets": True,
                 "excludedCommonAssetIds": [],
                 "referenceVideo": {},
@@ -1531,10 +1563,22 @@ def build_director_timeline(
         "global": {
             "taskType": task_key,
             "prompt": effective_prompt,
-            "refs": [copy.deepcopy(r) for r in ref_pictures],
+            "refs": [
+                {
+                    **copy.deepcopy(r),
+                    "assetId": f"global-picture-{r['index'] + 1}",
+                }
+                for r in ref_pictures
+            ],
         },
         "r2vCommon": {
-            "refs": [copy.deepcopy(r) for r in ref_pictures],
+            "refs": [
+                {
+                    **copy.deepcopy(r),
+                    "assetId": f"common-picture-{r['index'] + 1}",
+                }
+                for r in ref_pictures
+            ],
             "refVideos": [],
             "refAudios": [],
         },

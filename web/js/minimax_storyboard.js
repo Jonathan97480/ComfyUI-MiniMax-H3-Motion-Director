@@ -6,6 +6,8 @@ import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { getLocale } from "./minimax_i18n.js";
 import { normalizeMixedTimeline } from "./minimax_mixed_state.mjs?boot=mixed_native_v6";
+import { getDirectorMode, resolveTaskKey } from "./minimax_gen_timeline.js";
+import { ensureImageBatchTimeline } from "./minimax_image_batch.js";
 
 const STORY_DIRECTOR_CLASS = "MiniMaxH3StoryDirector";
 const MOTION_DIRECTOR_CLASS = "MiniMaxH3MotionDirector";
@@ -195,9 +197,10 @@ function updateDirectorTaskType(directorNode, requestedMode) {
             ed.populateTaskSelect(ed.globalTask, matchedOption);
         }
         if (ed.globalTask) ed.globalTask.value = matchedOption;
-        ed._directorMode = modeClean;
+        const targetMode = modeClean === "mixed" ? "mixed" : getDirectorMode(matchedOption);
+        ed._directorMode = targetMode;
         ed.onTaskTypeChanged?.(matchedOption);
-        ed.applyTaskLayout?.(modeClean);
+        ed.applyTaskLayout?.(targetMode);
     }
 }
 
@@ -309,19 +312,23 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
                 }
             }
 
-            const mode = modeClean || (ed.getDirectorMode ? ed.getDirectorMode() : (ed._directorMode || "mixed"));
-            ed._directorMode = mode;
-            if (mode === "mixed") {
+            const targetMode = isMixed
+                ? "mixed"
+                : getDirectorMode(modeClean || ed.taskTypeWidget?.value || "r2v");
+            ed._directorMode = targetMode;
+            if (targetMode === "mixed") {
                 // mixed mode owns editor.mixedTimeline
-            } else if (mode === "video") {
+            } else if (targetMode === "video") {
                 ed.restoreVideoFromTimeline?.();
+            } else if (targetMode === "prompt_batch" || targetMode === "image_batch") {
+                ensureImageBatchTimeline(ed);
             } else {
                 ed.ensureGenTimeline?.();
             }
 
             ed.populateTaskSelect?.(ed.globalTask, ed.taskTypeWidget?.value);
             ed.ensureContextLinks?.();
-            ed.applyTaskLayout?.(mode);
+            ed.applyTaskLayout?.(targetMode);
             ed.setEditMode?.(ed.timeline?.editMode || "global");
             ed.selectedIndex = 0;
             ed.updateSelectionUI?.();
@@ -398,6 +405,14 @@ function openDirectorModal(directorNode) {
                     if (ed._mixedController) {
                         try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
                     }
+                } else {
+                    const taskKey = resolveTaskKey(parsed?.global?.taskType || ed.taskTypeWidget?.value || "");
+                    const targetMode = getDirectorMode(taskKey || parsed?.timelineMode || "r2v");
+                    ed._directorMode = targetMode;
+                    if (targetMode === "prompt_batch" || targetMode === "image_batch") {
+                        ensureImageBatchTimeline(ed);
+                    }
+                    ed.applyTaskLayout?.(targetMode);
                 }
             } catch (err) {}
         }

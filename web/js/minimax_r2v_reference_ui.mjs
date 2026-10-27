@@ -92,7 +92,25 @@ export function mountR2vCommonSelection(card, {
         const kind = labels.kind?.(asset.kind) || asset.kind;
         text.textContent = `${kind}: ${formatR2vAssetStatusLabel(asset, labels.disabled)}`;
         text.title = text.textContent;
-        label.append(checkbox, text);
+        label.append(checkbox);
+        const imgSrc = asset.item?.imageB64 || asset.item?.imageFile;
+        if (asset.kind === "picture" && imgSrc) {
+            const thumb = documentRef.createElement("img");
+            thumb.className = "bd-r2v-common-thumb";
+            thumb.src = typeof imgSrc === "string" && (imgSrc.startsWith("data:") || imgSrc.startsWith("blob:") || imgSrc.startsWith("http"))
+                ? imgSrc
+                : `/view?filename=${encodeURIComponent(imgSrc)}&type=input`;
+            thumb.alt = asset.label || "";
+            thumb.style.width = "28px";
+            thumb.style.height = "28px";
+            thumb.style.objectFit = "cover";
+            thumb.style.borderRadius = "4px";
+            thumb.style.margin = "0 6px";
+            thumb.style.verticalAlign = "middle";
+            thumb.style.border = "1px solid rgba(255, 255, 255, 0.15)";
+            label.append(thumb);
+        }
+        label.append(text);
         items.appendChild(label);
     }
     section.appendChild(items);

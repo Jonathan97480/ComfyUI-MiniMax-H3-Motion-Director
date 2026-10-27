@@ -226,7 +226,9 @@ function sanitizeRefImage(ref) {
     return {
         index: Number.isFinite(index) ? index : 0,
         assetId: ref.assetId || ref.asset_id || "",
+        name: ref.name || "",
         imageFile: ref.imageFile || "",
+        imageB64: ref.imageB64 || ref.image_b64 || "",
         fileName: ref.fileName || "",
         type: ref.type || "input",
         subfolder: ref.subfolder || "",
@@ -270,16 +272,16 @@ function sanitizeSegmentForPayload(seg) {
     const {
         previewB64,
         previewFrames,
-        imageB64,
         ...rest
     } = seg;
     return {
         ...rest,
+        imageB64: seg.imageB64 || seg.image_b64 || "",
         refs: Array.isArray(rest.refs) ? rest.refs.map(sanitizeRefImage) : [],
         refAudios: Array.isArray(rest.refAudios) ? rest.refAudios.map(sanitizeRefAudio) : [],
         refVideos: Array.isArray(rest.refVideos) ? rest.refVideos.map(sanitizeRefVideo) : [],
         genImage: rest.genImage
-            ? { imageFile: rest.genImage.imageFile || "", fileName: rest.genImage.fileName || "" }
+            ? { imageFile: rest.genImage.imageFile || "", fileName: rest.genImage.fileName || "", imageB64: rest.genImage.imageB64 || "" }
             : undefined,
         referenceVideo: rest.referenceVideo
             ? {
@@ -2226,7 +2228,8 @@ function parseTimeline(raw, totalFrames, fps) {
                 : Math.max(farthest, total, 240);
             return data;
         }
-        if (data.timelineMode === "image_batch" || data.timelineMode === "prompt_batch") {
+        const taskKey = resolveTaskKey(data.global?.taskType || "");
+        if (data.timelineMode === "image_batch" || data.timelineMode === "prompt_batch" || isPromptBatchTask(taskKey)) {
             data.timelineMode = "prompt_batch";
             data.editMode = "segment";
             data.totalFrames = sumFrameCounts(data.segments) || data.totalFrames || total;
@@ -2367,13 +2370,13 @@ class MiniMaxH3MotionDirectorEditor {
                                     try { this._mixedController.setState(this.mixedTimeline); } catch (e) {}
                                 }
                             } else {
+                                const prevMode = this._directorMode || "video";
                                 this._directorMode = this.getDirectorMode();
                                 this.populateTaskSelect?.(this.globalTask, this.taskTypeWidget?.value);
+                                this.ensureContextLinks?.();
+                                this.syncFrameRateUI?.(this.timeline?.frameRate || initFps);
+                                this.applyTaskLayout(prevMode);
                             }
-
-                            this.ensureContextLinks?.();
-                            this.syncFrameRateUI?.(this.timeline?.frameRate || initFps);
-                            this.applyTaskLayout(this._directorMode);
                             this.updateSelectionUI?.();
                             this.commit?.(true, { syncTimeline: false });
                         }
@@ -2978,6 +2981,8 @@ class MiniMaxH3MotionDirectorEditor {
                         refs: clean.refs || [],
                         refAudios: clean.refAudios || [],
                         refVideos: clean.refVideos || [],
+                        useCommonAssets: clean.useCommonAssets ?? true,
+                        excludedCommonAssetIds: clean.excludedCommonAssetIds || [],
                         genImage: clean.genImage || { imageFile: "" },
                         contextLink: clean.contextLink,
                     };
@@ -4442,8 +4447,9 @@ class MiniMaxH3MotionDirectorEditor {
         if (this.mixedTimeline && this._mixedLoadedFromSerialized && !this._directorMode) {
             return "mixed";
         }
-        if (this._directorMode) return this._directorMode;
-        return mode;
+        if (mode) return mode;
+        if (this._directorMode && this._directorMode !== "r2v") return this._directorMode;
+        return "video";
     }
 
     isGenMode() {
@@ -9902,12 +9908,15 @@ class MiniMaxH3MotionDirectorEditor {
             }
             this.timeline.global[field] = value;
             const prevMode = this._directorMode || "video";
+            this._directorMode = nextMode;
             if (this.globalTask && this.globalTask.value !== value) this.globalTask.value = value;
             if (this.taskTypeWidget) this.taskTypeWidget.value = value;
             if (prevTaskKey === "ads2v" && resolveTaskKey(value) !== "ads2v") {
                 this._stopRefVideoPreviews();
             }
             this.applyTaskLayout(prevMode);
+            this.updateModeUI?.();
+            this.updateSelectionUI?.();
         } else {
             this.timeline.global[field] = value;
         }

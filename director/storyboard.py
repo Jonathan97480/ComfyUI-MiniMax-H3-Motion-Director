@@ -1477,8 +1477,19 @@ def build_director_timeline(
     cursor = 0
     std_segments = []
     task_key = "r2v" if (director_mode in ("r2v", "mixed") or ref_pictures) else director_mode
+    is_batch_task = task_key in ("r2v", "t2v", "i2v", "r2i", "t2i", "i2i")
+
     for s in scenes:
         seg_frames = max(5, int(round(s.duration * fps)))
+        seg_local_refs: list[dict[str, Any]] = []
+        if s.image_b64 and not subjects:
+            seg_local_refs.append({
+                "index": 0,
+                "slot": 0,
+                "imageB64": s.image_b64,
+                "assetId": f"scene-{s.index}",
+                "name": s.title or f"Plan {s.index}",
+            })
         std_segments.append(
             {
                 "id": f"s{s.index - 1}",
@@ -1489,7 +1500,7 @@ def build_director_timeline(
                 "prompt": s.full_prompt,
                 "negativePrompt": "",
                 "taskType": task_key,
-                "refs": [copy.deepcopy(r) for r in ref_pictures],
+                "refs": seg_local_refs if subjects else [copy.deepcopy(r) for r in ref_pictures],
                 "useCommonAssets": True,
                 "excludedCommonAssetIds": [],
                 "referenceVideo": {},
@@ -1499,7 +1510,8 @@ def build_director_timeline(
 
     return {
         "version": 4,
-        "editMode": "global",
+        "timelineMode": "prompt_batch" if is_batch_task else "video",
+        "editMode": "segment" if is_batch_task else "global",
         "totalFrames": total_frames,
         "frameRate": float(fps),
         "width": int(width),

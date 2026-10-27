@@ -946,6 +946,8 @@ function removeSegVideo(editor, index, slot) {
 }
 
 function fileBaseName(path) {
+    if (!path || typeof path !== "string") return "";
+    if (path.startsWith("data:") || path.length > 500) return "";
     const s = String(path || "").replace(/\\/g, "/");
     return s.split("/").pop() || s;
 }
@@ -956,7 +958,7 @@ function countFilledRefs(seg) {
     let audios = 0;
     for (const r of seg.refs || []) {
         const idx = Number(r.index ?? r.slot);
-        if (r?.imageFile && Number.isFinite(idx) && idx >= 0 && idx < R2V_PICTURE_SLOTS) imgs += 1;
+        if ((r?.imageFile || r?.imageB64) && Number.isFinite(idx) && idx >= 0 && idx < R2V_PICTURE_SLOTS) imgs += 1;
     }
     for (const r of seg.refVideos || []) {
         if (r?.videoFile || r?.fileName || r?.previewImageFile || r?.previewImageUrl || r?.linked) {
@@ -1211,7 +1213,7 @@ function appendR2vAssetSections(assets, seg, index, editor) {
     let highestFilled = -1;
     for (const r of seg.refs || []) {
         const idx = Number(r.index ?? r.slot);
-        if (r?.imageFile && Number.isFinite(idx)) highestFilled = Math.max(highestFilled, idx);
+        if ((r?.imageFile || r?.imageB64) && Number.isFinite(idx)) highestFilled = Math.max(highestFilled, idx);
     }
     const minVisible = highestFilled >= 0
         ? Math.min(R2V_PICTURE_SLOTS, Math.ceil((highestFilled + 1) / R2V_PICTURE_STEP) * R2V_PICTURE_STEP)
@@ -1715,7 +1717,7 @@ export function renderImageBatchGroups(editor) {
     if (editor.batchI2vNotice) {
         const needsRefs = key === "r2i" || key === "r2v";
         const hasAnyMedia = (editor.timeline.segments || []).some((s) => (
-            (s.refs || []).some((r) => r?.imageFile)
+            (s.refs || []).some((r) => r?.imageFile || r?.imageB64)
             || (s.refAudios || []).some((r) => r?.audioFile || r?.fileName)
             || (s.refVideos || []).some((r) => (
                 r?.videoFile || r?.fileName || r?.previewImageFile || r?.previewImageUrl || r?.linked

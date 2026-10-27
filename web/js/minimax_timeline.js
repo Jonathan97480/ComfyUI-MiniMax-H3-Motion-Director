@@ -2331,6 +2331,43 @@ class MiniMaxH3MotionDirectorEditor {
             ),
             onOpen: () => {
                 this._directorModalOpen = true;
+
+                // Re-hydrate live timeline state from timeline_data widget on open
+                if (this.timelineWidget?.value) {
+                    try {
+                        const raw = String(this.timelineWidget.value || "").trim();
+                        if (raw.startsWith("{")) {
+                            const initTotal = Math.max(0, parseInt(this.totalFramesWidget?.value || 124, 10));
+                            const initFps = (typeof coerceTimelineFps === "function")
+                                ? coerceTimelineFps(this.frameRateWidget?.value || 24)
+                                : Number(this.frameRateWidget?.value || 24);
+
+                            this.timeline = this._loadNativeTimelineState(raw, initTotal, initFps);
+
+                            let parsed = null;
+                            try { parsed = JSON.parse(raw); } catch (e) {}
+
+                            if (parsed && String(parsed.timelineMode || "").toLowerCase() === "mixed") {
+                                this.mixedTimeline = normalizeMixedTimeline(parsed);
+                                if (this.node?.id != null) this.mixedTimeline.nodeId = String(this.node.id);
+                                if (this._mixedController) {
+                                    this._mixedController.setState(this.mixedTimeline);
+                                }
+                            }
+
+                            this.ensureContextLinks?.();
+                            this.syncFrameRateUI?.(this.timeline?.frameRate || initFps);
+                            this._directorMode = this.getDirectorMode();
+                            this.applyTaskLayout(this._directorMode);
+                            this.populateTaskSelect?.(this.globalTask, this.taskTypeWidget?.value);
+                            this.updateSelectionUI?.();
+                            this.commit?.(true, { syncTimeline: false });
+                        }
+                    } catch (syncErr) {
+                        console.warn("[Director Modal] onOpen timeline sync warning:", syncErr);
+                    }
+                }
+
                 this._resetLayoutStyles();
                 this.applyZoomWidth();
                 this.syncExternalGroupsTimeline?.();
@@ -4105,6 +4142,9 @@ class MiniMaxH3MotionDirectorEditor {
                     this.mixedTimeline = normalizeMixedTimeline(parsed);
                     if (this.node?.id != null) this.mixedTimeline.nodeId = String(this.node.id);
                     this._mixedLoadedFromSerialized = true;
+                    if (this._mixedController) {
+                        try { this._mixedController.setState(this.mixedTimeline); } catch (e) {}
+                    }
                     // Mixed schema must never pass through legacy video/batch/FL2V normalizers.
                     return parseTimeline("", totalFrames, fps);
                 }
@@ -11240,4 +11280,5 @@ app.registerExtension({
     },
 });
 globalThis.__MMX_MOTION_DIRECTOR_EXTENSION_REGISTERED__ = true;
+globalThis.__MMX_INIT_DIRECTOR_EDITOR__ = initDirectorEditor;
 }

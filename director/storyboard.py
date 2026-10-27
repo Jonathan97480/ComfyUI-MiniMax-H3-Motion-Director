@@ -253,56 +253,76 @@ def render_storyboard_visual_concept(
     height: int = 480,
     seed: int = 0,
 ) -> torch.Tensor:
-    """Render a stylized visual concept art illustration (character portrait or environment scenery)."""
+    """Render a stylized visual concept art illustration (character turnaround sheet or environment scenery)."""
     rng = random.Random(seed + scene_num * 101)
-    img = Image.new("RGB", (width, height), color=(10, 14, 22))
+    img = Image.new("RGB", (width, height), color=(12, 16, 24))
     draw = ImageDraw.Draw(img)
 
     lower_snippet = (story_snippet + " " + lighting + " " + title).lower()
-    is_cyber = any(k in lower_snippet for k in ["neon", "cyber", "robot", "pluie", "rain", "tokyo", "futur"])
-    is_sunset = any(k in lower_snippet for k in ["soleil", "sunset", "golden", "or", "nature", "forêt"])
+    is_cyber = any(k in lower_snippet for k in ["neon", "cyber", "robot", "pluie", "rain", "tokyo", "futur", "plasma"])
+    is_sunset = any(k in lower_snippet for k in ["soleil", "sunset", "golden", "or", "nature", "forêt", "wood"])
+    accent_col = (0, 210, 255) if is_cyber else ((255, 175, 60) if is_sunset else (150, 190, 255))
 
     if category == "character":
-        # Character reference sheet illustration
-        cx = width // 2
-        cy = int(height * 0.52)
-        for y in range(height):
+        # Multi-angle Character Turnaround Model Sheet (Front, 3/4, Profile) on clean studio background
+        panel_w = width // 3
+        for y in range(height - 30):
             ratio = y / max(1, height)
-            r = int(12 + ratio * 24)
-            g = int(14 + ratio * 26)
-            b = int(24 + ratio * 45)
+            r = int(12 + ratio * 16)
+            g = int(16 + ratio * 18)
+            b = int(24 + ratio * 28)
             draw.line([(0, y), (width, y)], fill=(r, g, b))
 
-        halo_rad = int(min(width, height) * 0.38)
-        glow_col = (0, 200, 255) if is_cyber else ((255, 170, 60) if is_sunset else (140, 180, 255))
-        for r_step in range(halo_rad, 0, -8):
-            af = (1.0 - r_step / halo_rad) ** 1.8
-            draw.ellipse(
-                [(cx - r_step, cy - int(r_step * 1.1)), (cx + r_step, cy + int(r_step * 0.9))],
-                fill=(int(glow_col[0] * af), int(glow_col[1] * af), int(glow_col[2] * af)),
-            )
+        for p in range(1, 3):
+            x = p * panel_w
+            draw.line([(x, 35), (x, height - 35)], fill=(38, 50, 72), width=2)
 
-        head_r = int(min(width, height) * 0.12)
-        head_y = int(cy - head_r * 1.8)
-        draw.ellipse([(cx - head_r, head_y - head_r), (cx + head_r, head_y + head_r)], fill=(14, 18, 28))
-        draw.polygon(
-            [
-                (cx - int(head_r * 2.4), height),
-                (cx - int(head_r * 1.5), head_y + head_r),
-                (cx + int(head_r * 1.5), head_y + head_r),
-                (cx + int(head_r * 2.4), height),
-            ],
-            fill=(14, 18, 28),
-        )
-        draw.arc(
-            [(cx - head_r, head_y - head_r), (cx + head_r, head_y + head_r)],
-            start=160,
-            end=330,
-            fill=(0, 230, 255) if is_cyber else (255, 210, 120),
-            width=3,
-        )
+        views = ["FRONT VIEW", "THREE-QUARTER VIEW", "PROFILE VIEW"]
+        for idx, view_name in enumerate(views):
+            center_x = idx * panel_w + panel_w // 2
+            cy = int((height - 35) * 0.52)
+            head_r = int(min(panel_w, height) * 0.11)
+            head_y = cy - head_r * 2
+
+            halo_rad = int(head_r * 2.2)
+            for r_step in range(halo_rad, 0, -6):
+                af = (1.0 - r_step / halo_rad) ** 1.8
+                draw.ellipse(
+                    [(center_x - r_step, cy - r_step), (center_x + r_step, cy + r_step)],
+                    fill=(int(accent_col[0] * af * 0.35), int(accent_col[1] * af * 0.35), int(accent_col[2] * af * 0.35)),
+                )
+
+            if idx == 0:
+                draw.ellipse([(center_x - head_r, head_y - head_r), (center_x + head_r, head_y + head_r)], fill=(20, 26, 40), outline=accent_col, width=2)
+                draw.polygon([
+                    (center_x - int(head_r * 2.0), height - 42),
+                    (center_x - int(head_r * 1.3), head_y + head_r),
+                    (center_x + int(head_r * 1.3), head_y + head_r),
+                    (center_x + int(head_r * 2.0), height - 42)
+                ], fill=(20, 26, 40), outline=(50, 70, 100), width=1)
+            elif idx == 1:
+                draw.ellipse([(center_x - head_r, head_y - head_r), (center_x + head_r, head_y + head_r)], fill=(20, 26, 40), outline=accent_col, width=2)
+                draw.polygon([
+                    (center_x - int(head_r * 2.2), height - 42),
+                    (center_x - int(head_r * 1.5), head_y + head_r),
+                    (center_x + int(head_r * 0.9), head_y + head_r),
+                    (center_x + int(head_r * 1.6), height - 42)
+                ], fill=(20, 26, 40), outline=(50, 70, 100), width=1)
+            else:
+                draw.ellipse([(center_x - int(head_r * 0.8), head_y - head_r), (center_x + int(head_r * 0.8), head_y + head_r)], fill=(20, 26, 40), outline=accent_col, width=2)
+                draw.polygon([
+                    (center_x - int(head_r * 1.4), height - 42),
+                    (center_x - int(head_r * 0.9), head_y + head_r),
+                    (center_x + int(head_r * 0.7), head_y + head_r),
+                    (center_x + int(head_r * 1.2), height - 42)
+                ], fill=(20, 26, 40), outline=(50, 70, 100), width=1)
+
+            draw.text((center_x - 45, 14), view_name, fill=(160, 190, 230))
+
+        draw.rectangle([(0, height - 28), (width, height)], fill=(8, 12, 18))
+        draw.text((16, height - 22), f"<Subject {scene_num}> CHARACTER MODEL SHEET: {title.upper()} (TURNAROUND MULTI-ANGLE REFERENCE)", fill=(0, 220, 250))
     else:
-        # Environment architectural layout illustration
+        # Environment architectural layout illustration (pure empty environment, NO people)
         horizon_y = int(height * 0.62)
         for y in range(horizon_y):
             ratio = y / max(1, horizon_y)
@@ -314,25 +334,21 @@ def render_storyboard_visual_concept(
                 r, g, b = int(15 + ratio * 35), int(22 + ratio * 45), int(40 + ratio * 75)
             draw.line([(0, y), (width, y)], fill=(r, g, b))
 
-        # Room / architecture silhouette
         desk_x2 = int(width * 0.42)
-        draw.rectangle([(int(width * 0.08), int(height * 0.22)), (desk_x2, horizon_y)], fill=(16, 20, 30))
+        draw.rectangle([(int(width * 0.08), int(height * 0.22)), (desk_x2, horizon_y)], fill=(16, 20, 30), outline=(35, 55, 80))
         bed_x1 = int(width * 0.58)
-        draw.rectangle([(bed_x1, int(height * 0.35)), (int(width * 0.92), horizon_y)], fill=(20, 24, 34))
+        draw.rectangle([(bed_x1, int(height * 0.35)), (int(width * 0.92), horizon_y)], fill=(20, 24, 34), outline=(35, 55, 80))
 
-        for y in range(horizon_y, height):
+        for y in range(horizon_y, height - 28):
             ratio = (y - horizon_y) / max(1, height - horizon_y)
             draw.line([(0, y), (width, y)], fill=(int(14 + ratio * 18), int(16 + ratio * 18), int(28 + ratio * 32)))
 
-    # Frame lines and cinematic label
-    draw.rectangle([(16, 16), (width - 17, height - 17)], outline=(35, 55, 80), width=1)
-    tag = f"<Subject {scene_num}> : {title} [{'Character Reference' if category == 'character' else 'Environment Reference'}]"
-    draw.text((32, 28), tag, fill=(0, 220, 250))
+        draw.rectangle([(16, 16), (width - 17, height - 32)], outline=(35, 55, 80), width=1)
+        draw.rectangle([(0, height - 28), (width, height)], fill=(8, 12, 18))
+        draw.text((16, height - 22), f"<Subject {scene_num}> ENVIRONMENT ARCHITECTURAL REFERENCE: {title.upper()} (EMPTY LAYOUT)", fill=(0, 220, 250))
 
     arr = np.array(img, dtype=np.float32) / 255.0
     return torch.from_numpy(arr).unsqueeze(0)
-
-
 def format_h3_structured_prompt(
     subjects: list[StoryboardSubject],
     summary: str,
@@ -573,90 +589,123 @@ def calculate_cinematic_shot_durations(
     return rounded
 
 
-def extract_subjects_from_story(story: str) -> tuple[tuple[str, str], tuple[str, str], tuple[str, str] | None]:
-    """Analyze high-level narrative to extract Character (Subject 1), Environment (Subject 2), and Prop (Subject 3)."""
+def extract_multi_subjects_from_story(story: str) -> dict[str, Any]:
+    """Analyze high-level narrative to extract all characters, companions, environments, and props in order of appearance."""
     lower = story.lower()
-    char_name = "Protagonist"
-    char_desc = "cinematic protagonist with striking appearance, detailed tailored clothing and natural posture"
 
-    char_keywords = [
-        ("chevalier cyberpunk", "Cyberpunk Knight", "armored cyberpunk knight in high-tech mechanical plate armor with glowing LED accents, cybernetic visor and utility cloak"),
-        ("cyberpunk knight", "Cyberpunk Knight", "armored cyberpunk knight in high-tech mechanical plate armor with glowing LED accents, cybernetic visor and utility cloak"),
-        ("samouraï", "Samurai Warrior", "ronin samurai warrior in traditional lacquered armor plates with patterned haori and katana sheath"),
-        ("samourai", "Samurai Warrior", "ronin samurai warrior in traditional lacquered armor plates with patterned haori and katana sheath"),
-        ("samurai", "Samurai Warrior", "ronin samurai warrior in traditional lacquered armor plates with patterned haori and katana sheath"),
-        ("fille", "Anime Girl", "teenage anime girl with expressive facial identity, distinctive styled hair, school or casual modern clothing and realistic proportions"),
-        ("girl", "Anime Girl", "teenage anime girl with expressive facial identity, distinctive styled hair, school or casual modern clothing and realistic proportions"),
-        ("femme", "Elegant Woman", "young adult woman with elegant features, distinctive hairstyle, tailored modern clothing and natural poise"),
-        ("woman", "Elegant Woman", "young adult woman with elegant features, distinctive hairstyle, tailored modern clothing and natural poise"),
-        ("homme", "Man", "young adult man with rugged facial features, styled hair, atmospheric jacket and layered garments"),
-        ("man", "Man", "young adult man with rugged facial features, styled hair, atmospheric jacket and layered garments"),
-        ("robot", "Cybernetic Android", "humanoid android robot with polished metallic chassis, optic sensors, exposed joint hydraulics and sleek design"),
-        ("androïde", "Cybernetic Android", "humanoid android robot with polished metallic chassis, optic sensors, exposed joint hydraulics and sleek design"),
-        ("android", "Cybernetic Android", "humanoid android robot with polished metallic chassis, optic sensors, exposed joint hydraulics and sleek design"),
-        ("mecha", "Mecha Pilot", "tactical mecha pilot in fitted flight suit with biometric neural interface headset"),
-        ("mécha", "Mecha Pilot", "tactical mecha pilot in fitted flight suit with biometric neural interface headset"),
-        ("ninja", "Tactical Shinobi", "covert shinobi ninja in dark tactical gear, cloth mask, strapped gauntlets and stealth attire"),
-        ("guerrier", "Battle Warrior", "battle-hardened warrior with combat armor, survival harness and determined expression"),
-        ("warrior", "Battle Warrior", "battle-hardened warrior with combat armor, survival harness and determined expression"),
-        ("detective", "Noir Detective", "investigative detective in trench coat, fedora hat, loosened tie and observant eyes"),
-        ("détective", "Noir Detective", "investigative detective in trench coat, fedora hat, loosened tie and observant eyes"),
-        ("sorcier", "Arcane Mage", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet"),
-        ("magicien", "Arcane Mage", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet"),
-        ("wizard", "Arcane Mage", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet"),
-        ("astronaute", "Astronaut", "explorer astronaut in pressurized EVA space suit with golden visor reflections"),
-        ("astronaut", "Astronaut", "explorer astronaut in pressurized EVA space suit with golden visor reflections"),
+    char_candidates = [
+        ("chevalier cyberpunk", "Cyberpunk Knight", "armored cyberpunk knight in high-tech mechanical plate armor with glowing LED accents, cybernetic visor and utility cloak", "he"),
+        ("cyberpunk knight", "Cyberpunk Knight", "armored cyberpunk knight in high-tech mechanical plate armor with glowing LED accents, cybernetic visor and utility cloak", "he"),
+        ("samouraï", "Samurai Warrior", "ronin samurai warrior in traditional lacquered armor plates with patterned haori and katana sheath", "he"),
+        ("samourai", "Samurai Warrior", "ronin samurai warrior in traditional lacquered armor plates with patterned haori and katana sheath", "he"),
+        ("samurai", "Samurai Warrior", "ronin samurai warrior in traditional lacquered armor plates with patterned haori and katana sheath", "he"),
+        ("fille", "Anime Girl", "teenage anime girl with expressive facial identity, distinctive styled hair, casual or school clothing and realistic proportions", "she"),
+        ("girl", "Anime Girl", "teenage anime girl with expressive facial identity, distinctive styled hair, casual or school clothing and realistic proportions", "she"),
+        ("femme", "Elegant Woman", "young adult woman with elegant features, distinctive hairstyle, tailored modern clothing and natural poise", "she"),
+        ("woman", "Elegant Woman", "young adult woman with elegant features, distinctive hairstyle, tailored modern clothing and natural poise", "she"),
+        ("homme", "Man", "young adult man with rugged facial features, styled hair, atmospheric jacket and layered garments", "he"),
+        ("man", "Man", "young adult man with rugged facial features, styled hair, atmospheric jacket and layered garments", "he"),
+        ("robot", "Cybernetic Android", "humanoid android robot with polished metallic chassis, optic sensors, exposed joint hydraulics and sleek design", "it"),
+        ("androïde", "Cybernetic Android", "humanoid android robot with polished metallic chassis, optic sensors, exposed joint hydraulics and sleek design", "it"),
+        ("android", "Cybernetic Android", "humanoid android robot with polished metallic chassis, optic sensors, exposed joint hydraulics and sleek design", "it"),
+        ("mecha", "Mecha Pilot", "tactical mecha pilot in fitted flight suit with biometric neural interface headset", "he"),
+        ("mécha", "Mecha Pilot", "tactical mecha pilot in fitted flight suit with biometric neural interface headset", "he"),
+        ("ninja", "Tactical Shinobi", "covert shinobi ninja in dark tactical gear, cloth mask, strapped gauntlets and stealth attire", "he"),
+        ("guerrier", "Battle Warrior", "battle-hardened warrior with combat armor, survival harness and determined expression", "he"),
+        ("warrior", "Battle Warrior", "battle-hardened warrior with combat armor, survival harness and determined expression", "he"),
+        ("detective", "Noir Detective", "investigative detective in trench coat, fedora hat, loosened tie and observant eyes", "he"),
+        ("détective", "Noir Detective", "investigative detective in trench coat, fedora hat, loosened tie and observant eyes", "he"),
+        ("sorcier", "Arcane Mage", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet", "he"),
+        ("magicien", "Arcane Mage", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet", "he"),
+        ("wizard", "Arcane Mage", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet", "he"),
+        ("astronaute", "Astronaut", "explorer astronaut in pressurized EVA space suit with golden visor reflections", "he"),
+        ("astronaut", "Astronaut", "explorer astronaut in pressurized EVA space suit with golden visor reflections", "he"),
     ]
-    for kw, name, desc in char_keywords:
+
+    primary_char = None
+    for kw, name, desc, pronoun in char_candidates:
         if kw in lower:
-            char_name, char_desc = name, desc
+            primary_char = (name, desc, pronoun)
             break
+    if not primary_char:
+        primary_char = ("Protagonist", "cinematic protagonist with striking appearance, detailed tailored clothing and natural posture", "they")
 
-    env_name = "Environment"
-    env_desc = "cinematic setting with intricate spatial architectural details"
-
-    env_keywords = [
-        ("temple", "Ancient Futuristic Temple", "ancient futuristic temple sanctuary with weathered stone pillars, glowing cybernetic runes, carved altars and mystical volumetric atmosphere"),
-        ("sanctuaire", "Ancient Futuristic Temple", "ancient futuristic temple sanctuary with weathered stone pillars, glowing cybernetic runes, carved altars and mystical volumetric atmosphere"),
-        ("chambre", "Cozy Bedroom", "cozy teenage bedroom environment, bed on the right, window and desk on the left, curtains, furniture arrangement, materials, warm neutral colors and spatial layout"),
-        ("bedroom", "Cozy Bedroom", "cozy teenage bedroom environment, bed on the right, window and desk on the left, curtains, furniture arrangement, materials, warm neutral colors and spatial layout"),
-        ("ruelle", "Neon Cyberpunk Alley", "rain-slicked cyberpunk city street with glowing neon signs, wet asphalt reflections, towering skyscrapers and urban alley architecture"),
-        ("ville néon", "Neon Cyberpunk Alley", "rain-slicked cyberpunk city street with glowing neon signs, wet asphalt reflections, towering skyscrapers and urban alley architecture"),
-        ("ville neon", "Neon Cyberpunk Alley", "rain-slicked cyberpunk city street with glowing neon signs, wet asphalt reflections, towering skyscrapers and urban alley architecture"),
-        ("street", "City Street", "cinematic urban street environment, architectural storefronts, pavement, streetlights and atmospheric perspective"),
-        ("rue", "City Street", "cinematic urban street environment, architectural storefronts, pavement, streetlights and atmospheric perspective"),
-        ("forêt", "Forest Sanctuary", "dense ancient forest environment with moss-covered trees, sunbeams filtering through the foliage and natural earthen path"),
-        ("forest", "Forest Sanctuary", "dense ancient forest environment with moss-covered trees, sunbeams filtering through the foliage and natural earthen path"),
-        ("laboratoire", "Research Lab", "high-tech scientific laboratory interior, holographic displays, clean metal surfaces and scientific instruments"),
-        ("lab", "Research Lab", "high-tech scientific laboratory interior, holographic displays, clean metal surfaces and scientific instruments"),
-        ("vaisseau", "Starship Bridge", "starship command bridge interior, control consoles, observation viewport overlooking outer space and metallic bulkheads"),
-        ("spaceship", "Starship Bridge", "starship command bridge interior, control consoles, observation viewport overlooking outer space and metallic bulkheads"),
-        ("toit", "Skyscraper Rooftop", "expansive skyscraper rooftop overlooking a sprawling futuristic skyline with radio antennas and dramatic skyline perspective"),
-        ("rooftop", "Skyscraper Rooftop", "expansive skyscraper rooftop overlooking a sprawling futuristic skyline with radio antennas and dramatic skyline perspective"),
-        ("bar", "Cyberpunk Lounge", "moody cyberpunk bar interior, neon bottle displays, bar counter, atmospheric smoke and ambient lighting"),
-    ]
-    for kw, name, desc in env_keywords:
-        if kw in lower:
-            env_name, env_desc = name, desc
-            break
-
-    prop_item = None
-    prop_keywords = [
+    companion_candidates = [
+        ("renard holographique", "Holographic Fox", "luminescent ethereal holographic fox companion with neon data particles and glowing amber eyes"),
         ("renard", "Holographic Fox", "luminescent ethereal holographic fox companion with neon data particles and glowing amber eyes"),
         ("fox", "Holographic Fox", "luminescent ethereal holographic fox companion with neon data particles and glowing amber eyes"),
+        ("drone", "Tactical Companion Drone", "compact hovering reconnaissance drone with blue ring lighting and carbon-fiber thrusters"),
+        ("chien", "Companion Hound", "faithful companion hound with tactical protective vest and alert posture"),
+        ("dog", "Companion Hound", "faithful companion hound with tactical protective vest and alert posture"),
+        ("chat", "Companion Cat", "mysterious sleek black feline companion with luminous emerald eyes"),
+        ("cat", "Companion Cat", "mysterious sleek black feline companion with luminous emerald eyes"),
+        ("dragon", "Ethereal Dragon Companion", "miniature ethereal dragon spirit winding through the air with shimmering scales"),
+    ]
+    companion = None
+    for kw, name, desc in companion_candidates:
+        if kw in lower:
+            companion = (name, desc)
+            break
+
+    env_candidates = [
+        (["ruelle", "ville néon", "ville neon", "rue", "street", "alley"], "Neon Cyberpunk Alley", "rain-slicked cyberpunk city street with glowing neon signs, wet asphalt reflections, towering skyscrapers and urban alley architecture"),
+        (["temple", "sanctuaire", "sanctuary"], "Ancient Futuristic Temple", "ancient futuristic temple sanctuary with weathered stone pillars, glowing cybernetic runes, carved altars and mystical volumetric atmosphere"),
+        (["chambre", "bedroom"], "Cozy Bedroom", "cozy teenage bedroom environment, bed on the right, window and desk on the left, curtains, furniture arrangement, materials, warm neutral colors and spatial layout"),
+        (["forêt", "foret", "forest", "bois", "woods"], "Forest Sanctuary", "dense ancient forest environment with moss-covered trees, sunbeams filtering through the foliage and natural earthen path"),
+        (["laboratoire", "lab", "recherche"], "Research Lab", "high-tech scientific laboratory interior, holographic displays, clean metal surfaces and scientific instruments"),
+        (["vaisseau", "spaceship", "passerelle", "bridge"], "Starship Bridge", "starship command bridge interior, control consoles, observation viewport overlooking outer space and metallic bulkheads"),
+        (["toit", "rooftop", "roof"], "Skyscraper Rooftop", "expansive skyscraper rooftop overlooking a sprawling futuristic skyline with radio antennas and dramatic skyline perspective"),
+        (["bar", "lounge", "club"], "Cyberpunk Lounge", "moody cyberpunk bar interior, neon bottle displays, bar counter, atmospheric smoke and ambient lighting"),
+        (["désert", "desert", "dunes"], "Dune Wasteland", "sweeping desert expanse with wind-sculpted sand dunes, distant rocky outcroppings and shimmering heat haze"),
+        (["grotte", "caverne", "cave"], "Crystalline Cavern", "subterranean cavern with glowing mineral crystals, subterranean water reflections and arched rock formations"),
+    ]
+
+    detected_environments: list[tuple[str, str, int]] = []
+    for kw_list, name, desc in env_candidates:
+        earliest_pos = -1
+        for kw in kw_list:
+            pos = lower.find(kw)
+            if pos != -1 and (earliest_pos == -1 or pos < earliest_pos):
+                earliest_pos = pos
+        if earliest_pos != -1:
+            detected_environments.append((name, desc, earliest_pos))
+
+    detected_environments.sort(key=lambda x: x[2])
+    environments = [(name, desc) for name, desc, _ in detected_environments]
+    if not environments:
+        environments = [("Environment", "cinematic setting with intricate spatial architectural details")]
+
+    prop_candidates = [
         ("sabre", "Energy Katana", "sleek cybernetic energy katana with glowing cyan plasma edge and carbon-fiber hilt"),
         ("katana", "Energy Katana", "sleek cybernetic energy katana with glowing cyan plasma edge and carbon-fiber hilt"),
         ("écouteurs", "Wireless Headphones", "sleek premium wireless headphones resting cleanly on desk with matte finish"),
         ("headphones", "Wireless Headphones", "sleek premium wireless headphones resting cleanly on desk with matte finish"),
         ("clé", "Data Keycard", "luminescent holographic data keycard with glowing micro-circuits"),
         ("key", "Data Keycard", "luminescent holographic data keycard with glowing micro-circuits"),
+        ("bouclier", "Energy Shield", "hexagonal energy barrier projector emitting a faint cyan defensive field"),
+        ("grimoire", "Ancient Grimoire", "leather-bound ancient grimoire with glowing runic inscriptions across its parchment"),
     ]
-    for kw, name, desc in prop_keywords:
+    props = []
+    for kw, name, desc in prop_candidates:
         if kw in lower:
-            prop_item = (name, desc)
+            props.append((name, desc))
             break
 
-    return (char_name, char_desc), (env_name, env_desc), prop_item
+    return {
+        "primary_char": primary_char,
+        "companion": companion,
+        "environments": environments,
+        "props": props,
+    }
+
+
+def extract_subjects_from_story(story: str) -> tuple[tuple[str, str], tuple[str, str], tuple[str, str] | None]:
+    """Compatibility wrapper returning primary character, primary environment, and prop."""
+    info = extract_multi_subjects_from_story(story)
+    c_name, c_desc, _ = info["primary_char"]
+    e_name, e_desc = info["environments"][0]
+    p_item = info["props"][0] if info["props"] else None
+    return (c_name, c_desc), (e_name, e_desc), p_item
 
 
 def enrich_cinematic_story_beat(
@@ -669,11 +718,16 @@ def enrich_cinematic_story_beat(
     camera_motion: str,
     lighting: str,
     prop_name: str | None = None,
+    *,
+    char_subj_idx: int = 1,
+    env_subj_idx: int = 2,
+    is_repeat_env: bool = False,
+    companion_name: str | None = None,
+    companion_subj_idx: int | None = None,
 ) -> str:
-    """Embellish raw user story beat with rich cinematic details, atmosphere, lighting and camera staging."""
+    """Embellish raw user story beat with rich cinematic details, atmospheric lighting, turnaround character reference locking, and per-scene decor re-use."""
     clean_beat = beat.strip().rstrip(".!?,")
 
-    # Common French verb translations into active English gerunds for high-fidelity prompt injection
     fr_replacements = [
         (r"\bexplore les ruelles d'une ville n[eé]on sous la pluie battante\b", "exploring the labyrinthine neon-lit alleys under torrential rain, water cascading from awnings"),
         (r"\bexplore les ruelles\b", "navigating narrow rain-slicked city alleys with vibrant neon reflections"),
@@ -696,34 +750,39 @@ def enrich_cinematic_story_beat(
     if shot_index == 1:
         # Phase 1: Establishing spatial geometry, mood, lighting
         return (
-            f"Begin with a wide cinematic establishing {clean_stype.lower()} of <Subject 2>, strictly matching the spatial "
-            f"architecture in <Picture 2>. The environment is quiet and atmospheric with rich volumetric {lighting.lower()} highlights "
-            f"and deep environmental texture. <Subject 1> ({char_name}) is present in the frame, introducing the narrative presence "
+            f"Begin with a wide cinematic establishing {clean_stype.lower()} of <Subject {env_subj_idx}> ({env_name}), "
+            f"strictly matching the spatial architecture in <Picture {env_subj_idx}>. The environment is quiet and atmospheric "
+            f"with rich volumetric {lighting.lower()} highlights and deep environmental texture. <Subject {char_subj_idx}> ({char_name}) "
+            f"is present in the frame matching the turnaround character reference sheet in <Picture {char_subj_idx}>, introducing the narrative presence "
             f"with natural, understated physical posture. Hold this establishing composition briefly so the viewer assimilates the layout and mood."
         )
     elif shot_index == 2:
         # Phase 2: Focus, micro-expressions, intimate reaction
-        prop_clause = f" noticing the subtle glow of <Subject 3> ({prop_name})" if prop_name else ""
+        env_clause = f"in <Subject {env_subj_idx}> (reusing the exact same environment reference <Picture {env_subj_idx}>)" if is_repeat_env else f"in <Subject {env_subj_idx}> ({env_name})"
+        comp_clause = f", encountering <Subject {companion_subj_idx}> ({companion_name}, referencing turnaround sheet <Picture {companion_subj_idx}>)" if companion_name and companion_subj_idx else (f", noticing the subtle glow of <Subject 3> ({prop_name})" if prop_name else "")
         return (
-            f"Make a hard cinematic cut to an intimate {clean_stype.lower()} of <Subject 1>. Her facial features, expressive eyes, hairstyle "
-            f"and clothing from <Picture 1> are sharply defined under atmospheric lighting. <Subject 1> reacts naturally to the surroundings{prop_clause}, "
-            f"shifting gaze with subtle curiosity as {clean_beat or 'the sequence unfolds'}. Subtle micro-movements, breathing, and fabric motion bring tactile realism."
+            f"Make a hard cinematic cut to an intimate {clean_stype.lower()} of <Subject {char_subj_idx}> {env_clause}. Facial features, expressive gaze, "
+            f"hairstyle and clothing from turnaround reference sheet <Picture {char_subj_idx}> are preserved throughout. <Subject {char_subj_idx}>{comp_clause} "
+            f"reacts naturally to the surroundings, shifting gaze with subtle curiosity as {clean_beat or 'the sequence unfolds'}. Subtle micro-movements, breathing, and fabric motion bring tactile realism."
         )
     elif shot_index == total_shots:
         # Final Phase: Dramatic resolution, departure, spatial permanence
+        env_clause = f"in <Subject {env_subj_idx}> (reusing the exact same environment reference <Picture {env_subj_idx}>)" if is_repeat_env else f"in <Subject {env_subj_idx}> ({env_name})"
         return (
-            f"Make a hard cinematic cut to a wide tracking departure shot in <Subject 2>. <Subject 1> completes the movement, "
-            f"progressing deliberately through the space matching {clean_beat or 'the final narrative beat'}. The camera maintains steady composed "
-            f"framing as <Subject 1> transitions toward the edge of frame or into the deep background, leaving the enduring atmosphere, architectural "
-            f"details and gentle environmental particles of <Subject 2> clearly visible."
+            f"Make a hard cinematic cut to a wide tracking departure shot {env_clause}. <Subject {char_subj_idx}> (reusing turnaround reference sheet <Picture {char_subj_idx}>) "
+            f"completes the movement, progressing deliberately through the space matching {clean_beat or 'the final narrative beat'}. The camera maintains steady composed "
+            f"framing as <Subject {char_subj_idx}> transitions toward the edge of frame or into the deep background, leaving the enduring spatial architecture, "
+            f"materials and gentle environmental particles of <Subject {env_subj_idx}> clearly visible."
         )
     else:
         # Intermediate Phases: Dynamic interaction, physical action
-        prop_interaction = f" with <Subject 3> ({prop_name}) providing an illuminated visual focal point" if prop_name else ""
+        env_clause = f"in <Subject {env_subj_idx}> (reusing environment reference <Picture {env_subj_idx}>)" if is_repeat_env else f"transitioning into <Subject {env_subj_idx}> ({env_name})"
+        comp_clause = f" accompanied by <Subject {companion_subj_idx}> ({companion_name}, referencing <Picture {companion_subj_idx}>)" if companion_name and companion_subj_idx else (f" with <Subject 3> ({prop_name}) providing an illuminated visual focal point" if prop_name else "")
         return (
-            f"Make a hard cut to a dynamic {clean_stype.lower()} framing <Subject 1> actively engaged in {clean_beat}. "
-            f"Physical interaction with <Subject 2> is tangible, featuring authentic spatial depth, cast shadows, and natural weight{prop_interaction}. "
-            f"Camera motion executes a deliberate {camera_motion.lower()}, tracking the character's focused movement and dramatic momentum."
+            f"Make a hard cut to a dynamic {clean_stype.lower()} framing <Subject {char_subj_idx}> (reusing turnaround reference sheet <Picture {char_subj_idx}>) "
+            f"actively engaged in {clean_beat} {env_clause}{comp_clause}. Physical interaction with <Subject {env_subj_idx}> is tangible, "
+            f"featuring authentic spatial depth, cast shadows, and natural weight. Camera motion executes a deliberate {camera_motion.lower()}, "
+            f"tracking the character's focused movement and dramatic momentum."
         )
 
 
@@ -734,7 +793,7 @@ def generate_local_storyboard(
     shot_duration: float,
     style_prompt: str,
 ) -> StoryboardData:
-    """Generate structured MiniMax H3 StoryboardData locally with rich narrative embellishment and dynamic shot pacing."""
+    """Generate structured MiniMax H3 StoryboardData locally with turnaround character sheets, separate empty decors, and per-scene decor re-use."""
     clean_story = (story or "").strip()
     if not clean_story:
         clean_story = (
@@ -746,49 +805,95 @@ def generate_local_storyboard(
     if existing:
         return existing
 
-    (char_name, char_desc), (env_name, env_desc), prop_item = extract_subjects_from_story(clean_story)
+    info = extract_multi_subjects_from_story(clean_story)
+    char_name, char_desc, pronoun = info["primary_char"]
+    companion_item = info["companion"]
+    environments = info["environments"]
+    props = info["props"]
 
+    subjects: list[StoryboardSubject] = []
+    next_idx = 1
+
+    # Subject 1: Character Turnaround Reference Sheet (multi-view on clean studio background, no scenery)
     s1_def = (
         f"{char_desc} whose facial identity, hairstyle, age appearance, body proportions, clothing "
-        f"and overall character design are locked to the supplied character reference. Preserve appearance "
-        f"throughout every camera cut. The background of <Picture 1> is not used."
+        f"and overall character design are locked to the supplied character reference in <Picture {next_idx}>. Preserve appearance "
+        f"throughout every camera cut. The background of <Picture {next_idx}> is not used."
     )
     s1_retention = (
         f"fully_preserved — preserve the exact facial identity, hairstyle, age appearance, body proportions, "
-        f"clothing and recognizable character design from <Picture 1>. Allow natural changes in pose, expression and movement."
+        f"clothing and recognizable character design from <Picture {next_idx}>. Allow natural changes in pose, expression and movement."
     )
     s1_img_prompt = (
-        f"Character design concept art reference sheet portrait and full body view of {char_name}: {char_desc}, "
-        f"isolated, clean background, neutral studio lighting, sharp focus, masterpiece, {style_prompt}"
+        f"Character turnaround model sheet of {char_name}: multiple angles showing front view, three-quarter view, and profile side view, "
+        f"clean neutral studio background, no background scenery, no environment, consistent character model design, sharp focus, masterpiece, {style_prompt}"
     )
+    subjects.append(StoryboardSubject(next_idx, char_name, "character", s1_def, s1_retention, s1_img_prompt))
+    char_subj_idx = next_idx
+    next_idx += 1
 
+    # Subject 2: Primary Environment (pure empty environment without people)
+    env1_name, env1_desc = environments[0]
     s2_def = (
-        f"the exact {env_desc} shown in the supplied reference, including the spatial layout, materials, "
+        f"the exact {env1_desc} shown in the supplied reference in <Picture {next_idx}>, including the spatial layout, materials, "
         f"furniture arrangement and architectural details. Preserve this environment and layout consistently "
-        f"throughout the entire video. The character shown in <Picture 2>, if any, is ignored; <Picture 1> controls identity."
+        f"throughout the entire video. The character shown in <Picture {next_idx}>, if any, is ignored; <Picture 1> controls identity."
     )
     s2_retention = (
-        f"fully_preserved — preserve the exact {env_name.lower()} architecture, spatial layout, furniture, "
-        f"materials, lighting direction and spatial relationships from <Picture 2>."
+        f"fully_preserved — preserve the exact {env1_name.lower()} architecture, spatial layout, furniture, "
+        f"materials, lighting direction and spatial relationships from <Picture {next_idx}>."
     )
     s2_img_prompt = (
-        f"Architectural environmental concept art establishing view of {env_name}: {env_desc}, "
+        f"Architectural environmental concept art establishing view of {env1_name}: {env1_desc}, "
         f"wide angle view, empty space without people, spatial layout, furniture arrangement, cinematic lighting, masterpiece, sharp focus, {style_prompt}"
     )
+    subjects.append(StoryboardSubject(next_idx, env1_name, "environment", s2_def, s2_retention, s2_img_prompt))
+    env_subj_map = {0: next_idx}
+    next_idx += 1
 
-    subjects = [
-        StoryboardSubject(1, char_name, "character", s1_def, s1_retention, s1_img_prompt),
-        StoryboardSubject(2, env_name, "environment", s2_def, s2_retention, s2_img_prompt),
-    ]
+    # Companion Character / Secondary Character (e.g. Holographic Fox)
+    comp_subj_idx = None
+    if companion_item:
+        comp_name, comp_desc = companion_item
+        c_def = (
+            f"{comp_desc} whose visual identity and proportions are locked to the turnaround reference in <Picture {next_idx}>. "
+            f"Preserve recognizable appearance throughout every cut. The background of <Picture {next_idx}> is not used."
+        )
+        c_ret = f"fully_preserved — preserve the exact visual design and features from <Picture {next_idx}>."
+        c_img = (
+            f"Character turnaround model sheet of {comp_name}: multiple angles showing front view, three-quarter view, and profile view, "
+            f"clean neutral studio background, no background scenery, no environment, consistent design, sharp focus, masterpiece, {style_prompt}"
+        )
+        subjects.append(StoryboardSubject(next_idx, comp_name, "character", c_def, c_ret, c_img))
+        comp_subj_idx = next_idx
+        next_idx += 1
 
+    # Secondary Environments (e.g. Ancient Futuristic Temple)
+    for e_idx in range(1, len(environments)):
+        e_name, e_desc = environments[e_idx]
+        e_def = (
+            f"the exact {e_desc} shown in the supplied reference in <Picture {next_idx}>, including spatial layout, architecture, and lighting. "
+            f"Pure empty environment without people or characters. Characters shown in <Picture {next_idx}>, if any, are ignored; <Picture 1> controls character identity."
+        )
+        e_ret = f"fully_preserved — preserve the exact {e_name.lower()} architecture, spatial layout, materials, and lighting direction from <Picture {next_idx}>."
+        e_img = (
+            f"Architectural environmental concept art establishing view of {e_name}: {e_desc}, "
+            f"wide angle view, pure empty space without any people or characters, spatial layout, cinematic lighting, masterpiece, sharp focus, {style_prompt}"
+        )
+        subjects.append(StoryboardSubject(next_idx, e_name, "environment", e_def, e_ret, e_img))
+        env_subj_map[e_idx] = next_idx
+        next_idx += 1
+
+    # Props
     prop_name = None
-    if prop_item:
-        p_name, p_desc = prop_item
+    if props:
+        p_name, p_desc = props[0]
         prop_name = p_name
-        p_def = f"{p_desc} locked to supplied reference. Preserve recognizable design throughout every cut."
-        p_ret = f"fully_preserved — preserve the exact visual design from <Picture 3>."
+        p_def = f"{p_desc} locked to supplied reference in <Picture {next_idx}>. Preserve recognizable design throughout every cut."
+        p_ret = f"fully_preserved — preserve the exact visual design from <Picture {next_idx}>."
         p_img = f"Concept art prop reference sheet of {p_name}: {p_desc}, isolated on clean background, masterpiece, {style_prompt}"
-        subjects.append(StoryboardSubject(3, p_name, "prop", p_def, p_ret, p_img))
+        subjects.append(StoryboardSubject(next_idx, p_name, "prop", p_def, p_ret, p_img))
+        next_idx += 1
 
     raw_beats = [s.strip() for s in re.split(r'[.!?;\n]', clean_story) if s.strip()]
     if not raw_beats:
@@ -804,6 +909,8 @@ def generate_local_storyboard(
 
     scenes: list[StoryboardScene] = []
     current_time = 0.0
+    active_env_idx = 0
+    used_envs = set()
 
     for i, duration in enumerate(shot_durations):
         idx = i + 1
@@ -813,16 +920,38 @@ def generate_local_storyboard(
         ts_str = format_timestamp(current_time)
 
         beat = raw_beats[i % len(raw_beats)]
+        lower_beat = beat.lower()
+
+        # Check if beat specifically names one of the secondary environments
+        for env_i, (e_name, e_desc) in enumerate(environments):
+            e_kw = e_name.lower().split()[0]
+            if e_kw in lower_beat:
+                active_env_idx = env_i
+                break
+        else:
+            if len(environments) > 1 and i >= num_shots // 2 and active_env_idx == 0:
+                active_env_idx = 1
+
+        curr_env_name, _ = environments[active_env_idx]
+        curr_env_subj_idx = env_subj_map.get(active_env_idx, 2)
+        is_repeat_env = curr_env_subj_idx in used_envs
+        used_envs.add(curr_env_subj_idx)
+
         prompt_content = enrich_cinematic_story_beat(
             beat=beat,
             char_name=char_name,
-            env_name=env_name,
+            env_name=curr_env_name,
             shot_index=idx,
             total_shots=num_shots,
             shot_type=stype,
             camera_motion=cam,
             lighting=lighting,
             prop_name=prop_name,
+            char_subj_idx=char_subj_idx,
+            env_subj_idx=curr_env_subj_idx,
+            is_repeat_env=is_repeat_env,
+            companion_name=companion_item[0] if companion_item else None,
+            companion_subj_idx=comp_subj_idx,
         )
 
         full_prompt = (
@@ -848,7 +977,6 @@ def generate_local_storyboard(
             )
         )
         current_time += duration
-
     summary = (
         f"[reference generation] A cinematic narrative sequence set in <Subject 2> featuring <Subject 1>. "
         f"The visual story unfolds with purposeful camera framing and deliberate pacing while preserving identity and environmental continuity."
@@ -897,9 +1025,11 @@ def generate_llm_storyboard(
         "Your task is to EMBELLISH and expand the user's narrative story into MiniMax H3's official multi-subject cinematic reference format.\n\n"
         "CRITICAL RULES:\n"
         "1. EMBELLISH THE STORY: Do not just repeat the user's text. Add vivid sensory details, lighting atmosphere, facial micro-expressions, posture, and spatial staging.\n"
-        f"2. DYNAMIC SHOT DURATIONS: Assign each shot a dynamic duration between 2.5s and {shot_duration}s based on dramatic weight (e.g. establishing shots and action beats held longer, reactions punchier).\n"
-        f"3. DURATION SUM: The sum of all shot durations MUST strictly equal {total_duration}s.\n"
-        "4. STRICT SUBJECT TAGGING: Always use <Subject 1>, <Subject 2>, <Picture 1>, <Picture 2> in definitions and shot descriptions.\n"
+        "2. CHARACTER TURNAROUND SHEETS: Character reference image prompts MUST specify multi-angle turnaround model sheets (front view, three-quarter view, profile side view, clean neutral studio background, no background scenery, no environment).\n"
+        "3. SEPARATE DECOR REFERENCES: Environment reference image prompts MUST specify pure empty environments without any people or characters, showing spatial architecture and layout.\n"
+        "4. REUSE REFERENCES ACROSS SCENES: Re-use the exact same <Picture 1> across all scenes for the character. Re-use <Picture 2> (or subsequent decor) across all scenes set in that location. Never duplicate references for the same subject.\n"
+        f"5. DYNAMIC SHOT DURATIONS: Assign dynamic durations (between 2.5s and {shot_duration}s) respecting shot_duration as a maximum ceiling. Sum must strictly equal {total_duration}s.\n"
+        "6. STRICT SUBJECT TAGGING: Always use <Subject 1>, <Subject 2>, <Picture 1>, <Picture 2> in definitions and shot descriptions.\n"
         "Return ONLY a valid JSON object matching this schema:\n"
         "{\n"
         '  "subject_1": {\n'

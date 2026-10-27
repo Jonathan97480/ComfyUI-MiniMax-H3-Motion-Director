@@ -60,6 +60,21 @@ function t(key) {
     return dict[key] || I18N.en[key] || key;
 }
 
+function findNodeInGraph(graph, id) {
+    if (!graph || id == null) return null;
+    let n = graph.getNodeById?.(id);
+    if (!n && typeof id === "string" && !isNaN(Number(id))) {
+        n = graph.getNodeById?.(Number(id));
+    }
+    if (!n && typeof id === "number") {
+        n = graph.getNodeById?.(String(id));
+    }
+    if (!n && Array.isArray(graph._nodes)) {
+        n = graph._nodes.find((item) => String(item.id) === String(id));
+    }
+    return n || null;
+}
+
 function findConnectedDirectors(storyNode, autoConnect = true) {
     const graph = storyNode?.graph || app.graph;
     if (!graph) return [];
@@ -187,6 +202,15 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
 
     const modeClean = String(directorMode || "mixed").toLowerCase().trim();
 
+    // Ensure editor is instantiated if node hasn't been mounted yet
+    if (!directorNode._minimaxEditor && typeof globalThis.__MMX_INIT_DIRECTOR_EDITOR__ === "function") {
+        try {
+            globalThis.__MMX_INIT_DIRECTOR_EDITOR__(directorNode);
+        } catch (e) {
+            console.warn("[StoryDirector] initDirectorEditor warning:", e);
+        }
+    }
+
     // 1. Update task_type mode (e.g. Mixed, R2V, FL2V, T2V)
     updateDirectorTaskType(directorNode, modeClean);
 
@@ -266,6 +290,19 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
             ed.ensureContextLinks?.();
             ed.syncFrameRateUI?.(ed.timeline?.frameRate || initFps);
 
+            let parsed = null;
+            try { parsed = JSON.parse(timelineJson); } catch (e) {}
+
+            if (parsed && String(parsed.timelineMode || "").toLowerCase() === "mixed") {
+                ed.mixedTimeline = (typeof normalizeMixedTimeline === "function")
+                    ? normalizeMixedTimeline(parsed)
+                    : parsed;
+                if (directorNode.id != null) ed.mixedTimeline.nodeId = String(directorNode.id);
+                if (ed._mixedController) {
+                    try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
+                }
+            }
+
             const mode = modeClean || (ed.getDirectorMode ? ed.getDirectorMode() : (ed._directorMode || "mixed"));
             ed._directorMode = mode;
             if (mode === "mixed") {
@@ -286,6 +323,13 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
             ed._externalGroupsSyncSig = null;
             ed.syncExternalGroupsTimeline?.();
             ed.scheduleRender?.();
+
+            if (ed._directorModalController?.isOpen) {
+                if (ed._mixedController && ed.mixedTimeline) {
+                    try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
+                }
+                ed._directorModalController.setPage?.("generation");
+            }
         } catch (e) {
             console.warn("[StoryDirector] Live Editor sync error:", e);
         }
@@ -311,11 +355,45 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
 function openDirectorModal(directorNode) {
     if (!directorNode) return false;
 
-    // Direct modal controller
+    if (!directorNode._minimaxEditor && typeof globalThis.__MMX_INIT_DIRECTOR_EDITOR__ === "function") {
+        try {
+            globalThis.__MMX_INIT_DIRECTOR_EDITOR__(directorNode);
+        } catch (e) {}
+    }
+
     const ed = directorNode._minimaxEditor;
+    if (ed) {
+        // Re-hydrate state from timelineWidget before opening modal
+        const raw = String(ed.timelineWidget?.value || "").trim();
+        if (raw.startsWith("{")) {
+            try {
+                const initTotal = Math.max(0, parseInt(ed.totalFramesWidget?.value || 124, 10));
+                const initFps = Number(ed.frameRateWidget?.value || 24);
+                if (typeof ed._loadNativeTimelineState === "function") {
+                    ed.timeline = ed._loadNativeTimelineState(raw, initTotal, initFps);
+                }
+                let parsed = null;
+                try { parsed = JSON.parse(raw); } catch (e) {}
+                if (parsed && String(parsed.timelineMode || "").toLowerCase() === "mixed") {
+                    ed.mixedTimeline = (typeof normalizeMixedTimeline === "function")
+                        ? normalizeMixedTimeline(parsed)
+                        : parsed;
+                    if (directorNode.id != null) ed.mixedTimeline.nodeId = String(directorNode.id);
+                    if (ed._mixedController) {
+                        try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
+                    }
+                }
+            } catch (err) {}
+        }
+    }
+
+    // Direct modal controller
     if (ed?._directorModalController) {
         if (!ed._directorModalController.isOpen) {
             ed._directorModalController.open();
+        }
+        if (ed._mixedController && ed.mixedTimeline) {
+            try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
         }
         ed._directorModalController.setPage?.("generation");
         return true;
@@ -608,7 +686,7 @@ app.registerExtension({
             let targetDirectors = [];
 
             if (storyNodeId) {
-                const storyNode = graph.getNodeById?.(storyNodeId);
+                const storyNode = findNodeInGraph(graph, storyNodeId);
                 if (storyNode) {
                     storyNode._lastGeneratedTimeline = detail.timeline_data;
                     storyNode._lastGeneratedPrompt = detail.prompt;
@@ -656,7 +734,7 @@ app.registerExtension({
             const graph = app.graph;
             if (!graph) return;
 
-            const directorNode = graph.getNodeById?.(detail.node_id);
+            const directorNode = findNodeInGraph(graph, detail.node_id);
             if (directorNode) {
                 applyTimelineToDirector(
                     directorNode,

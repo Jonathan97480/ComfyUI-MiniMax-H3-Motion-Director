@@ -284,6 +284,67 @@ class TestStoryboardModule(unittest.TestCase):
             self.assertLessEqual(s.duration, 8.0)
             self.assertGreaterEqual(s.duration, 2.0)
 
+    def test_turnaround_model_sheets_and_decor_reuse(self):
+        from director.storyboard import generate_local_storyboard, extract_multi_subjects_from_story
+
+        user_story = (
+            "Un chevalier cyberpunk explore les ruelles d'une ville néon sous la pluie battante. "
+            "Il rencontre un renard holographique lumineux qui le guide vers une porte secrète dans un temple antique futuriste."
+        )
+
+        # 1. Multi-subject extraction
+        info = extract_multi_subjects_from_story(user_story)
+        self.assertEqual(info["primary_char"][0], "Cyberpunk Knight")
+        self.assertIsNotNone(info["companion"])
+        self.assertEqual(info["companion"][0], "Holographic Fox")
+        self.assertEqual(len(info["environments"]), 2)
+        self.assertEqual(info["environments"][0][0], "Neon Cyberpunk Alley")
+        self.assertEqual(info["environments"][1][0], "Ancient Futuristic Temple")
+
+        # 2. Storyboard generation with turnaround model sheets and decor re-use
+        sb_data = generate_local_storyboard(
+            story=user_story,
+            total_duration=15.0,
+            shot_duration=5.0,
+            style_prompt="8k, masterpiece",
+        )
+        self.assertEqual(len(sb_data.subjects), 4)
+        s1 = sb_data.subjects[0]
+        s2 = sb_data.subjects[1]
+        s3 = sb_data.subjects[2]
+        s4 = sb_data.subjects[3]
+
+        # S1: Character turnaround model sheet
+        self.assertEqual(s1.category, "character")
+        self.assertIn("turnaround model sheet", s1.image_prompt.lower())
+        self.assertIn("clean neutral studio background", s1.image_prompt.lower())
+        self.assertIn("no background scenery", s1.image_prompt.lower())
+
+        # S2: Decor 1 (Alley) pure empty environment
+        self.assertEqual(s2.category, "environment")
+        self.assertIn("empty space without people", s2.image_prompt.lower())
+
+        # S3: Companion character turnaround
+        self.assertEqual(s3.category, "character")
+        self.assertIn("turnaround model sheet", s3.image_prompt.lower())
+
+        # S4: Decor 2 (Temple) pure empty environment
+        self.assertEqual(s4.category, "environment")
+        self.assertIn("pure empty space without any people", s4.image_prompt.lower())
+
+        # Check reference re-use in shot descriptions
+        self.assertGreaterEqual(len(sb_data.scenes), 3)
+        shot1 = sb_data.scenes[0]
+        self.assertIn("<Subject 2>", shot1.visual_prompt)
+        self.assertIn("<Picture 2>", shot1.visual_prompt)
+        self.assertIn("<Subject 1>", shot1.visual_prompt)
+        self.assertIn("<Picture 1>", shot1.visual_prompt)
+
+        # In last shot, decor should be reused
+        last_shot = sb_data.scenes[-1]
+        self.assertIn("<Picture 1>", last_shot.visual_prompt)
+        self.assertIn("reusing", last_shot.visual_prompt.lower())
+
 
 class TestStoryboardHttpRoute(unittest.IsolatedAsyncioTestCase):
     async def test_minimax_storyboard_generate_route(self):

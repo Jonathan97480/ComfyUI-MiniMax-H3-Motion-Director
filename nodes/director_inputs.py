@@ -179,6 +179,9 @@ class MiniMaxH3MotionDirector(_BaseDirector):
 
         effective_timeline_data = timeline_data
         if storyboard is not None:
+            sb_prompt = None
+            sb_dur = None
+            sb_mode = None
             if isinstance(storyboard, dict):
                 sb_json = storyboard.get("timeline_data") or storyboard.get("timeline_json")
                 if sb_json and str(sb_json).strip():
@@ -191,6 +194,13 @@ class MiniMaxH3MotionDirector(_BaseDirector):
                     total_frames = int(storyboard["total_frames"])
                 if "frame_rate" in storyboard and storyboard["frame_rate"]:
                     frame_rate = float(storyboard["frame_rate"])
+                sb_prompt = storyboard.get("prompt")
+                sb_dur = storyboard.get("total_duration")
+                sb_mode = storyboard.get("director_mode")
+                if sb_prompt and str(sb_prompt).strip():
+                    global_prompt = str(sb_prompt).strip()
+                if sb_mode and str(sb_mode).strip():
+                    task_type = str(sb_mode).strip()
             elif isinstance(storyboard, str) and storyboard.strip():
                 effective_timeline_data = storyboard.strip()
 
@@ -203,6 +213,9 @@ class MiniMaxH3MotionDirector(_BaseDirector):
                         {
                             "node_id": str(unique_id),
                             "timeline_data": effective_timeline_data,
+                            "prompt": sb_prompt,
+                            "total_duration": sb_dur,
+                            "director_mode": sb_mode,
                         },
                     )
                 except Exception:

@@ -321,6 +321,11 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
             } else if (targetMode === "video") {
                 ed.restoreVideoFromTimeline?.();
             } else if (targetMode === "prompt_batch" || targetMode === "image_batch") {
+                if (ed.timeline) {
+                    delete ed.timeline.batchWorkspace;
+                    delete ed.timeline.batchTaskWorkspaces;
+                    delete ed.timeline.videoWorkspace;
+                }
                 ensureImageBatchTimeline(ed);
             } else {
                 ed.ensureGenTimeline?.();
@@ -328,7 +333,7 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
 
             ed.populateTaskSelect?.(ed.globalTask, ed.taskTypeWidget?.value);
             ed.ensureContextLinks?.();
-            ed.applyTaskLayout?.(targetMode);
+            ed.applyTaskLayout?.("video");
             ed.setEditMode?.(ed.timeline?.editMode || "global");
             ed.selectedIndex = 0;
             ed.updateSelectionUI?.();
@@ -410,9 +415,20 @@ function openDirectorModal(directorNode) {
                     const targetMode = getDirectorMode(taskKey || parsed?.timelineMode || "r2v");
                     ed._directorMode = targetMode;
                     if (targetMode === "prompt_batch" || targetMode === "image_batch") {
+                        if (ed.timeline) {
+                            delete ed.timeline.batchWorkspace;
+                            delete ed.timeline.batchTaskWorkspaces;
+                            delete ed.timeline.videoWorkspace;
+                        }
                         ensureImageBatchTimeline(ed);
                     }
-                    ed.applyTaskLayout?.(targetMode);
+                    if (ed.globalTask) ed.globalTask.value = taskKey;
+                    if (ed.taskTypeWidget) ed.taskTypeWidget.value = taskKey;
+                    ed.populateTaskSelect?.(ed.globalTask, taskKey);
+                    ed.applyTaskLayout?.("video");
+                    if (ed.isImageBatch?.()) {
+                        ed.renderImageBatchGroups?.();
+                    }
                 }
             } catch (err) {}
         }

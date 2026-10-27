@@ -2375,10 +2375,20 @@ class MiniMaxH3MotionDirectorEditor {
                                 this.populateTaskSelect?.(this.globalTask, this.taskTypeWidget?.value);
                                 this.ensureContextLinks?.();
                                 this.syncFrameRateUI?.(this.timeline?.frameRate || initFps);
+                                if (this.isImageBatch?.()) {
+                                    delete this.timeline?.batchWorkspace;
+                                    delete this.timeline?.batchTaskWorkspaces;
+                                }
                                 this.applyTaskLayout(prevMode);
+                                if (this.isImageBatch?.()) {
+                                    this.renderImageBatchGroups?.();
+                                }
                             }
                             this.updateSelectionUI?.();
                             this.commit?.(true, { syncTimeline: false });
+                            if (this.isImageBatch?.()) {
+                                this.renderImageBatchGroups?.();
+                            }
                         }
                     } catch (syncErr) {
                         console.warn("[Director Modal] onOpen timeline sync warning:", syncErr);

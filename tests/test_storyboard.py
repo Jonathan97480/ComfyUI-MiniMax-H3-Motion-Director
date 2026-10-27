@@ -200,8 +200,9 @@ class TestStoryboardModule(unittest.TestCase):
         )
         self.assertIsInstance(sb, dict)
         self.assertEqual(sb["version"], 1)
-        # Canonical reference images batch has shape (2, H, W, 3) for Subject 1 & Subject 2
-        self.assertEqual(imgs.shape, (2, 480, 864, 3))
+        # Canonical reference images batch has shape (N, H, W, 3) for Subject 1, Subject 2, and optional Subject 3
+        self.assertGreaterEqual(imgs.shape[0], 2)
+        self.assertEqual(imgs.shape[1:], (480, 864, 3))
         self.assertIn("timelineMode", t_json)
         self.assertIn("subject_definitions:", summary)
         self.assertIn("<Subject 1>", summary)
@@ -250,6 +251,38 @@ class TestStoryboardModule(unittest.TestCase):
         )
         self.assertIsInstance(sb, dict)
         self.assertEqual(imgs.shape[0], 2)
+
+    def test_dynamic_shot_durations_and_embellishment(self):
+        from director.storyboard import calculate_cinematic_shot_durations, generate_local_storyboard
+
+        # 1. Test calculation of durations with max shot ceiling
+        durations = calculate_cinematic_shot_durations(total_duration=15.0, max_shot_duration=15.0, num_beats=4)
+        self.assertGreater(len(durations), 1)
+        self.assertAlmostEqual(sum(durations), 15.0, places=1)
+        for d in durations:
+            self.assertLessEqual(d, 15.0)
+            self.assertGreaterEqual(d, 2.0)
+
+        # 2. Test generation embellishment with user story
+        user_story = "Un chevalier cyberpunk explore les ruelles d'une ville néon sous la pluie battante. Il rencontre un renard holographique lumineux."
+        sb_data = generate_local_storyboard(
+            story=user_story,
+            total_duration=15.0,
+            shot_duration=8.0,
+            style_prompt="8k, cinematic",
+        )
+        self.assertGreaterEqual(len(sb_data.scenes), 2)
+        # Check that scenes are enriched with atmospheric and spatial details
+        first_scene = sb_data.scenes[0]
+        self.assertIn("<Subject 2>", first_scene.visual_prompt)
+        self.assertIn("<Picture 2>", first_scene.visual_prompt)
+        self.assertIn("<Subject 1>", first_scene.visual_prompt)
+        # Check durations sum
+        scene_dur_sum = sum(s.duration for s in sb_data.scenes)
+        self.assertAlmostEqual(scene_dur_sum, 15.0, places=1)
+        for s in sb_data.scenes:
+            self.assertLessEqual(s.duration, 8.0)
+            self.assertGreaterEqual(s.duration, 2.0)
 
 
 class TestStoryboardHttpRoute(unittest.IsolatedAsyncioTestCase):

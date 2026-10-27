@@ -495,28 +495,117 @@ def parse_existing_h3_prompt(text: str, total_duration: float = 15.0, style_prom
     )
 
 
+def calculate_cinematic_shot_durations(
+    total_duration: float,
+    max_shot_duration: float,
+    num_beats: int = 4,
+) -> list[float]:
+    """Calculate dynamically varying shot durations honoring max_shot_duration as a strict upper bound.
+
+    Shot durations vary according to dramatic pacing (establishing shots and climax/resolutions held longer,
+    reaction/detail shots punchier and shorter), while guaranteeing:
+    - Each shot duration <= max_shot_duration
+    - Minimum shot duration >= 2.0s
+    - Sum of all shot durations == total_duration exactly
+    """
+    total = max(2.0, float(total_duration))
+    max_dur = max(2.0, float(max_shot_duration))
+
+    min_shots = max(1, math.ceil(total / max_dur))
+    max_possible_shots = max(1, int(total // 2.5))
+    target_shots = max(min_shots, min(max_possible_shots, max(num_beats, min_shots)))
+
+    if target_shots <= 1:
+        return [round(total, 2)]
+
+    base_patterns = {
+        2: [1.1, 0.9],
+        3: [1.15, 0.85, 1.0],
+        4: [1.15, 0.85, 1.05, 0.95],
+        5: [1.15, 0.85, 1.05, 0.9, 1.05],
+        6: [1.15, 0.85, 1.0, 0.9, 1.05, 1.05],
+    }
+    pattern = base_patterns.get(target_shots)
+    if not pattern:
+        pattern = [1.0] * target_shots
+        pattern[0] = 1.15
+        pattern[1] = 0.85
+        pattern[-1] = 1.1
+
+    weight_sum = sum(pattern)
+    raw_durations = [(w / weight_sum) * total for w in pattern]
+
+    min_dur = 2.0
+    for _ in range(10):
+        clamped = False
+        excess = 0.0
+        free_indices = []
+        for idx, d in enumerate(raw_durations):
+            if d > max_dur:
+                excess += (d - max_dur)
+                raw_durations[idx] = max_dur
+                clamped = True
+            elif d < min_dur and total >= target_shots * min_dur:
+                deficit = min_dur - d
+                excess -= deficit
+                raw_durations[idx] = min_dur
+                clamped = True
+            else:
+                free_indices.append(idx)
+
+        if not clamped or abs(excess) < 1e-4 or not free_indices:
+            break
+
+        share = excess / len(free_indices)
+        for idx in free_indices:
+            raw_durations[idx] += share
+
+    rounded = [round(d, 1) for d in raw_durations]
+    diff = round(total - sum(rounded), 2)
+    for idx in reversed(range(len(rounded))):
+        if rounded[idx] + diff <= max_dur and rounded[idx] + diff >= min_dur:
+            rounded[idx] = round(rounded[idx] + diff, 1)
+            diff = 0.0
+            break
+    if abs(diff) > 1e-4:
+        rounded[-1] = round(rounded[-1] + diff, 2)
+
+    return rounded
+
+
 def extract_subjects_from_story(story: str) -> tuple[tuple[str, str], tuple[str, str], tuple[str, str] | None]:
-    """Analyze high-level narrative to extract Character (Subject 1) and Environment (Subject 2)."""
+    """Analyze high-level narrative to extract Character (Subject 1), Environment (Subject 2), and Prop (Subject 3)."""
     lower = story.lower()
     char_name = "Protagonist"
-    char_desc = "cinematic character"
+    char_desc = "cinematic protagonist with striking appearance, detailed tailored clothing and natural posture"
+
     char_keywords = [
         ("chevalier cyberpunk", "Cyberpunk Knight", "armored cyberpunk knight in high-tech mechanical plate armor with glowing LED accents, cybernetic visor and utility cloak"),
         ("cyberpunk knight", "Cyberpunk Knight", "armored cyberpunk knight in high-tech mechanical plate armor with glowing LED accents, cybernetic visor and utility cloak"),
-        ("fille", "Girl", "teenage anime girl with expressive facial identity, distinctive hairstyle, school or casual clothing, realistic proportions"),
-        ("girl", "Girl", "teenage anime girl with expressive facial identity, distinctive hairstyle, school or casual clothing, realistic proportions"),
-        ("femme", "Woman", "young adult woman with elegant features, distinctive hairstyle, tailored modern clothing and natural poise"),
-        ("woman", "Woman", "young adult woman with elegant features, distinctive hairstyle, tailored modern clothing and natural poise"),
-        ("homme", "Man", "young adult man with rugged facial features, styled hair, atmospheric jacket and clothing"),
-        ("man", "Man", "young adult man with rugged facial features, styled hair, atmospheric jacket and clothing"),
-        ("ninja", "Ninja", "covert shinobi ninja with dark tactical shinobi gear, cloth mask, strapped gauntlets and stealth attire"),
-        ("samourai", "Samurai", "ronin samurai warrior in traditional armored lacquered plates with patterned haori and topknot"),
-        ("samurai", "Samurai", "ronin samurai warrior in traditional armored lacquered plates with patterned haori and topknot"),
-        ("sorcier", "Wizard", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet"),
-        ("wizard", "Wizard", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet"),
-        ("robot", "Robot", "humanoid android robot with polished chassis, optic sensors, exposed joint hydraulics and sleek design"),
-        ("guerrier", "Warrior", "battle-hardened warrior with combat armor, survival harness and determined expression"),
-        ("warrior", "Warrior", "battle-hardened warrior with combat armor, survival harness and determined expression"),
+        ("samouraï", "Samurai Warrior", "ronin samurai warrior in traditional lacquered armor plates with patterned haori and katana sheath"),
+        ("samourai", "Samurai Warrior", "ronin samurai warrior in traditional lacquered armor plates with patterned haori and katana sheath"),
+        ("samurai", "Samurai Warrior", "ronin samurai warrior in traditional lacquered armor plates with patterned haori and katana sheath"),
+        ("fille", "Anime Girl", "teenage anime girl with expressive facial identity, distinctive styled hair, school or casual modern clothing and realistic proportions"),
+        ("girl", "Anime Girl", "teenage anime girl with expressive facial identity, distinctive styled hair, school or casual modern clothing and realistic proportions"),
+        ("femme", "Elegant Woman", "young adult woman with elegant features, distinctive hairstyle, tailored modern clothing and natural poise"),
+        ("woman", "Elegant Woman", "young adult woman with elegant features, distinctive hairstyle, tailored modern clothing and natural poise"),
+        ("homme", "Man", "young adult man with rugged facial features, styled hair, atmospheric jacket and layered garments"),
+        ("man", "Man", "young adult man with rugged facial features, styled hair, atmospheric jacket and layered garments"),
+        ("robot", "Cybernetic Android", "humanoid android robot with polished metallic chassis, optic sensors, exposed joint hydraulics and sleek design"),
+        ("androïde", "Cybernetic Android", "humanoid android robot with polished metallic chassis, optic sensors, exposed joint hydraulics and sleek design"),
+        ("android", "Cybernetic Android", "humanoid android robot with polished metallic chassis, optic sensors, exposed joint hydraulics and sleek design"),
+        ("mecha", "Mecha Pilot", "tactical mecha pilot in fitted flight suit with biometric neural interface headset"),
+        ("mécha", "Mecha Pilot", "tactical mecha pilot in fitted flight suit with biometric neural interface headset"),
+        ("ninja", "Tactical Shinobi", "covert shinobi ninja in dark tactical gear, cloth mask, strapped gauntlets and stealth attire"),
+        ("guerrier", "Battle Warrior", "battle-hardened warrior with combat armor, survival harness and determined expression"),
+        ("warrior", "Battle Warrior", "battle-hardened warrior with combat armor, survival harness and determined expression"),
+        ("detective", "Noir Detective", "investigative detective in trench coat, fedora hat, loosened tie and observant eyes"),
+        ("détective", "Noir Detective", "investigative detective in trench coat, fedora hat, loosened tie and observant eyes"),
+        ("sorcier", "Arcane Mage", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet"),
+        ("magicien", "Arcane Mage", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet"),
+        ("wizard", "Arcane Mage", "arcane wizard in embroidered mystical robes with runic leather wraps and glowing amulet"),
+        ("astronaute", "Astronaut", "explorer astronaut in pressurized EVA space suit with golden visor reflections"),
+        ("astronaut", "Astronaut", "explorer astronaut in pressurized EVA space suit with golden visor reflections"),
     ]
     for kw, name, desc in char_keywords:
         if kw in lower:
@@ -524,20 +613,27 @@ def extract_subjects_from_story(story: str) -> tuple[tuple[str, str], tuple[str,
             break
 
     env_name = "Environment"
-    env_desc = "cinematic setting"
+    env_desc = "cinematic setting with intricate spatial architectural details"
+
     env_keywords = [
-        ("chambre", "Bedroom", "cozy teenage bedroom environment, bed, window, curtains, desk, furniture arrangement, materials, warm neutral colors and spatial layout"),
-        ("bedroom", "Bedroom", "cozy teenage bedroom environment, bed, window, curtains, desk, furniture arrangement, materials, warm neutral colors and spatial layout"),
-        ("ruelle", "Neon City Street", "rain-slicked cyberpunk city street with neon signs, wet asphalt reflections, towering skyscrapers and urban alley architecture"),
-        ("neon", "Neon City Street", "rain-slicked cyberpunk city street with neon signs, wet asphalt reflections, towering skyscrapers and urban alley architecture"),
+        ("temple", "Ancient Futuristic Temple", "ancient futuristic temple sanctuary with weathered stone pillars, glowing cybernetic runes, carved altars and mystical volumetric atmosphere"),
+        ("sanctuaire", "Ancient Futuristic Temple", "ancient futuristic temple sanctuary with weathered stone pillars, glowing cybernetic runes, carved altars and mystical volumetric atmosphere"),
+        ("chambre", "Cozy Bedroom", "cozy teenage bedroom environment, bed on the right, window and desk on the left, curtains, furniture arrangement, materials, warm neutral colors and spatial layout"),
+        ("bedroom", "Cozy Bedroom", "cozy teenage bedroom environment, bed on the right, window and desk on the left, curtains, furniture arrangement, materials, warm neutral colors and spatial layout"),
+        ("ruelle", "Neon Cyberpunk Alley", "rain-slicked cyberpunk city street with glowing neon signs, wet asphalt reflections, towering skyscrapers and urban alley architecture"),
+        ("ville néon", "Neon Cyberpunk Alley", "rain-slicked cyberpunk city street with glowing neon signs, wet asphalt reflections, towering skyscrapers and urban alley architecture"),
+        ("ville neon", "Neon Cyberpunk Alley", "rain-slicked cyberpunk city street with glowing neon signs, wet asphalt reflections, towering skyscrapers and urban alley architecture"),
         ("street", "City Street", "cinematic urban street environment, architectural storefronts, pavement, streetlights and atmospheric perspective"),
-        ("temple", "Ancient Temple", "ancient futuristic temple sanctuary with weathered stone pillars, glowing cybernetic runes, carved altars and mystical volumetric atmosphere"),
+        ("rue", "City Street", "cinematic urban street environment, architectural storefronts, pavement, streetlights and atmospheric perspective"),
         ("forêt", "Forest Sanctuary", "dense ancient forest environment with moss-covered trees, sunbeams filtering through the foliage and natural earthen path"),
         ("forest", "Forest Sanctuary", "dense ancient forest environment with moss-covered trees, sunbeams filtering through the foliage and natural earthen path"),
         ("laboratoire", "Research Lab", "high-tech scientific laboratory interior, holographic displays, clean metal surfaces and scientific instruments"),
         ("lab", "Research Lab", "high-tech scientific laboratory interior, holographic displays, clean metal surfaces and scientific instruments"),
-        ("vaisseau", "Spaceship Bridge", "starship command bridge interior, control consoles, observation viewport overlooking outer space and metallic bulkheads"),
-        ("spaceship", "Spaceship Bridge", "starship command bridge interior, control consoles, observation viewport overlooking outer space and metallic bulkheads"),
+        ("vaisseau", "Starship Bridge", "starship command bridge interior, control consoles, observation viewport overlooking outer space and metallic bulkheads"),
+        ("spaceship", "Starship Bridge", "starship command bridge interior, control consoles, observation viewport overlooking outer space and metallic bulkheads"),
+        ("toit", "Skyscraper Rooftop", "expansive skyscraper rooftop overlooking a sprawling futuristic skyline with radio antennas and dramatic skyline perspective"),
+        ("rooftop", "Skyscraper Rooftop", "expansive skyscraper rooftop overlooking a sprawling futuristic skyline with radio antennas and dramatic skyline perspective"),
+        ("bar", "Cyberpunk Lounge", "moody cyberpunk bar interior, neon bottle displays, bar counter, atmospheric smoke and ambient lighting"),
     ]
     for kw, name, desc in env_keywords:
         if kw in lower:
@@ -545,10 +641,90 @@ def extract_subjects_from_story(story: str) -> tuple[tuple[str, str], tuple[str,
             break
 
     prop_item = None
-    if "renard" in lower or "fox" in lower:
-        prop_item = ("Holographic Fox", "luminescent ethereal holographic fox companion with neon data particles and glowing amber eyes")
+    prop_keywords = [
+        ("renard", "Holographic Fox", "luminescent ethereal holographic fox companion with neon data particles and glowing amber eyes"),
+        ("fox", "Holographic Fox", "luminescent ethereal holographic fox companion with neon data particles and glowing amber eyes"),
+        ("sabre", "Energy Katana", "sleek cybernetic energy katana with glowing cyan plasma edge and carbon-fiber hilt"),
+        ("katana", "Energy Katana", "sleek cybernetic energy katana with glowing cyan plasma edge and carbon-fiber hilt"),
+        ("écouteurs", "Wireless Headphones", "sleek premium wireless headphones resting cleanly on desk with matte finish"),
+        ("headphones", "Wireless Headphones", "sleek premium wireless headphones resting cleanly on desk with matte finish"),
+        ("clé", "Data Keycard", "luminescent holographic data keycard with glowing micro-circuits"),
+        ("key", "Data Keycard", "luminescent holographic data keycard with glowing micro-circuits"),
+    ]
+    for kw, name, desc in prop_keywords:
+        if kw in lower:
+            prop_item = (name, desc)
+            break
 
     return (char_name, char_desc), (env_name, env_desc), prop_item
+
+
+def enrich_cinematic_story_beat(
+    beat: str,
+    char_name: str,
+    env_name: str,
+    shot_index: int,
+    total_shots: int,
+    shot_type: str,
+    camera_motion: str,
+    lighting: str,
+    prop_name: str | None = None,
+) -> str:
+    """Embellish raw user story beat with rich cinematic details, atmosphere, lighting and camera staging."""
+    clean_beat = beat.strip().rstrip(".!?,")
+
+    # Common French verb translations into active English gerunds for high-fidelity prompt injection
+    fr_replacements = [
+        (r"\bexplore les ruelles d'une ville n[eé]on sous la pluie battante\b", "exploring the labyrinthine neon-lit alleys under torrential rain, water cascading from awnings"),
+        (r"\bexplore les ruelles\b", "navigating narrow rain-slicked city alleys with vibrant neon reflections"),
+        (r"\brencontre un renard holographique lumineux\b", "encountering a luminescent holographic fox that flickers with ambient cyan particles"),
+        (r"\bqui le guide vers\b", "following the glowing companion as it leads the way toward"),
+        (r"\bune porte secr[eè]te\b", "a concealed monolithic portal etched with glowing circuits"),
+        (r"\bdans un temple antique futuriste\b", "inside a secluded ancient futuristic temple sanctuary"),
+        (r"\bd[eé]gaine son sabre\b", "deliberately drawing an illuminated plasma katana with smooth physical weight"),
+        (r"\bd[eé]fie un robot g[eé]ant\b", "standing firm in defiance against an imposing towering cybernetic automaton"),
+        (r"\bse r[eé]veille\b", "stirring and opening eyes gently as morning light brightens"),
+        (r"\bregarde par la fen[eê]tre\b", "turning head to gaze thoughtfully out through the rain-streaked window"),
+        (r"\bprend ses [eé]couteurs\b", "reaching out to pick up headphones from the wooden desk"),
+        (r"\bsort de la pi[eè]ce\b", "stepping deliberately across the room toward the exit threshold"),
+    ]
+    for pattern, rep in fr_replacements:
+        clean_beat = re.sub(pattern, rep, clean_beat, flags=re.IGNORECASE)
+
+    clean_stype = shot_type.split("(")[0].strip()
+
+    if shot_index == 1:
+        # Phase 1: Establishing spatial geometry, mood, lighting
+        return (
+            f"Begin with a wide cinematic establishing {clean_stype.lower()} of <Subject 2>, strictly matching the spatial "
+            f"architecture in <Picture 2>. The environment is quiet and atmospheric with rich volumetric {lighting.lower()} highlights "
+            f"and deep environmental texture. <Subject 1> ({char_name}) is present in the frame, introducing the narrative presence "
+            f"with natural, understated physical posture. Hold this establishing composition briefly so the viewer assimilates the layout and mood."
+        )
+    elif shot_index == 2:
+        # Phase 2: Focus, micro-expressions, intimate reaction
+        prop_clause = f" noticing the subtle glow of <Subject 3> ({prop_name})" if prop_name else ""
+        return (
+            f"Make a hard cinematic cut to an intimate {clean_stype.lower()} of <Subject 1>. Her facial features, expressive eyes, hairstyle "
+            f"and clothing from <Picture 1> are sharply defined under atmospheric lighting. <Subject 1> reacts naturally to the surroundings{prop_clause}, "
+            f"shifting gaze with subtle curiosity as {clean_beat or 'the sequence unfolds'}. Subtle micro-movements, breathing, and fabric motion bring tactile realism."
+        )
+    elif shot_index == total_shots:
+        # Final Phase: Dramatic resolution, departure, spatial permanence
+        return (
+            f"Make a hard cinematic cut to a wide tracking departure shot in <Subject 2>. <Subject 1> completes the movement, "
+            f"progressing deliberately through the space matching {clean_beat or 'the final narrative beat'}. The camera maintains steady composed "
+            f"framing as <Subject 1> transitions toward the edge of frame or into the deep background, leaving the enduring atmosphere, architectural "
+            f"details and gentle environmental particles of <Subject 2> clearly visible."
+        )
+    else:
+        # Intermediate Phases: Dynamic interaction, physical action
+        prop_interaction = f" with <Subject 3> ({prop_name}) providing an illuminated visual focal point" if prop_name else ""
+        return (
+            f"Make a hard cut to a dynamic {clean_stype.lower()} framing <Subject 1> actively engaged in {clean_beat}. "
+            f"Physical interaction with <Subject 2> is tangible, featuring authentic spatial depth, cast shadows, and natural weight{prop_interaction}. "
+            f"Camera motion executes a deliberate {camera_motion.lower()}, tracking the character's focused movement and dramatic momentum."
+        )
 
 
 def generate_local_storyboard(
@@ -558,10 +734,13 @@ def generate_local_storyboard(
     shot_duration: float,
     style_prompt: str,
 ) -> StoryboardData:
-    """Generate structured MiniMax H3 StoryboardData locally using rule-based narrative decomposition."""
+    """Generate structured MiniMax H3 StoryboardData locally with rich narrative embellishment and dynamic shot pacing."""
     clean_story = (story or "").strip()
     if not clean_story:
-        clean_story = "A teenage anime girl wakes up in her cozy bedroom in the morning, gets up, takes her headphones from the desk and walks out."
+        clean_story = (
+            "A teenage anime girl wakes up in her cozy bedroom in the morning, "
+            "gets up, takes her headphones from the desk and walks out."
+        )
 
     existing = parse_existing_h3_prompt(clean_story, total_duration=total_duration, style_prompt=style_prompt)
     if existing:
@@ -580,7 +759,7 @@ def generate_local_storyboard(
     )
     s1_img_prompt = (
         f"Character design concept art reference sheet portrait and full body view of {char_name}: {char_desc}, "
-        f"isolated, clean background, neutral lighting, masterpiece, sharp focus, {style_prompt}"
+        f"isolated, clean background, neutral studio lighting, sharp focus, masterpiece, {style_prompt}"
     )
 
     s2_def = (
@@ -602,42 +781,49 @@ def generate_local_storyboard(
         StoryboardSubject(2, env_name, "environment", s2_def, s2_retention, s2_img_prompt),
     ]
 
+    prop_name = None
     if prop_item:
         p_name, p_desc = prop_item
+        prop_name = p_name
         p_def = f"{p_desc} locked to supplied reference. Preserve recognizable design throughout every cut."
         p_ret = f"fully_preserved — preserve the exact visual design from <Picture 3>."
         p_img = f"Concept art prop reference sheet of {p_name}: {p_desc}, isolated on clean background, masterpiece, {style_prompt}"
         subjects.append(StoryboardSubject(3, p_name, "prop", p_def, p_ret, p_img))
 
-    # Calculate shots
-    num_shots = max(1, int(round(total_duration / max(1.5, shot_duration))))
-    time_per_shot = round(total_duration / num_shots, 2)
-
-    raw_beats = [s.strip() for s in re.split(r"[.!?;\n]+", clean_story) if s.strip()]
+    raw_beats = [s.strip() for s in re.split(r'[.!?;\n]', clean_story) if s.strip()]
     if not raw_beats:
         raw_beats = [clean_story]
+
+    # Calculate dynamic cinematic durations respecting shot_duration as an upper bound ceiling
+    shot_durations = calculate_cinematic_shot_durations(
+        total_duration=total_duration,
+        max_shot_duration=shot_duration,
+        num_beats=len(raw_beats),
+    )
+    num_shots = len(shot_durations)
 
     scenes: list[StoryboardScene] = []
     current_time = 0.0
 
-    for i in range(num_shots):
+    for i, duration in enumerate(shot_durations):
         idx = i + 1
         stype, shot_desc = SHOT_TYPES[min(i, len(SHOT_TYPES) - 1)]
         cam = CAMERA_MOTIONS[i % len(CAMERA_MOTIONS)]
         lighting = LIGHTING_MOODS[i % len(LIGHTING_MOODS)]
         ts_str = format_timestamp(current_time)
 
-        if i == 0:
-            prompt_content = f"Begin with a {stype.split('(')[0].strip().lower()} of <Subject 2>, matching the layout in <Picture 2>. <Subject 1> is present in the scene, introducing the narrative setting."
-        elif i == 1:
-            prompt_content = f"a medium close-up of <Subject 1> in <Subject 2>, capturing natural movement and facial expression."
-        elif i == 2:
-            prompt_content = f"a three-quarter cinematic angle as <Subject 1> interacts deliberately with the environment in <Subject 2>."
-        elif i == num_shots - 1:
-            prompt_content = f"a concluding wide shot showing <Subject 1> completing the action and moving through <Subject 2>."
-        else:
-            beat = raw_beats[i % len(raw_beats)]
-            prompt_content = f"a {stype.split('(')[0].strip().lower()} framing <Subject 1> engaged in {beat} within <Subject 2>."
+        beat = raw_beats[i % len(raw_beats)]
+        prompt_content = enrich_cinematic_story_beat(
+            beat=beat,
+            char_name=char_name,
+            env_name=env_name,
+            shot_index=idx,
+            total_shots=num_shots,
+            shot_type=stype,
+            camera_motion=cam,
+            lighting=lighting,
+            prop_name=prop_name,
+        )
 
         full_prompt = (
             f"[Camera: {cam.split('(')[-1].rstrip(')')}] {prompt_content} "
@@ -648,7 +834,7 @@ def generate_local_storyboard(
             StoryboardScene(
                 index=idx,
                 title=f"Plan {idx} : {stype.split('(')[0].strip()}",
-                duration=time_per_shot,
+                duration=duration,
                 start_time=current_time,
                 timestamp_str=ts_str,
                 shot_type=stype,
@@ -661,16 +847,20 @@ def generate_local_storyboard(
                 continuity_audio=(i > 0),
             )
         )
-        current_time += time_per_shot
+        current_time += duration
 
-    summary = f"[reference generation] A sequence set in <Subject 2>. <Subject 1> navigates the environment with deliberate cinematic cuts while preserving the same character and setting."
+    summary = (
+        f"[reference generation] A cinematic narrative sequence set in <Subject 2> featuring <Subject 1>. "
+        f"The visual story unfolds with purposeful camera framing and deliberate pacing while preserving identity and environmental continuity."
+    )
     intro = (
         f"The target video is a polished cinematic sequence. Movement is natural, understated and physically believable. "
-        f"The environment layout is fixed throughout: the spatial relationships established in <Picture 2> remain consistent. "
-        f"H3 should use real cinematic cuts between clearly different viewpoints; each cut introduces meaningful new framing or visual information."
+        f"The environment layout is fixed throughout: spatial relationships established in <Picture 2> remain consistent. "
+        f"H3 uses deliberate cinematic cuts between clearly distinct viewpoints, each introducing meaningful framing and visual information."
     )
     soundscape = (
-        f"Atmospheric environmental soundscape matching <Subject 2> throughout. Subtle movement, footsteps, and natural room acoustics."
+        f"Detailed environmental acoustics and ambient audio matching <Subject 2> throughout. "
+        f"Subtle fabric movement, natural footsteps on surfaces, gentle atmospheric airflow, and nuanced room reverb."
     )
 
     full_prompt = format_h3_structured_prompt(subjects, summary, intro, scenes, soundscape)
@@ -697,42 +887,52 @@ def generate_llm_storyboard(
     api_format: str = "ollama",
     timeout: int = 40,
 ) -> StoryboardData | None:
-    """Generate structured MiniMax H3 StoryboardData using local LLM."""
-    num_shots = max(1, int(round(total_duration / max(1.5, shot_duration))))
+    """Generate structured MiniMax H3 StoryboardData using local LLM with narrative embellishment."""
+    # shot_duration is the MAXIMUM allowed duration per shot
+    min_shots = max(1, math.ceil(total_duration / max(2.0, shot_duration)))
+    target_shots = max(min_shots, min(int(total_duration // 2.5), 6))
+
     system_prompt = (
-        "You are an award-winning cinematic director and AI video prompt engineer for MiniMax H3.\n"
-        "Your task is to decompose the user's narrative story into MiniMax H3's official multi-subject cinematic reference format.\n"
+        "You are an award-winning Hollywood film director and master cinematic prompt architect for MiniMax H3.\n"
+        "Your task is to EMBELLISH and expand the user's narrative story into MiniMax H3's official multi-subject cinematic reference format.\n\n"
+        "CRITICAL RULES:\n"
+        "1. EMBELLISH THE STORY: Do not just repeat the user's text. Add vivid sensory details, lighting atmosphere, facial micro-expressions, posture, and spatial staging.\n"
+        f"2. DYNAMIC SHOT DURATIONS: Assign each shot a dynamic duration between 2.5s and {shot_duration}s based on dramatic weight (e.g. establishing shots and action beats held longer, reactions punchier).\n"
+        f"3. DURATION SUM: The sum of all shot durations MUST strictly equal {total_duration}s.\n"
+        "4. STRICT SUBJECT TAGGING: Always use <Subject 1>, <Subject 2>, <Picture 1>, <Picture 2> in definitions and shot descriptions.\n"
         "Return ONLY a valid JSON object matching this schema:\n"
         "{\n"
         '  "subject_1": {\n'
-        '    "name": "Girl",\n'
+        '    "name": "Character Name",\n'
         '    "definition": "Detailed character identity locked to Picture 1",\n'
-        '    "image_prompt": "Clean T2I prompt for character design reference sheet"\n'
+        '    "image_prompt": "Clean T2I prompt for character design concept reference sheet"\n'
         "  },\n"
         '  "subject_2": {\n'
-        '    "name": "Bedroom",\n'
-        '    "definition": "Detailed environment architecture and layout locked to Picture 2",\n'
+        '    "name": "Environment Name",\n'
+        '    "definition": "Detailed architectural layout and spatial geometry locked to Picture 2",\n'
         '    "image_prompt": "Clean T2I prompt for empty environment architecture layout"\n'
         "  },\n"
-        '  "summary": "Short narrative summary across Subject 1 and Subject 2",\n'
+        '  "summary": "Short cinematic summary across Subject 1 and Subject 2",\n'
         '  "detailed_description_intro": "Cinematic motion guidelines",\n'
         '  "shots": [\n'
         "    {\n"
         '      "shot_index": 1,\n'
+        '      "duration": 4.5,\n'
         '      "timestamp_str": "00:00.000",\n'
-        '      "description": "Begin with wide establishing view of <Subject 2> with <Subject 1>"\n'
+        '      "description": "Begin with wide establishing view of <Subject 2>..."\n'
         "    }\n"
         "  ],\n"
-        '  "soundscape": "Environmental ambient soundscape",\n'
+        '  "soundscape": "Environmental ambient soundscape details",\n'
         '  "music": "N/A"\n'
         "}"
     )
 
     user_message = (
-        f"Story to adapt:\n{story}\n\n"
-        f"Parameters:\n"
-        f"- Target number of shots: {num_shots}\n"
-        f"- Duration per shot: {shot_duration}s (Total: {total_duration}s)\n"
+        f"User Narrative Script to Adapt and Embellish:\n{story}\n\n"
+        f"Production Specifications:\n"
+        f"- Target number of shots: {target_shots}\n"
+        f"- Maximum duration per shot: {shot_duration}s (Each shot <= {shot_duration}s)\n"
+        f"- Total duration: {total_duration}s (Sum of all shot durations must equal {total_duration}s)\n"
         f"- Visual aesthetic: {style_prompt}"
     )
 
@@ -810,19 +1010,33 @@ def generate_llm_storyboard(
         ]
 
         raw_shots = parsed.get("shots") or []
-        scenes: list[StoryboardScene] = []
-        time_per_shot = round(total_duration / max(1, len(raw_shots) or num_shots), 2)
+        num_raw = len(raw_shots) or target_shots
 
-        for i, s_raw in enumerate(raw_shots[:num_shots]):
+        # Parse or compute dynamic shot durations
+        parsed_durations = [float(s.get("duration") or 0.0) for s in raw_shots if isinstance(s, dict)]
+        if len(parsed_durations) == len(raw_shots) and all(0.5 < d <= shot_duration + 0.5 for d in parsed_durations):
+            # Scale to match total_duration exactly
+            scale = total_duration / max(0.1, sum(parsed_durations))
+            durations = [round(d * scale, 1) for d in parsed_durations]
+            diff = round(total_duration - sum(durations), 1)
+            durations[-1] = round(durations[-1] + diff, 1)
+        else:
+            durations = calculate_cinematic_shot_durations(total_duration, shot_duration, num_raw)
+
+        scenes: list[StoryboardScene] = []
+        curr_t = 0.0
+
+        for i, s_dur in enumerate(durations):
             idx = i + 1
-            ts_str = str(s_raw.get("timestamp_str") or format_timestamp(i * time_per_shot))
+            s_raw = raw_shots[i] if i < len(raw_shots) else {}
+            ts_str = format_timestamp(curr_t)
             desc = str(s_raw.get("description") or f"Scene {idx}")
             scenes.append(
                 StoryboardScene(
                     index=idx,
                     title=f"Plan {idx}",
-                    start_time=i * time_per_shot,
-                    duration=time_per_shot,
+                    start_time=curr_t,
+                    duration=s_dur,
                     timestamp_str=ts_str,
                     shot_type=SHOT_TYPES[min(i, len(SHOT_TYPES) - 1)][0],
                     camera_motion=CAMERA_MOTIONS[i % len(CAMERA_MOTIONS)],
@@ -834,6 +1048,7 @@ def generate_llm_storyboard(
                     continuity_audio=(i > 0),
                 )
             )
+            curr_t += s_dur
 
         summary = str(parsed.get("summary") or f"[reference generation] Sequence in <Subject 2> featuring <Subject 1>.")
         intro = str(parsed.get("detailed_description_intro") or "Cinematic motion.")
@@ -851,9 +1066,8 @@ def generate_llm_storyboard(
             music=music,
             full_h3_prompt=full_prompt,
         )
-
     except Exception as exc:
-        log.warning("LLM Storyboard call failed (%s); falling back to Built-in Engine: %s", endpoint, exc)
+        log.warning("LLM Storyboard Generation failed (%s). Falling back to rule-based engine.", exc)
         return None
 
 

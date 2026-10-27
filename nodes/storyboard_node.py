@@ -93,7 +93,7 @@ class MiniMaxH3StoryDirector:
                         "min": 2.0,
                         "max": 15.0,
                         "step": 0.5,
-                        "tooltip": "Durée cible de chaque scène/plan (MiniMax excelle sur des plans de 5 à 6 secondes).",
+                        "tooltip": "Durée maximale autorisée pour chaque scène/plan (ex: 6s, 8s, 15s). L'IA module librement la durée optimale de chaque plan (ex: 3s, 4s, 5s, 8s) selon le rythme dramatique sans dépasser ce plafond.",
                     },
                 ),
                 "aspect_ratio": (
@@ -215,6 +215,7 @@ class MiniMaxH3StoryDirector:
 
     RETURN_TYPES = (MMX_STORYBOARD, "STRING", "IMAGE", "STRING")
     RETURN_NAMES = ("storyboard", "timeline_json", "reference_images", "script_summary")
+    OUTPUT_NODE = True
     FUNCTION = "execute"
     CATEGORY = "MiniMaxH3/Director"
     DESCRIPTION = (
@@ -375,17 +376,43 @@ class MiniMaxH3StoryDirector:
         try:
             from server import PromptServer
 
-            PromptServer.instance.send_sync(
-                "minimax_storyboard_generated",
-                {
-                    "node_id": str(unique_id) if unique_id else None,
-                    "timeline_data": timeline_json,
-                    "total_duration": target_duration,
-                    "num_scenes": len(scenes),
-                    "summary": script_summary,
-                },
-            )
-        except Exception:
-            pass
+            if PromptServer.instance:
+                PromptServer.instance.send_sync(
+                    "minimax_storyboard_generated",
+                    {
+                        "node_id": str(unique_id) if unique_id else None,
+                        "timeline_data": timeline_json,
+                        "total_duration": target_duration,
+                        "director_mode": director_mode,
+                        "num_scenes": len(scenes),
+                        "summary": script_summary,
+                        "prompt": sb_data.full_h3_prompt,
+                        "subjects": [s.to_dict() for s in subjects],
+                        "reference_images": [s.image_b64 for s in subjects],
+                    },
+                )
+        except Exception as b_exc:
+            log.warning("Story Director PromptServer broadcast warning: %s", b_exc)
 
-        return (storyboard_payload, timeline_json, batch_images, script_summary)
+        # 7. Save preview images to ComfyUI temp folder for canvas visualization
+        ui_images = []
+        try:
+            import folder_paths
+            import random
+            from PIL import Image
+            import numpy as np
+            temp_dir = folder_paths.get_temp_directory()
+            prefix = f"story_{random.randint(1000, 9999)}"
+            for idx in range(batch_images.shape[0]):
+                fname = f"{prefix}_{idx}.png"
+                fpath = os.path.join(temp_dir, fname)
+                arr = (batch_images[idx].cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
+                Image.fromarray(arr).save(fpath, format="PNG")
+                ui_images.append({"filename": fname, "subfolder": "", "type": "temp"})
+        except Exception as p_exc:
+            log.debug("Preview image cache notice: %s", p_exc)
+
+        out_tuple = (storyboard_payload, timeline_json, batch_images, script_summary)
+        if unique_id is not None and ui_images:
+            return {"ui": {"images": ui_images}, "result": out_tuple}
+        return out_tuple

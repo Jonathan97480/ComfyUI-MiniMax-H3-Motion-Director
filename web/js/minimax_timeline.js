@@ -2351,28 +2351,29 @@ class MiniMaxH3MotionDirectorEditor {
                             if (isMixedTimeline) {
                                 this.mixedTimeline = normalizeMixedTimeline(parsed);
                                 if (this.node?.id != null) this.mixedTimeline.nodeId = String(this.node.id);
-                                if (this._mixedController) {
-                                    this._mixedController.setState(this.mixedTimeline);
-                                }
                                 this._directorMode = "mixed";
                                 if (this.taskTypeWidget) {
                                     const opts = this.taskTypeWidget.options?.values || [];
                                     const mixedOpt = opts.find((opt) => String(opt).toLowerCase().includes("mixed")) || "mixed";
                                     this.taskTypeWidget.value = mixedOpt;
                                 }
+                                this.populateTaskSelect?.(this.globalTask, this.taskTypeWidget?.value);
                                 if (this.globalTask) {
                                     const opts = this.globalTask.options || [];
                                     const mixedOpt = Array.from(opts).find((opt) => String(opt.value || opt).toLowerCase().includes("mixed"))?.value || "mixed";
                                     this.globalTask.value = mixedOpt;
                                 }
+                                if (this._mixedController) {
+                                    try { this._mixedController.setState(this.mixedTimeline); } catch (e) {}
+                                }
                             } else {
                                 this._directorMode = this.getDirectorMode();
+                                this.populateTaskSelect?.(this.globalTask, this.taskTypeWidget?.value);
                             }
 
                             this.ensureContextLinks?.();
                             this.syncFrameRateUI?.(this.timeline?.frameRate || initFps);
                             this.applyTaskLayout(this._directorMode);
-                            this.populateTaskSelect?.(this.globalTask, this.taskTypeWidget?.value);
                             this.updateSelectionUI?.();
                             this.commit?.(true, { syncTimeline: false });
                         }
@@ -2488,7 +2489,19 @@ class MiniMaxH3MotionDirectorEditor {
         this.bindEvents();
         this._unsubLocale = onLocaleChange(() => this.applyLocale());
         this.applyLocale();
-        this._directorMode = getDirectorMode(this.taskTypeWidget?.value);
+        let parsedInitCtor = null;
+        try { parsedInitCtor = JSON.parse(this.timelineWidget?.value || "{}"); } catch (e) {}
+        const isMixedInitCtor = parsedInitCtor && String(parsedInitCtor.timelineMode || "").toLowerCase() === "mixed";
+        if (isMixedInitCtor) {
+            this._directorMode = "mixed";
+            if (this.taskTypeWidget) {
+                const opts = this.taskTypeWidget.options?.values || [];
+                const mixedOpt = opts.find((opt) => String(opt).toLowerCase().includes("mixed")) || "mixed";
+                this.taskTypeWidget.value = mixedOpt;
+            }
+        } else {
+            this._directorMode = getDirectorMode(this.taskTypeWidget?.value);
+        }
         if (this._directorMode === "mixed") {
             // Mixed owns editor.mixedTimeline; legacy normalizers intentionally do nothing here.
         } else if (this._directorMode === "video") {
@@ -2498,6 +2511,7 @@ class MiniMaxH3MotionDirectorEditor {
         } else {
             this.ensureGenTimeline();
         }
+        this.populateTaskSelect?.(this.globalTask, this.taskTypeWidget?.value);
         this.ensureContextLinks();
         this.applyTaskLayout(this._directorMode);
 
@@ -4418,7 +4432,18 @@ class MiniMaxH3MotionDirectorEditor {
     }
 
     getDirectorMode() {
-        return getDirectorMode(this.globalTask?.value || this.taskTypeWidget?.value);
+        if (this._directorMode === "mixed") return "mixed";
+        const raw = this.globalTask?.value || this.taskTypeWidget?.value;
+        const mode = getDirectorMode(raw);
+        if (mode === "mixed") return "mixed";
+        if (this.timeline && String(this.timeline.timelineMode || "").trim().toLowerCase() === "mixed" && !this._directorMode) {
+            return "mixed";
+        }
+        if (this.mixedTimeline && this._mixedLoadedFromSerialized && !this._directorMode) {
+            return "mixed";
+        }
+        if (this._directorMode) return this._directorMode;
+        return mode;
     }
 
     isGenMode() {
@@ -4817,7 +4842,9 @@ class MiniMaxH3MotionDirectorEditor {
     }
 
     applyTaskLayout(prevMode) {
-        const mode = this.getDirectorMode();
+        const mode = (prevMode === "mixed" && (this.mixedTimeline || this._directorMode === "mixed"))
+            ? "mixed"
+            : this.getDirectorMode();
         if (mode === "mixed") {
             this._enterMixedNative(prevMode || this._directorMode);
             this._directorMode = "mixed";
@@ -4867,17 +4894,18 @@ class MiniMaxH3MotionDirectorEditor {
                 }
                 // Prefer restoring the previous r2v/r2i/i2v batch (prompts + its own run-select).
                 if (!this._restoreBatchWorkspace()) {
-                    const keep = this.timeline.global?.prompt
-                        || this.timeline.segments?.[0]?.prompt
-                        || "";
-                    const keepRefs = Array.isArray(this.timeline.global?.refs) && this.timeline.global.refs.length
-                        ? JSON.parse(JSON.stringify(this.timeline.global.refs))
-                        : [];
-                    this.timeline.segments = [newBatchSegment({
-                        prompt: keep,
-                        negativePrompt: this.negativePromptWidget?.value || "bad video",
-                        refs: keepRefs,
-                    })];
+                    if (!Array.isArray(this.timeline.segments) || this.timeline.segments.length === 0) {
+                        const keep = this.timeline.global?.prompt
+                            || "";
+                        const keepRefs = Array.isArray(this.timeline.global?.refs) && this.timeline.global.refs.length
+                            ? JSON.parse(JSON.stringify(this.timeline.global.refs))
+                            : [];
+                        this.timeline.segments = [newBatchSegment({
+                            prompt: keep,
+                            negativePrompt: this.negativePromptWidget?.value || "bad video",
+                            refs: keepRefs,
+                        })];
+                    }
                     this._clearLiveRunSelection();
                 }
             }
@@ -9828,6 +9856,7 @@ class MiniMaxH3MotionDirectorEditor {
             const nextMode = getDirectorMode(value);
             if (nextMode === "mixed") {
                 if (currentMode !== "mixed") this._standaloneDirectorMode = currentMode;
+                this._directorMode = "mixed";
                 if (this.globalTask) this.globalTask.value = value;
                 if (this.taskTypeWidget) this.taskTypeWidget.value = value;
                 this.applyTaskLayout(currentMode);
@@ -9837,6 +9866,7 @@ class MiniMaxH3MotionDirectorEditor {
                 return;
             }
             if (currentMode === "mixed") {
+                this._directorMode = nextMode;
                 this.timeline.global = this.timeline.global || { refs: [] };
                 this.timeline.global.taskType = value;
                 if (this.globalTask) this.globalTask.value = value;
@@ -11283,13 +11313,14 @@ app.registerExtension({
                         const mixedOpt = opts.find((opt) => String(opt).toLowerCase().includes("mixed")) || "mixed";
                         ed.taskTypeWidget.value = mixedOpt;
                     }
-                    if (ed.globalTask) {
-                        const opts = ed.globalTask.options || [];
-                        const mixedOpt = Array.from(opts).find((opt) => String(opt.value || opt).toLowerCase().includes("mixed"))?.value || "mixed";
-                        ed.globalTask.value = mixedOpt;
-                    }
                 } else {
                     ed._directorMode = ed.getDirectorMode();
+                }
+                ed.populateTaskSelect?.(ed.globalTask, ed.taskTypeWidget?.value);
+                if (isMixedTimelineInit && ed.globalTask) {
+                    const opts = ed.globalTask.options || [];
+                    const mixedOpt = Array.from(opts).find((opt) => String(opt.value || opt).toLowerCase().includes("mixed"))?.value || "mixed";
+                    ed.globalTask.value = mixedOpt;
                 }
                 if (ed._directorMode === "mixed") {
                     // Mixed owns editor.mixedTimeline; legacy normalizers intentionally do nothing here.
@@ -11302,7 +11333,6 @@ app.registerExtension({
                 }
                 ed.ensureContextLinks();
                 ed.applyTaskLayout(ed._directorMode);
-                ed.populateTaskSelect(ed.globalTask, ed.taskTypeWidget?.value);
                 ed.setEditMode(ed.timeline.editMode || "global");
                 ed.selectedIndex = 0;
                 ed.updateSelectionUI();

@@ -5,6 +5,7 @@
 import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { getLocale } from "./minimax_i18n.js";
+import { normalizeMixedTimeline } from "./minimax_mixed_state.mjs?boot=mixed_native_v6";
 
 const STORY_DIRECTOR_CLASS = "MiniMaxH3StoryDirector";
 const MOTION_DIRECTOR_CLASS = "MiniMaxH3MotionDirector";
@@ -190,9 +191,12 @@ function updateDirectorTaskType(directorNode, requestedMode) {
     // Direct update on editor if active
     const ed = directorNode._minimaxEditor;
     if (ed) {
+        if (ed.populateTaskSelect && ed.globalTask) {
+            ed.populateTaskSelect(ed.globalTask, matchedOption);
+        }
         if (ed.globalTask) ed.globalTask.value = matchedOption;
-        ed.onTaskTypeChanged?.(matchedOption);
         ed._directorMode = modeClean;
+        ed.onTaskTypeChanged?.(matchedOption);
         ed.applyTaskLayout?.(modeClean);
     }
 }
@@ -297,10 +301,9 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
             try { parsed = JSON.parse(timelineJson); } catch (e) {}
 
             if (parsed && String(parsed.timelineMode || "").toLowerCase() === "mixed") {
-                ed.mixedTimeline = (typeof normalizeMixedTimeline === "function")
-                    ? normalizeMixedTimeline(parsed)
-                    : parsed;
+                ed.mixedTimeline = normalizeMixedTimeline(parsed);
                 if (directorNode.id != null) ed.mixedTimeline.nodeId = String(directorNode.id);
+                ed._directorMode = "mixed";
                 if (ed._mixedController) {
                     try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
                 }
@@ -316,9 +319,9 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
                 ed.ensureGenTimeline?.();
             }
 
+            ed.populateTaskSelect?.(ed.globalTask, ed.taskTypeWidget?.value);
             ed.ensureContextLinks?.();
             ed.applyTaskLayout?.(mode);
-            ed.populateTaskSelect?.(ed.globalTask, ed.taskTypeWidget?.value);
             ed.setEditMode?.(ed.timeline?.editMode || "global");
             ed.selectedIndex = 0;
             ed.updateSelectionUI?.();
@@ -327,9 +330,19 @@ function applyTimelineToDirector(directorNode, timelineJson, prompt, totalDurati
             ed.syncExternalGroupsTimeline?.();
             ed.scheduleRender?.();
 
-            if (ed._directorModalController?.isOpen) {
+            if (mode === "mixed") {
                 if (ed._mixedController && ed.mixedTimeline) {
                     try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
+                }
+            } else if (ed.isImageBatch?.()) {
+                ed.renderImageBatchGroups?.();
+            }
+
+            if (ed._directorModalController?.isOpen) {
+                if (mode === "mixed" && ed._mixedController && ed.mixedTimeline) {
+                    try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
+                } else if (ed.isImageBatch?.()) {
+                    ed.renderImageBatchGroups?.();
                 }
                 ed._directorModalController.setPage?.("generation");
             }
@@ -395,8 +408,15 @@ function openDirectorModal(directorNode) {
         if (!ed._directorModalController.isOpen) {
             ed._directorModalController.open();
         }
-        if (ed._mixedController && ed.mixedTimeline) {
-            try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
+        if (ed._directorMode === "mixed") {
+            if (!ed._mixedController) {
+                ed.applyTaskLayout?.("mixed");
+            }
+            if (ed._mixedController && ed.mixedTimeline) {
+                try { ed._mixedController.setState(ed.mixedTimeline); } catch (e) {}
+            }
+        } else if (ed.isImageBatch?.()) {
+            ed.renderImageBatchGroups?.();
         }
         ed._directorModalController.setPage?.("generation");
         return true;

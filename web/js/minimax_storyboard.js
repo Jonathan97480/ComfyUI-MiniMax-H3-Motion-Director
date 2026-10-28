@@ -653,17 +653,27 @@ async function triggerStoryboardGeneration(storyNode, btnWidget) {
             storyNode.properties.lastGeneratedSubjects = data.subjects;
             storyNode.properties.lastGeneratedScenes = data.scenes;
 
+            const effectiveDuration = data.total_duration || totalDuration;
+            if (data.total_duration) {
+                const durWidget = (storyNode.widgets || []).find((w) => w?.name === "total_duration_sec");
+                if (durWidget && Math.abs(Number(durWidget.value) - Number(data.total_duration)) > 0.05) {
+                    durWidget.value = Number(data.total_duration);
+                    storyNode.setDirtyCanvas?.(true, true);
+                }
+            }
+
             const directors = findConnectedDirectors(storyNode, true);
             let syncCount = 0;
             for (const dir of directors) {
-                if (applyTimelineToDirector(dir, data.timeline_data, data.prompt, totalDuration, directorMode, storyNode)) {
+                if (applyTimelineToDirector(dir, data.timeline_data, data.prompt, effectiveDuration, directorMode, storyNode)) {
                     syncCount++;
                 }
             }
 
             const sceneCount = data.scenes?.length || 0;
             if (btnWidget) {
-                btnWidget.name = `✅ ${sceneCount} ${t("scenesCount")} ${t("generateSyncSuccess").slice(2, 20)}...`;
+                const durStr = `${Number(effectiveDuration).toFixed(1)}s`;
+                btnWidget.name = `✅ ${sceneCount} scènes (${durStr}) synchronisées !`;
                 storyNode.setDirtyCanvas?.(true, true);
                 setTimeout(() => {
                     btnWidget.name = originalLabel;
@@ -765,7 +775,14 @@ app.registerExtension({
                     : message.h3_prompt;
 
                 const directorMode = (this.widgets || []).find((w) => w?.name === "director_mode")?.value || "mixed";
-                const totalDur = (this.widgets || []).find((w) => w?.name === "total_duration_sec")?.value || 15.0;
+                let totalDur = (this.widgets || []).find((w) => w?.name === "total_duration_sec")?.value || 15.0;
+                try {
+                    const parsedTl = JSON.parse(timelineStr);
+                    if (parsedTl?.segments?.length) {
+                        const sumDur = parsedTl.segments.reduce((acc, s) => acc + Number(s.durationSec || s.duration || 0), 0);
+                        if (sumDur > 0) totalDur = sumDur;
+                    }
+                } catch (e) {}
 
                 if (timelineStr && typeof timelineStr === "string") {
                     this._lastGeneratedTimeline = timelineStr;
@@ -809,12 +826,20 @@ app.registerExtension({
                         storyNode.properties.lastGeneratedScenes = detail.scenes;
                         storyNode._lastGeneratedScenes = detail.scenes;
                     }
+                    if (detail.total_duration) {
+                        const durWidget = (storyNode.widgets || []).find((w) => w?.name === "total_duration_sec");
+                        if (durWidget && Math.abs(Number(durWidget.value) - Number(detail.total_duration)) > 0.05) {
+                            durWidget.value = Number(detail.total_duration);
+                            storyNode.setDirtyCanvas?.(true, true);
+                        }
+                    }
                     targetDirectors = findConnectedDirectors(storyNode, true);
 
                     // Reset button label on the story node if it was busy
                     const genBtn = (storyNode.widgets || []).find((w) => w?._mmxIsGenBtn);
                     if (genBtn) {
-                        genBtn.name = `✅ ${detail.num_scenes || ""} ${t("scenesCount")} ${t("generateSyncSuccess").slice(2, 20)}...`;
+                        const durStr = detail.total_duration ? ` (${Number(detail.total_duration).toFixed(1)}s)` : "";
+                        genBtn.name = `✅ ${detail.num_scenes || ""}${durStr} scènes synchronisées !`;
                         storyNode.setDirtyCanvas?.(true, true);
                         setTimeout(() => {
                             genBtn.name = t("generateSyncButton");

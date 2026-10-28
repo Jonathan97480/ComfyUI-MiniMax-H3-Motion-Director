@@ -27,6 +27,7 @@ try:
         generate_local_scenes,
         generate_local_storyboard,
         generate_scene_reference_images,
+        generate_storyboard_reference_images,
         generate_subject_reference_images,
         parse_aspect_ratio,
     )
@@ -45,6 +46,7 @@ except (ImportError, ValueError):
         generate_local_scenes,
         generate_local_storyboard,
         generate_scene_reference_images,
+        generate_storyboard_reference_images,
         generate_subject_reference_images,
         parse_aspect_ratio,
     )
@@ -320,9 +322,13 @@ class MiniMaxH3StoryDirector:
         scenes = sb_data.scenes
         subjects = sb_data.subjects
 
-        # 2. Canonical Reference Image Generation for each Subject (<Picture 1>, <Picture 2>)
-        batch_images, b64_list = generate_subject_reference_images(
+        # 1. Effective total duration adapted from narrative pacing
+        effective_duration = round(sum(s.duration for s in scenes), 1)
+
+        # 2. Canonical Reference Image Generation for Subjects and Scene Keyframe Compositions
+        batch_images, b64_list = generate_storyboard_reference_images(
             subjects,
+            scenes=scenes,
             width=width,
             height=height,
             model=model,
@@ -352,11 +358,11 @@ class MiniMaxH3StoryDirector:
         script_summary = sb_data.full_h3_prompt
 
         # 5. Build MMX_STORYBOARD payload
-        total_frames = int(timeline_dict.get("totalFrames") or round(target_duration * 24.0))
+        total_frames = int(timeline_dict.get("totalFrames") or round(effective_duration * 24.0))
         storyboard_payload = {
             "version": 1,
             "story": story,
-            "total_duration": target_duration,
+            "total_duration": effective_duration,
             "total_frames": total_frames,
             "frame_rate": 24.0,
             "width": width,
@@ -382,13 +388,15 @@ class MiniMaxH3StoryDirector:
                     {
                         "node_id": str(unique_id) if unique_id else None,
                         "timeline_data": timeline_json,
-                        "total_duration": target_duration,
+                        "total_duration": effective_duration,
+                        "total_frames": total_frames,
                         "director_mode": director_mode,
                         "num_scenes": len(scenes),
                         "summary": script_summary,
                         "prompt": sb_data.full_h3_prompt,
                         "subjects": [s.to_dict() for s in subjects],
-                        "reference_images": [s.image_b64 for s in subjects],
+                        "scenes": [s.to_dict() for s in scenes],
+                        "reference_images": b64_list,
                     },
                 )
         except Exception as b_exc:

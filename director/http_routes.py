@@ -321,6 +321,7 @@ async def minimax_storyboard_generate(request):
             build_director_timeline,
             generate_llm_storyboard,
             generate_local_storyboard,
+            generate_storyboard_reference_images,
             generate_subject_reference_images,
             parse_aspect_ratio,
         )
@@ -373,9 +374,13 @@ async def minimax_storyboard_generate(request):
                 style_prompt=style_prompt,
             )
 
-        # Generate subject references
-        batch_images, b64_list = generate_subject_reference_images(
+        # Effective total duration adapted from narrative pacing
+        effective_duration = round(sum(s.duration for s in sb_data.scenes), 1)
+
+        # Generate subject references and scene keyframe compositions
+        batch_images, b64_list = generate_storyboard_reference_images(
             sb_data.subjects,
+            scenes=sb_data.scenes,
             width=width,
             height=height,
             model=None,
@@ -399,6 +404,7 @@ async def minimax_storyboard_generate(request):
             fps=24.0,
             ref_max_size=max(width, height),
         )
+        total_frames = int(timeline_dict.get("totalFrames") or round(effective_duration * 24.0))
         timeline_json = json.dumps(timeline_dict, ensure_ascii=False, indent=2)
 
         # Broadcast event to connected nodes in ComfyUI frontend
@@ -410,13 +416,15 @@ async def minimax_storyboard_generate(request):
                     {
                         "node_id": node_id,
                         "timeline_data": timeline_json,
-                        "total_duration": total_duration_sec,
+                        "total_duration": effective_duration,
+                        "total_frames": total_frames,
                         "director_mode": director_mode,
                         "num_scenes": len(sb_data.scenes),
                         "summary": sb_data.full_h3_prompt,
                         "prompt": sb_data.full_h3_prompt,
                         "subjects": [s.to_dict() for s in sb_data.subjects],
-                        "reference_images": [s.image_b64 for s in sb_data.subjects],
+                        "scenes": [s.to_dict() for s in sb_data.scenes],
+                        "reference_images": b64_list,
                     },
                 )
         except Exception as exc:
@@ -429,10 +437,11 @@ async def minimax_storyboard_generate(request):
             "prompt": sb_data.full_h3_prompt,
             "summary": sb_data.full_h3_prompt,
             "director_mode": director_mode,
-            "total_duration": total_duration_sec,
+            "total_duration": effective_duration,
+            "total_frames": total_frames,
             "subjects": [s.to_dict() for s in sb_data.subjects],
             "scenes": [s.to_dict() for s in sb_data.scenes],
-            "reference_images": [s.image_b64 for s in sb_data.subjects],
+            "reference_images": b64_list,
         })
     except Exception as exc:
         log.error("Storyboard generation failed: %s", exc, exc_info=True)

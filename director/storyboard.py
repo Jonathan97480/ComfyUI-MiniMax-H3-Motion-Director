@@ -257,15 +257,33 @@ def render_storyboard_visual_concept(
     height: int = 480,
     seed: int = 0,
 ) -> torch.Tensor:
-    """Render a stylized visual concept art illustration (character turnaround sheet or environment scenery)."""
+    """Render a stylized visual concept art illustration (character turnaround sheet, empty environment, or scene keyframe composition)."""
     rng = random.Random(seed + scene_num * 101)
     img = Image.new("RGB", (width, height), color=(12, 16, 24))
     draw = ImageDraw.Draw(img)
 
     lower_snippet = (story_snippet + " " + lighting + " " + title).lower()
+    is_desert = any(k in lower_snippet for k in ["désert", "desert", "dune", "sable", "sand", "sahara", "oasis", "soleil brûlant", "chaleur"])
     is_cyber = any(k in lower_snippet for k in ["neon", "cyber", "robot", "pluie", "rain", "tokyo", "futur", "plasma"])
-    is_sunset = any(k in lower_snippet for k in ["soleil", "sunset", "golden", "or", "nature", "forêt", "wood"])
-    accent_col = (0, 210, 255) if is_cyber else ((255, 175, 60) if is_sunset else (150, 190, 255))
+    is_temple = any(k in lower_snippet for k in ["temple", "sanctuaire", "sanctuary", "ruines", "ruins", "autel", "altar", "pillar", "pilier"])
+    is_forest = any(k in lower_snippet for k in ["forêt", "foret", "forest", "bois", "woods", "arbre", "tree", "nature"])
+    is_space = any(k in lower_snippet for k in ["espace", "space", "star", "étoile", "etoile", "cosmos", "vaisseau", "spaceship", "galaxie", "orbit"])
+    is_sunset = any(k in lower_snippet for k in ["soleil", "sunset", "golden", "or", "crépuscule", "dawn"])
+
+    if is_desert:
+        accent_col = (255, 185, 70)
+    elif is_cyber:
+        accent_col = (0, 210, 255)
+    elif is_temple:
+        accent_col = (130, 220, 255)
+    elif is_forest:
+        accent_col = (100, 220, 140)
+    elif is_space:
+        accent_col = (180, 160, 255)
+    elif is_sunset:
+        accent_col = (255, 175, 60)
+    else:
+        accent_col = (150, 190, 255)
 
     if category == "character":
         # Multi-angle Character Turnaround Model Sheet (Front, 3/4, Profile) on clean studio background
@@ -325,31 +343,196 @@ def render_storyboard_visual_concept(
 
         draw.rectangle([(0, height - 28), (width, height)], fill=(8, 12, 18))
         draw.text((16, height - 22), f"<Subject {scene_num}> CHARACTER MODEL SHEET: {title.upper()} (TURNAROUND MULTI-ANGLE REFERENCE)", fill=(0, 220, 250))
-    else:
-        # Environment architectural layout illustration (pure empty environment, NO people)
-        horizon_y = int(height * 0.62)
+
+    elif category in ("scene", "composition"):
+        # Scene Keyframe Composition: Character placed in the environment performing the action
+        horizon_y = int(height * 0.60)
+        # Background sky / atmosphere
         for y in range(horizon_y):
             ratio = y / max(1, horizon_y)
-            if is_cyber:
-                r, g, b = int(12 + ratio * 45), int(16 + ratio * 20), int(45 + ratio * 85)
-            elif is_sunset:
-                r, g, b = int(50 + ratio * 150), int(25 + ratio * 80), int(20 + ratio * 40)
+            if is_desert:
+                r, g, b = int(40 + ratio * 160), int(45 + ratio * 110), int(60 + ratio * 40)
+            elif is_cyber:
+                r, g, b = int(12 + ratio * 35), int(16 + ratio * 20), int(40 + ratio * 75)
+            elif is_temple:
+                r, g, b = int(20 + ratio * 40), int(30 + ratio * 50), int(55 + ratio * 70)
+            elif is_forest:
+                r, g, b = int(25 + ratio * 55), int(45 + ratio * 85), int(35 + ratio * 60)
+            elif is_space:
+                r, g, b = int(8 + ratio * 15), int(10 + ratio * 18), int(25 + ratio * 45)
             else:
-                r, g, b = int(15 + ratio * 35), int(22 + ratio * 45), int(40 + ratio * 75)
+                r, g, b = int(25 + ratio * 65), int(30 + ratio * 75), int(50 + ratio * 95)
             draw.line([(0, y), (width, y)], fill=(r, g, b))
 
-        desk_x2 = int(width * 0.42)
-        draw.rectangle([(int(width * 0.08), int(height * 0.22)), (desk_x2, horizon_y)], fill=(16, 20, 30), outline=(35, 55, 80))
-        bed_x1 = int(width * 0.58)
-        draw.rectangle([(bed_x1, int(height * 0.35)), (int(width * 0.92), horizon_y)], fill=(20, 24, 34), outline=(35, 55, 80))
+        # Terrain / Floor
+        if is_desert:
+            # Undulating dunes with sun
+            sun_cx, sun_cy = int(width * 0.72), int(height * 0.25)
+            for sr in range(55, 0, -4):
+                sa = (1.0 - sr / 55.0) ** 1.5
+                draw.ellipse([(sun_cx - sr, sun_cy - sr), (sun_cx + sr, sun_cy + sr)], fill=(int(255 * sa), int(220 * sa), int(140 * sa)))
 
-        for y in range(horizon_y, height - 28):
-            ratio = (y - horizon_y) / max(1, height - horizon_y)
-            draw.line([(0, y), (width, y)], fill=(int(14 + ratio * 18), int(16 + ratio * 18), int(28 + ratio * 32)))
+            # Dunes
+            dune_pts1 = [(0, horizon_y + 30)]
+            for step in range(0, width + 40, 40):
+                dy = int(math.sin(step * 0.007) * 35 + math.cos(step * 0.015) * 15)
+                dune_pts1.append((step, horizon_y + 15 + dy))
+            dune_pts1.extend([(width, height - 28), (0, height - 28)])
+            draw.polygon(dune_pts1, fill=(185, 120, 45), outline=(215, 150, 65))
 
-        draw.rectangle([(16, 16), (width - 17, height - 32)], outline=(35, 55, 80), width=1)
+            dune_pts2 = [(0, horizon_y + 60)]
+            for step in range(0, width + 40, 30):
+                dy = int(math.sin((step + 120) * 0.009) * 28)
+                dune_pts2.append((step, horizon_y + 55 + dy))
+            dune_pts2.extend([(width, height - 28), (0, height - 28)])
+            draw.polygon(dune_pts2, fill=(150, 92, 32), outline=(190, 125, 50))
+        elif is_cyber:
+            # Cyberpunk street with neon reflections
+            for y in range(horizon_y, height - 28):
+                ratio = (y - horizon_y) / max(1, height - horizon_y)
+                draw.line([(0, y), (width, y)], fill=(int(18 + ratio * 20), int(22 + ratio * 24), int(34 + ratio * 40)))
+            # Neon sign glow on street
+            draw.ellipse([(int(width * 0.2), horizon_y + 20), (int(width * 0.5), height - 40)], fill=(15, 45, 65))
+            draw.ellipse([(int(width * 0.55), horizon_y + 30), (int(width * 0.85), height - 35)], fill=(55, 15, 45))
+        else:
+            for y in range(horizon_y, height - 28):
+                ratio = (y - horizon_y) / max(1, height - horizon_y)
+                draw.line([(0, y), (width, y)], fill=(int(20 + ratio * 30), int(24 + ratio * 32), int(35 + ratio * 45)))
+
+        # Character figure in situation (action / walking pose)
+        char_cx = int(width * 0.45)
+        char_base_y = int(height * 0.72)
+        char_h = int(height * 0.36)
+        ch_r = int(char_h * 0.12)
+        ch_head_y = char_base_y - char_h + ch_r
+
+        # Cast shadow on ground
+        draw.ellipse([(char_cx - int(ch_r * 2.8), char_base_y - 8), (char_cx + int(ch_r * 3.5), char_base_y + 12)], fill=(10, 14, 18))
+
+        # Body in walking / dynamic stride pose
+        # Head
+        draw.ellipse([(char_cx - ch_r, ch_head_y - ch_r), (char_cx + ch_r, ch_head_y + ch_r)], fill=(22, 28, 42), outline=accent_col, width=2)
+        # Torso & dynamic cloak
+        draw.polygon([
+            (char_cx - int(ch_r * 1.5), ch_head_y + ch_r),
+            (char_cx + int(ch_r * 1.5), ch_head_y + ch_r),
+            (char_cx + int(ch_r * 2.4), char_base_y - int(char_h * 0.35)),
+            (char_cx - int(ch_r * 2.0), char_base_y - int(char_h * 0.35)),
+        ], fill=(22, 28, 42), outline=(60, 80, 115), width=2)
+        # Legs stride
+        draw.line([(char_cx - int(ch_r * 0.8), char_base_y - int(char_h * 0.35)), (char_cx - int(ch_r * 1.8), char_base_y)], fill=accent_col, width=3)
+        draw.line([(char_cx + int(ch_r * 0.8), char_base_y - int(char_h * 0.35)), (char_cx + int(ch_r * 2.0), char_base_y)], fill=(70, 90, 125), width=3)
+
+        # Cinematic composition framing markers
+        draw.rectangle([(16, 16), (width - 17, height - 32)], outline=(45, 65, 95), width=1)
+        # Letterbox bars
+        draw.rectangle([(0, 0), (width, 18)], fill=(8, 12, 18))
         draw.rectangle([(0, height - 28), (width, height)], fill=(8, 12, 18))
-        draw.text((16, height - 22), f"<Subject {scene_num}> ENVIRONMENT ARCHITECTURAL REFERENCE: {title.upper()} (EMPTY LAYOUT)", fill=(0, 220, 250))
+        draw.text((16, height - 22), f"<Picture {scene_num}> SCENE {scene_num} KEYFRAME COMPOSITION: {title.upper()} (IN SITUATION)", fill=(255, 215, 90))
+
+    else:
+        # Environment architectural layout illustration (pure empty environment, NO people)
+        horizon_y = int(height * 0.58)
+
+        if is_desert:
+            # Pure empty Desert Dune environment concept
+            for y in range(horizon_y):
+                ratio = y / max(1, horizon_y)
+                r = int(50 + ratio * 170)
+                g = int(60 + ratio * 120)
+                b = int(80 + ratio * 35)
+                draw.line([(0, y), (width, y)], fill=(r, g, b))
+
+            # Blazing sun
+            sun_cx, sun_cy = int(width * 0.50), int(height * 0.22)
+            for sr in range(70, 0, -5):
+                sa = (1.0 - sr / 70.0) ** 1.6
+                draw.ellipse([(sun_cx - sr, sun_cy - sr), (sun_cx + sr, sun_cy + sr)], fill=(int(255 * sa), int(230 * sa), int(150 * sa)))
+
+            # Layered rolling sand dunes
+            dune_pts1 = [(0, horizon_y + 15)]
+            for step in range(0, width + 50, 50):
+                dy = int(math.sin(step * 0.008) * 35 + math.cos(step * 0.018) * 18)
+                dune_pts1.append((step, horizon_y + dy))
+            dune_pts1.extend([(width, height - 28), (0, height - 28)])
+            draw.polygon(dune_pts1, fill=(205, 140, 55), outline=(235, 170, 80), width=2)
+
+            dune_pts2 = [(0, horizon_y + 55)]
+            for step in range(0, width + 50, 40):
+                dy = int(math.sin((step + 180) * 0.010) * 32)
+                dune_pts2.append((step, horizon_y + 45 + dy))
+            dune_pts2.extend([(width, height - 28), (0, height - 28)])
+            draw.polygon(dune_pts2, fill=(170, 108, 40), outline=(210, 145, 65), width=2)
+
+            draw.rectangle([(16, 16), (width - 17, height - 32)], outline=(110, 80, 40), width=1)
+            draw.rectangle([(0, height - 28), (width, height)], fill=(8, 12, 18))
+            draw.text((16, height - 22), f"<Subject {scene_num}> ENVIRONMENT ARCHITECTURAL REFERENCE: {title.upper()} (EMPTY DESERT DUNES)", fill=(255, 200, 70))
+
+        elif is_cyber:
+            # Pure empty Cyberpunk city street concept
+            for y in range(horizon_y):
+                ratio = y / max(1, horizon_y)
+                r, g, b = int(12 + ratio * 45), int(16 + ratio * 20), int(45 + ratio * 85)
+                draw.line([(0, y), (width, y)], fill=(r, g, b))
+
+            # Skyscraper silhouettes
+            building_xs = [0, 80, 180, 310, 480, 620, 740, width]
+            for bi in range(len(building_xs) - 1):
+                bx1 = building_xs[bi]
+                bx2 = building_xs[bi + 1]
+                bh = int(height * (0.28 + (bi % 3) * 0.12))
+                draw.rectangle([(bx1, bh), (bx2 - 4, horizon_y)], fill=(16, 22, 34), outline=(35, 55, 80))
+
+            for y in range(horizon_y, height - 28):
+                ratio = (y - horizon_y) / max(1, height - horizon_y)
+                draw.line([(0, y), (width, y)], fill=(int(14 + ratio * 18), int(18 + ratio * 22), int(28 + ratio * 32)))
+
+            draw.rectangle([(16, 16), (width - 17, height - 32)], outline=(35, 55, 80), width=1)
+            draw.rectangle([(0, height - 28), (width, height)], fill=(8, 12, 18))
+            draw.text((16, height - 22), f"<Subject {scene_num}> ENVIRONMENT ARCHITECTURAL REFERENCE: {title.upper()} (EMPTY NEON CITY)", fill=(0, 220, 250))
+
+        elif is_temple:
+            # Ancient Temple Sanctuary with stone pillars
+            for y in range(horizon_y):
+                ratio = y / max(1, horizon_y)
+                draw.line([(0, y), (width, y)], fill=(int(15 + ratio * 25), int(20 + ratio * 35), int(40 + ratio * 55)))
+
+            # Pillars
+            for px in [int(width * 0.15), int(width * 0.35), int(width * 0.65), int(width * 0.85)]:
+                draw.rectangle([(px - 18, int(height * 0.18)), (px + 18, horizon_y)], fill=(24, 32, 46), outline=(60, 85, 120), width=2)
+                draw.rectangle([(px - 26, int(height * 0.16)), (px + 26, int(height * 0.20))], fill=(30, 42, 60), outline=(75, 105, 145))
+                draw.rectangle([(px - 26, horizon_y - 12), (px + 26, horizon_y)], fill=(30, 42, 60), outline=(75, 105, 145))
+
+            for y in range(horizon_y, height - 28):
+                ratio = (y - horizon_y) / max(1, height - horizon_y)
+                draw.line([(0, y), (width, y)], fill=(int(18 + ratio * 20), int(22 + ratio * 24), int(32 + ratio * 35)))
+
+            draw.rectangle([(16, 16), (width - 17, height - 32)], outline=(50, 75, 110), width=1)
+            draw.rectangle([(0, height - 28), (width, height)], fill=(8, 12, 18))
+            draw.text((16, height - 22), f"<Subject {scene_num}> ENVIRONMENT ARCHITECTURAL REFERENCE: {title.upper()} (EMPTY TEMPLE)", fill=(120, 210, 255))
+
+        else:
+            # General / Bedroom Architectural Interior layout (pure empty environment, NO people)
+            for y in range(horizon_y):
+                ratio = y / max(1, horizon_y)
+                if is_sunset:
+                    r, g, b = int(50 + ratio * 150), int(25 + ratio * 80), int(20 + ratio * 40)
+                else:
+                    r, g, b = int(15 + ratio * 35), int(22 + ratio * 45), int(40 + ratio * 75)
+                draw.line([(0, y), (width, y)], fill=(r, g, b))
+
+            desk_x2 = int(width * 0.42)
+            draw.rectangle([(int(width * 0.08), int(height * 0.22)), (desk_x2, horizon_y)], fill=(16, 20, 30), outline=(35, 55, 80))
+            bed_x1 = int(width * 0.58)
+            draw.rectangle([(bed_x1, int(height * 0.35)), (int(width * 0.92), horizon_y)], fill=(20, 24, 34), outline=(35, 55, 80))
+
+            for y in range(horizon_y, height - 28):
+                ratio = (y - horizon_y) / max(1, height - horizon_y)
+                draw.line([(0, y), (width, y)], fill=(int(14 + ratio * 18), int(16 + ratio * 18), int(28 + ratio * 32)))
+
+            draw.rectangle([(16, 16), (width - 17, height - 32)], outline=(35, 55, 80), width=1)
+            draw.rectangle([(0, height - 28), (width, height)], fill=(8, 12, 18))
+            draw.text((16, height - 22), f"<Subject {scene_num}> ENVIRONMENT ARCHITECTURAL REFERENCE: {title.upper()} (EMPTY LAYOUT)", fill=(0, 220, 250))
 
     arr = np.array(img, dtype=np.float32) / 255.0
     return torch.from_numpy(arr).unsqueeze(0)
@@ -519,6 +702,7 @@ def calculate_cinematic_shot_durations(
     total_duration: float,
     max_shot_duration: float,
     num_beats: int = 4,
+    allow_duration_expansion: bool = True,
 ) -> list[float]:
     """Calculate dynamically varying shot durations honoring max_shot_duration as a strict upper bound.
 
@@ -526,10 +710,21 @@ def calculate_cinematic_shot_durations(
     reaction/detail shots punchier and shorter), while guaranteeing:
     - Each shot duration <= max_shot_duration
     - Minimum shot duration >= 2.0s
-    - Sum of all shot durations == total_duration exactly
+    - When allow_duration_expansion is True and narrative beats require more time to breathe properly
+      (preventing unnaturally rushed shots below 3.2s), acts as 'force de proposition' and adapts total duration.
     """
     total = max(2.0, float(total_duration))
     max_dur = max(2.0, float(max_shot_duration))
+
+    # Dynamic adaptation: if the narrative beats require more time to breathe naturally,
+    # act as force de proposition and expand total duration rather than crushing shots.
+    min_comfortable_dur = 3.2
+    if allow_duration_expansion and num_beats > 1:
+        needed_total = num_beats * min_comfortable_dur
+        if needed_total > total:
+            # Propose an adapted total duration giving each shot natural pacing
+            adapted_total = min(num_beats * min(max_dur, 4.5), max(total, num_beats * min_comfortable_dur))
+            total = max(total, round(adapted_total, 1))
 
     min_shots = max(1, math.ceil(total / max_dur))
     max_possible_shots = max(1, int(total // 2.5))
@@ -712,6 +907,77 @@ def extract_subjects_from_story(story: str) -> tuple[tuple[str, str], tuple[str,
     return (c_name, c_desc), (e_name, e_desc), p_item
 
 
+def decompose_story_into_cinematic_beats(
+    story: str,
+    target_shots: int = 3,
+    char_name: str = "Protagonist",
+    env_name: str = "Environment",
+) -> list[str]:
+    """Expand brief or single-sentence stories into a compelling multi-beat cinematic narrative arc."""
+    clean = (story or "").strip()
+    raw = [s.strip() for s in re.split(r'[.!?;\n]+', clean) if len(s.strip()) > 3]
+
+    if len(raw) >= max(2, target_shots):
+        return raw
+
+    lower = clean.lower()
+    is_desert = any(k in lower for k in ["désert", "desert", "dune", "sable", "sand", "sahara", "oasis"])
+    is_cyber = any(k in lower for k in ["cyber", "neon", "robot", "pluie", "rain", "ville", "street", "alley", "tokyo"])
+    is_temple = any(k in lower for k in ["temple", "sanctuaire", "sanctuary", "ruines", "ruins", "autel", "altar", "pillar"])
+    is_forest = any(k in lower for k in ["forêt", "foret", "forest", "bois", "woods", "arbre", "tree", "nature"])
+    is_bedroom = any(k in lower for k in ["chambre", "bedroom", "lit", "bed", "réveille", "reveille", "écouteurs", "headphones"])
+
+    if is_desert:
+        beats = [
+            f"{char_name} se tient seul au sommet d'une immense dune de sable doré, observant l'immensité du désert sous un soleil écrasant.",
+            f"{char_name} descend la pente avec détermination, ses pas s'enfonçant dans le sable chaud tandis que le vent du désert soulève de fins nuages de poussière.",
+            f"Gros plan sur le visage marqué de {char_name}, plissant les yeux face aux mirages scintillants de la chaleur et scrutant l'horizon lointain.",
+            f"{char_name} aperçoit la silhouette intrigante d'une oasis émergeant à travers les vapeurs thermiques et reprend sa marche vers son but.",
+        ]
+    elif is_cyber:
+        beats = [
+            f"{char_name} s'avance prudemment dans les ruelles labyrinthiques d'une métropole néon sous une pluie battante réfléchie sur le bitume.",
+            f"{char_name} progresse d'un pas alerte, surveillant les coursives métalliques et consultant une balise holographique lumineuse.",
+            f"Plan rapproché sur le regard déterminé de {char_name}, les gouttes de pluie ruisselant sur sa tenue tandis que des reflets cyan et magenta s'animent.",
+            f"{char_name} accélère l'allure et disparaît silencieusement dans les ombres de la ville haute.",
+        ]
+    elif is_temple:
+        beats = [
+            f"{char_name} franchit le portail monumental d'un sanctuaire antique aux piliers colossaux baignés d'une lumière mystique.",
+            f"{char_name} progresse avec respect sur le dallage de pierre centenaire, contemplant les glyphes lumineux gravés dans la roche.",
+            f"Plan serré sur {char_name} découvrant une source d'énergie ancestrale pulsant d'une lueur bleutée.",
+            f"{char_name} s'approche de l'autel sacré, prêt à percer le secret de ce lieu hors du temps.",
+        ]
+    elif is_forest:
+        beats = [
+            f"{char_name} s'engage sur un sentier forestier brumeux où la lumière du soleil filtre à travers une canopée ancestrale.",
+            f"{char_name} avance d'un pas souple parmi les arbres moussus, attentif aux bruits de la nature sauvage.",
+            f"Plan rapproché sur {char_name} s'arrêtant un instant pour observer des empreintes fraîches sur le sol meuble.",
+            f"{char_name} débouche sur une clairière enchanteresse baignée d'une clarté dorée.",
+        ]
+    elif is_bedroom:
+        beats = [
+            f"{char_name} s'éveille paisiblement dans {env_name} au moment où les rayons matinaux illuminent la pièce.",
+            f"{char_name} s'assoit au bord du lit, contemple l'extérieur par la fenêtre et s'étire calmement.",
+            f"Plan rapproché sur {char_name} s'approchant du bureau pour saisir ses accessoires personnels.",
+            f"{char_name} traverse la pièce avec assurance et franchit la porte pour commencer sa journée.",
+        ]
+    else:
+        # Dynamic embellishment of whatever base sentence the user gave
+        base_subject = clean.rstrip(".!?,")
+        beats = [
+            f"Plan d'ensemble introduisant {char_name} dans {env_name}, établissant l'atmosphère visuelle et l'échelle du décor.",
+            f"{char_name} se met en marche et progresse avec fluidité : {base_subject}.",
+            f"Plan rapproché captant les micro-expressions et la détermination de {char_name} en pleine action.",
+            f"{char_name} accomplit son mouvement avec un impact visuel marquant, concluant la séquence avec force.",
+        ]
+
+    if len(raw) == 1 and not any(raw[0].lower().startswith(k) for k in ["un ", "une ", "le ", "la ", "a "]):
+        beats[1] = f"{char_name} progresse activement : {raw[0]}"
+
+    return beats[:max(target_shots, len(beats))]
+
+
 def enrich_cinematic_story_beat(
     beat: str,
     char_name: str,
@@ -733,6 +999,13 @@ def enrich_cinematic_story_beat(
     clean_beat = beat.strip().rstrip(".!?,")
 
     fr_replacements = [
+        (r"\bmarche dans le d[eé]sert sous un soleil br[uû]lant\b", "trudging relentlessly across vast golden sand dunes under an oppressive blazing sun"),
+        (r"\bmarche dans le d[eé]sert\b", "marching across vast golden sand dunes under harsh solar illumination"),
+        (r"\bdans le d[eé]sert\b", "in the vast arid desert expanse"),
+        (r"\bd[eé]couvre une oasis\b", "discovering an emerald oasis shimmering with cool waters amidst the golden sands"),
+        (r"\bregarde l'horizon\b", "halting to scan the shimmering heat waves distorting the distant desert horizon"),
+        (r"\bessuie la sueur\b", "wiping perspiration from forehead while shielding eyes from intense solar glare"),
+        (r"\bse tient seul\b", "standing solitary against the immense expanse, travel cloak billowing in dry desert wind"),
         (r"\bexplore les ruelles d'une ville n[eé]on sous la pluie battante\b", "exploring the labyrinthine neon-lit alleys under torrential rain, water cascading from awnings"),
         (r"\bexplore les ruelles\b", "navigating narrow rain-slicked city alleys with vibrant neon reflections"),
         (r"\brencontre un renard holographique lumineux\b", "encountering a luminescent holographic fox that flickers with ambient cyan particles"),
@@ -899,15 +1172,26 @@ def generate_local_storyboard(
         subjects.append(StoryboardSubject(next_idx, p_name, "prop", p_def, p_ret, p_img))
         next_idx += 1
 
-    raw_beats = [s.strip() for s in re.split(r'[.!?;\n]', clean_story) if s.strip()]
-    if not raw_beats:
-        raw_beats = [clean_story]
+    target_shots = max(1, math.ceil(total_duration / max(2.0, shot_duration)))
+    if target_shots <= 1 and total_duration >= 7.0:
+        target_shots = 3
+    elif target_shots == 2 and total_duration >= 12.0:
+        target_shots = 3
+
+    enriched_beats = decompose_story_into_cinematic_beats(
+        clean_story,
+        target_shots=target_shots,
+        char_name=char_name,
+        env_name=env1_name,
+    )
 
     # Calculate dynamic cinematic durations respecting shot_duration as an upper bound ceiling
+    # and allowing duration adaptation when the narrative beats require natural breathing room
     shot_durations = calculate_cinematic_shot_durations(
         total_duration=total_duration,
         max_shot_duration=shot_duration,
-        num_beats=len(raw_beats),
+        num_beats=len(enriched_beats),
+        allow_duration_expansion=True,
     )
     num_shots = len(shot_durations)
 
@@ -923,7 +1207,7 @@ def generate_local_storyboard(
         lighting = LIGHTING_MOODS[i % len(LIGHTING_MOODS)]
         ts_str = format_timestamp(current_time)
 
-        beat = raw_beats[i % len(raw_beats)]
+        beat = enriched_beats[i % len(enriched_beats)]
         lower_beat = beat.lower()
 
         # Check if beat specifically names one of the secondary environments
@@ -963,6 +1247,12 @@ def generate_local_storyboard(
             f"Shot: {stype}. Lighting: {lighting}. Style: {style_prompt}."
         )
 
+        clean_beat_img = clean_subject_def_for_image(beat)
+        img_prompt = (
+            f"Cinematic keyframe shot of {char_name} in {curr_env_name}: {clean_beat_img}, "
+            f"{stype.split('(')[0].strip()}, {lighting}, masterpiece, highly detailed, {style_prompt}"
+        )
+
         scenes.append(
             StoryboardScene(
                 index=idx,
@@ -975,7 +1265,7 @@ def generate_local_storyboard(
                 lighting=lighting,
                 visual_prompt=prompt_content,
                 full_prompt=full_prompt,
-                image_prompt=prompt_content,
+                image_prompt=img_prompt,
                 continuity_visual=(i > 0),
                 continuity_audio=(i > 0),
             )
@@ -1032,7 +1322,7 @@ def generate_llm_storyboard(
         "2. CHARACTER TURNAROUND SHEETS: Character reference image prompts MUST specify multi-angle turnaround model sheets (front view, three-quarter view, profile side view, clean neutral studio background, no background scenery, no environment).\n"
         "3. SEPARATE DECOR REFERENCES: Environment reference image prompts MUST specify pure empty environments without any people or characters, showing spatial architecture and layout.\n"
         "4. REUSE REFERENCES ACROSS SCENES: Re-use the exact same <Picture 1> across all scenes for the character. Re-use <Picture 2> (or subsequent decor) across all scenes set in that location. Never duplicate references for the same subject.\n"
-        f"5. DYNAMIC SHOT DURATIONS: Assign dynamic durations (between 2.5s and {shot_duration}s) respecting shot_duration as a maximum ceiling. Sum must strictly equal {total_duration}s.\n"
+        f"5. DYNAMIC SHOT DURATIONS: Assign dynamic durations (between 2.5s and {shot_duration}s) respecting shot_duration as a maximum ceiling. You are EMPOWERED as force de proposition to adapt the total duration if your narrative embellishment requires more time to develop the scene cinematically without rushing.\n"
         "6. STRICT SUBJECT TAGGING: Always use <Subject 1>, <Subject 2>, <Picture 1>, <Picture 2> in definitions and shot descriptions.\n"
         "Return ONLY a valid JSON object matching this schema:\n"
         "{\n"
@@ -1146,16 +1436,12 @@ def generate_llm_storyboard(
         raw_shots = parsed.get("shots") or []
         num_raw = len(raw_shots) or target_shots
 
-        # Parse or compute dynamic shot durations
+        # Parse or compute dynamic shot durations (acting as force de proposition if adapted)
         parsed_durations = [float(s.get("duration") or 0.0) for s in raw_shots if isinstance(s, dict)]
-        if len(parsed_durations) == len(raw_shots) and all(0.5 < d <= shot_duration + 0.5 for d in parsed_durations):
-            # Scale to match total_duration exactly
-            scale = total_duration / max(0.1, sum(parsed_durations))
-            durations = [round(d * scale, 1) for d in parsed_durations]
-            diff = round(total_duration - sum(durations), 1)
-            durations[-1] = round(durations[-1] + diff, 1)
+        if len(parsed_durations) == len(raw_shots) and all(1.5 <= d <= shot_duration + 1.0 for d in parsed_durations):
+            durations = [round(d, 1) for d in parsed_durations]
         else:
-            durations = calculate_cinematic_shot_durations(total_duration, shot_duration, num_raw)
+            durations = calculate_cinematic_shot_durations(total_duration, shot_duration, num_raw, allow_duration_expansion=True)
 
         scenes: list[StoryboardScene] = []
         curr_t = 0.0
@@ -1249,8 +1535,9 @@ def generate_llm_scenes(
     return sb_data.scenes if sb_data else None
 
 
-def generate_subject_reference_images(
+def generate_storyboard_reference_images(
     subjects: list[StoryboardSubject],
+    scenes: list[StoryboardScene] | None = None,
     *,
     width: int,
     height: int,
@@ -1263,17 +1550,20 @@ def generate_subject_reference_images(
     negative_prompt: str = DEFAULT_NEGATIVE_PROMPT,
     external_images: torch.Tensor | None = None,
 ) -> tuple[torch.Tensor, list[str]]:
-    """Generate canonical AI reference images for each Subject (<Picture 1>, <Picture 2>)."""
+    """Generate canonical AI reference images for Subjects and Keyframe Compositions for Scenes (up to 9 reference slots)."""
     generated_tensors: list[torch.Tensor] = []
     b64_list: list[str] = []
 
     has_diffusion = model is not None and clip is not None and vae is not None
     ext_count = int(external_images.shape[0]) if external_images is not None and external_images.ndim == 4 else 0
+    MAX_R2V_REFERENCES = 9
 
+    # Tier 1: Generate reference images for design Subjects (Character turnaround sheets, pure empty environments, props)
     for i, subj in enumerate(subjects):
+        if len(generated_tensors) >= MAX_R2V_REFERENCES:
+            break
         img_tensor: torch.Tensor | None = None
 
-        # Option A: Real Diffusion AI Image Generation
         if has_diffusion:
             try:
                 comfy_core = get_comfy_core()
@@ -1311,12 +1601,10 @@ def generate_subject_reference_images(
                 log.warning("Diffusion reference generation failed for %s: %s", subj.subject_tag, diff_exc)
                 img_tensor = None
 
-        # Option B: External supplied image batch
-        if img_tensor is None and ext_count > 0:
-            pick_idx = min(i, ext_count - 1)
+        if img_tensor is None and ext_count > len(generated_tensors):
+            pick_idx = len(generated_tensors)
             img_tensor = external_images[pick_idx : pick_idx + 1]
 
-        # Option C: Stylized Visual Concept Art fallback
         if img_tensor is None:
             img_tensor = render_storyboard_visual_concept(
                 scene_num=subj.index,
@@ -1326,33 +1614,148 @@ def generate_subject_reference_images(
                 category=subj.category,
                 width=width,
                 height=height,
-                seed=seed,
+                seed=seed + i * 17,
             )
 
         subj.image_tensor = img_tensor
         b64_str = tensor_to_b64_jpeg(img_tensor)
         subj.image_b64 = b64_str
 
-        # Save reference image to ComfyUI input folder for persistent file loading and preview in Director
         try:
             import folder_paths
             input_dir = folder_paths.get_input_directory()
             safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', subj.name).strip('_').lower() or f"subj_{subj.index}"
-            fname = f"story_ref_{subj.index}_{safe_name}.png"
+            fname = f"story_ref_subject_{subj.index}_{safe_name}.png"
             fpath = os.path.join(input_dir, fname)
             t_slice = img_tensor[0] if img_tensor.ndim == 4 else img_tensor
             arr = (t_slice.detach().cpu().clamp(0.0, 1.0).numpy() * 255.0).astype(np.uint8)
             Image.fromarray(arr, mode="RGB").save(fpath, format="PNG")
             subj.image_file = fname
-            log.info("Story Director: Saved reference image to %s", fpath)
+            log.info("Story Director: Saved Subject reference image to %s", fpath)
         except Exception as save_exc:
             log.debug("Notice: Could not save reference image to input folder: %s", save_exc)
             subj.image_file = ""
+
         generated_tensors.append(img_tensor)
         b64_list.append(b64_str)
 
+    # Tier 2: Generate Keyframe Composition references for each Scene (in situation)
+    if scenes:
+        for j, s in enumerate(scenes):
+            if len(generated_tensors) >= MAX_R2V_REFERENCES:
+                break
+            ref_idx = len(generated_tensors) + 1
+            img_tensor: torch.Tensor | None = None
+
+            if has_diffusion:
+                try:
+                    comfy_core = get_comfy_core()
+                    if comfy_core:
+                        encoder = comfy_core.CLIPTextEncode()
+                        scene_img_prompt = s.image_prompt or s.visual_prompt
+                        pos_cond = encoder.encode(clip, scene_img_prompt)[0]
+                        neg_cond = encoder.encode(clip, negative_prompt)[0]
+
+                        latent_channels = 4
+                        if hasattr(model, "model") and hasattr(model.model, "latent_format"):
+                            latent_channels = getattr(model.model.latent_format, "latent_channels", 4) or 4
+                        elif hasattr(model, "latent_format"):
+                            latent_channels = getattr(model.latent_format, "latent_channels", 4) or 4
+
+                        latent_w = max(4, width // 8)
+                        latent_h = max(4, height // 8)
+                        empty_latent = {"samples": torch.zeros([1, latent_channels, latent_h, latent_w])}
+
+                        sampled = comfy_core.common_ksampler(
+                            model=model,
+                            seed=seed + 101 + j * 43,
+                            steps=steps,
+                            cfg=cfg,
+                            sampler_name="euler",
+                            scheduler="normal",
+                            positive=pos_cond,
+                            negative=neg_cond,
+                            latent=empty_latent,
+                            denoise=1.0,
+                        )
+                        decoded = vae.decode(sampled[0]["samples"])
+                        img_tensor = decoded[:1]
+                        log.info("Story Director: Generated Scene Keyframe Composition for Plan %d (%s)", s.index, s.title)
+                except Exception as diff_exc:
+                    log.warning("Diffusion scene composition generation failed for Plan %d: %s", s.index, diff_exc)
+                    img_tensor = None
+
+            if img_tensor is None and ext_count > len(generated_tensors):
+                pick_idx = len(generated_tensors)
+                img_tensor = external_images[pick_idx : pick_idx + 1]
+
+            if img_tensor is None:
+                img_tensor = render_storyboard_visual_concept(
+                    scene_num=ref_idx,
+                    title=s.title or f"Plan {s.index}",
+                    story_snippet=s.visual_prompt,
+                    lighting=s.lighting,
+                    category="scene",
+                    width=width,
+                    height=height,
+                    seed=seed + 200 + j * 79,
+                )
+
+            s.image_tensor = img_tensor
+            b64_str = tensor_to_b64_jpeg(img_tensor)
+            s.image_b64 = b64_str
+
+            try:
+                import folder_paths
+                input_dir = folder_paths.get_input_directory()
+                safe_title = re.sub(r'[^a-zA-Z0-9_-]', '_', s.title or f"plan_{s.index}").strip('_').lower()
+                fname = f"story_ref_scene_{s.index}_{safe_title}.png"
+                fpath = os.path.join(input_dir, fname)
+                t_slice = img_tensor[0] if img_tensor.ndim == 4 else img_tensor
+                arr = (t_slice.detach().cpu().clamp(0.0, 1.0).numpy() * 255.0).astype(np.uint8)
+                Image.fromarray(arr, mode="RGB").save(fpath, format="PNG")
+                s.image_file = fname
+                log.info("Story Director: Saved Scene Keyframe reference image to %s", fpath)
+            except Exception as save_exc:
+                log.debug("Notice: Could not save scene reference image to input folder: %s", save_exc)
+                s.image_file = ""
+
+            generated_tensors.append(img_tensor)
+            b64_list.append(b64_str)
+
     batch_tensor = torch.cat(generated_tensors, dim=0) if generated_tensors else torch.zeros([1, height, width, 3])
     return batch_tensor, b64_list
+
+
+def generate_subject_reference_images(
+    subjects: list[StoryboardSubject],
+    *,
+    width: int,
+    height: int,
+    model=None,
+    clip=None,
+    vae=None,
+    steps: int = 20,
+    cfg: float = 6.5,
+    seed: int = 0,
+    negative_prompt: str = DEFAULT_NEGATIVE_PROMPT,
+    external_images: torch.Tensor | None = None,
+) -> tuple[torch.Tensor, list[str]]:
+    """Backward compatibility wrapper generating canonical AI reference images for subjects."""
+    return generate_storyboard_reference_images(
+        subjects,
+        scenes=None,
+        width=width,
+        height=height,
+        model=model,
+        clip=clip,
+        vae=vae,
+        steps=steps,
+        cfg=cfg,
+        seed=seed,
+        negative_prompt=negative_prompt,
+        external_images=external_images,
+    )
 
 
 def generate_scene_reference_images(
@@ -1381,8 +1784,9 @@ def generate_scene_reference_images(
         )
         for s in scenes
     ]
-    batch_tensor, b64_list = generate_subject_reference_images(
+    batch_tensor, b64_list = generate_storyboard_reference_images(
         dummy_subjects,
+        scenes=None,
         width=width,
         height=height,
         model=model,
@@ -1412,18 +1816,23 @@ def build_director_timeline(
     fps: float = 24.0,
     ref_max_size: int = 864,
 ) -> dict[str, Any]:
-    """Assemble a compliant MiniMax H3 Motion Director timeline specification using canonical references."""
+    """Assemble a compliant MiniMax H3 Motion Director timeline specification using logically assigned references."""
     import copy
 
     total_frames = sum(max(5, int(round(s.duration * fps))) for s in scenes)
 
-    # Reference pictures from subjects or scenes
-    ref_pictures: list[dict[str, Any]] = []
+    # 1. Catalog all generated reference assets (subjects + scene compositions)
+    char_refs: list[dict[str, Any]] = []
+    env_refs_by_index: dict[int, dict[str, Any]] = {}
+    companion_refs: list[dict[str, Any]] = []
+    prop_refs: list[dict[str, Any]] = []
+    all_pool_refs: list[dict[str, Any]] = []
+
     if subjects:
         for subj in subjects:
             if subj.image_b64 or getattr(subj, "image_file", ""):
-                idx = len(ref_pictures)
-                ref_pictures.append({
+                idx = len(all_pool_refs)
+                ref_item = {
                     "index": idx,
                     "slot": idx,
                     "imageFile": getattr(subj, "image_file", "") or "",
@@ -1431,30 +1840,97 @@ def build_director_timeline(
                     "imageB64": subj.image_b64 or "",
                     "assetId": f"subject-{subj.index}",
                     "name": subj.name,
+                    "category": subj.category,
+                    "subject_index": subj.index,
                     "type": "input",
-                })
+                }
+                all_pool_refs.append(ref_item)
+                if subj.category == "character":
+                    if subj.index == 1 or not char_refs:
+                        char_refs.append(ref_item)
+                    else:
+                        companion_refs.append(ref_item)
+                elif subj.category == "environment":
+                    env_refs_by_index[subj.index] = ref_item
+                elif subj.category == "prop":
+                    prop_refs.append(ref_item)
+
+    scene_comp_refs_by_scene: dict[int, dict[str, Any]] = {}
     if scenes:
         for s in scenes:
-            if s.image_b64 or getattr(s, "image_file", ""):
-                scene_name = s.title or f"Plan {s.index}"
-                if not any(r.get("name") == scene_name for r in ref_pictures):
-                    idx = len(ref_pictures)
-                    ref_pictures.append({
-                        "index": idx,
-                        "slot": idx,
-                        "imageFile": getattr(s, "image_file", "") or "",
-                        "fileName": getattr(s, "image_file", "") or "",
-                        "imageB64": s.image_b64 or "",
-                        "assetId": f"scene-{s.index}",
-                        "name": scene_name,
-                        "type": "input",
-                    })
+            s_file = getattr(s, "image_file", "") or ""
+            s_b64 = s.image_b64 or ""
+            if s_file or s_b64:
+                if not any(r.get("imageFile") == s_file and r.get("imageB64") == s_b64 for r in all_pool_refs if s_file or s_b64):
+                    if len(all_pool_refs) < 9:
+                        idx = len(all_pool_refs)
+                        comp_item = {
+                            "index": idx,
+                            "slot": idx,
+                            "imageFile": s_file,
+                            "fileName": s_file,
+                            "imageB64": s_b64,
+                            "assetId": f"scene-comp-{s.index}",
+                            "name": f"Composition {s.title or f'Plan {s.index}'}",
+                            "category": "scene_composition",
+                            "scene_index": s.index,
+                            "type": "input",
+                        }
+                        all_pool_refs.append(comp_item)
+                        scene_comp_refs_by_scene[s.index] = comp_item
 
     effective_prompt = full_h3_prompt or (scenes[0].full_prompt if scenes else "")
+
+    def get_curated_refs_for_scene(s: StoryboardScene) -> list[dict[str, Any]]:
+        curated: list[dict[str, Any]] = []
+        # 1. Character Turnaround Sheet
+        if char_refs:
+            curated.append(copy.deepcopy(char_refs[0]))
+
+        # 2. Environment Concept for this scene (reused if same decor!)
+        s_text = (s.visual_prompt + " " + s.full_prompt + " " + s.title).lower()
+        active_env_ref = None
+        for s_idx, e_ref in env_refs_by_index.items():
+            e_name_kw = e_ref["name"].lower().split()[0]
+            if e_name_kw in s_text:
+                active_env_ref = e_ref
+                break
+        if not active_env_ref and env_refs_by_index:
+            first_env_idx = min(env_refs_by_index.keys())
+            active_env_ref = env_refs_by_index[first_env_idx]
+        if active_env_ref and not any(r["assetId"] == active_env_ref["assetId"] for r in curated):
+            curated.append(copy.deepcopy(active_env_ref))
+
+        # 3. Specific Scene Keyframe Composition Reference
+        if s.index in scene_comp_refs_by_scene:
+            curated.append(copy.deepcopy(scene_comp_refs_by_scene[s.index]))
+
+        # 4. Companion or Prop if present in scene
+        for comp_ref in companion_refs:
+            if comp_ref["name"].lower().split()[0] in s_text and not any(r["assetId"] == comp_ref["assetId"] for r in curated):
+                curated.append(copy.deepcopy(comp_ref))
+        for p_ref in prop_refs:
+            if p_ref["name"].lower().split()[0] in s_text and not any(r["assetId"] == p_ref["assetId"] for r in curated):
+                curated.append(copy.deepcopy(p_ref))
+
+        # Backwards compatibility fallback if no scene compositions exist
+        if len(curated) < 2 and len(all_pool_refs) >= 2:
+            for r in all_pool_refs:
+                if not any(cr["assetId"] == r["assetId"] for cr in curated):
+                    curated.append(copy.deepcopy(r))
+
+        if not curated:
+            curated = [copy.deepcopy(r) for r in all_pool_refs]
+
+        return curated
 
     if director_mode.lower() == "mixed":
         mixed_segments = []
         for s in scenes:
+            curated_pics = get_curated_refs_for_scene(s)
+            start_pic_file = getattr(s, "image_file", "") or (curated_pics[0]["imageFile"] if curated_pics else "")
+            start_pic_b64 = s.image_b64 or (curated_pics[0]["imageB64"] if curated_pics else "")
+
             seg_dict: dict[str, Any] = {
                 "id": f"seg_{s.index}",
                 "mode": "r2v",
@@ -1462,11 +1938,11 @@ def build_director_timeline(
                 "duration": float(s.duration),
                 "inputs": {
                     "resultRefs": [],
-                    "pictures": [copy.deepcopy(r) for r in ref_pictures],
-                    "identityPictures": [copy.deepcopy(r) for r in ref_pictures],
+                    "pictures": [copy.deepcopy(r) for r in curated_pics],
+                    "identityPictures": [copy.deepcopy(r) for r in curated_pics],
                     "startFrame": {
-                        "imageFile": getattr(s, "image_file", "") or (ref_pictures[0]["imageFile"] if ref_pictures else ""),
-                        "imageB64": s.image_b64 or (ref_pictures[0]["imageB64"] if ref_pictures else ""),
+                        "imageFile": start_pic_file,
+                        "imageB64": start_pic_b64,
                     },
                 },
                 "continuity": {
@@ -1497,39 +1973,28 @@ def build_director_timeline(
             "global": {
                 "taskType": "r2v",
                 "prompt": effective_prompt,
-                "refs": [copy.deepcopy(r) for r in ref_pictures],
+                "refs": [copy.deepcopy(r) for r in all_pool_refs],
             },
             "segments": mixed_segments,
         }
         return timeline_dict
 
-    # Standard / Global timeline structure
+    # Standard / Batch timeline structure
     cursor = 0
     std_segments = []
-    task_key = "r2v" if (director_mode in ("r2v", "mixed") or ref_pictures) else director_mode
+    task_key = "r2v" if (director_mode in ("r2v", "mixed") or all_pool_refs) else director_mode
     is_batch_task = task_key in ("r2v", "t2v", "i2v", "r2i", "t2i", "i2i")
 
     for s in scenes:
         seg_frames = max(5, int(round(s.duration * fps)))
+        curated_refs = get_curated_refs_for_scene(s)
         seg_refs: list[dict[str, Any]] = []
-        for r in ref_pictures:
+        for j, r in enumerate(curated_refs):
             r_copy = copy.deepcopy(r)
-            r_copy["assetId"] = f"segment-s{s.index - 1}-picture-{r['index'] + 1}"
+            r_copy["slot"] = j
+            r_copy["assetId"] = f"segment-s{s.index - 1}-picture-{j + 1}"
             seg_refs.append(r_copy)
 
-        if s.image_b64 or getattr(s, "image_file", ""):
-            scene_name = s.title or f"Plan {s.index}"
-            if not any(r.get("name") == scene_name for r in seg_refs):
-                seg_refs.append({
-                    "index": len(seg_refs),
-                    "slot": len(seg_refs),
-                    "imageFile": getattr(s, "image_file", "") or "",
-                    "fileName": getattr(s, "image_file", "") or "",
-                    "imageB64": s.image_b64 or "",
-                    "assetId": f"segment-s{s.index - 1}-scene-{s.index}",
-                    "name": scene_name,
-                    "type": "input",
-                })
         std_segments.append(
             {
                 "id": f"s{s.index - 1}",
@@ -1576,7 +2041,7 @@ def build_director_timeline(
                     **copy.deepcopy(r),
                     "assetId": f"global-picture-{r['index'] + 1}",
                 }
-                for r in ref_pictures
+                for r in all_pool_refs
             ],
         },
         "r2vCommon": {
@@ -1585,7 +2050,7 @@ def build_director_timeline(
                     **copy.deepcopy(r),
                     "assetId": f"common-picture-{r['index'] + 1}",
                 }
-                for r in ref_pictures
+                for r in all_pool_refs
             ],
             "refVideos": [],
             "refAudios": [],

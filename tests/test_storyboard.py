@@ -227,7 +227,8 @@ class TestStoryboardModule(unittest.TestCase):
             control_after_generate="fixed",
         )
         self.assertIsInstance(sb, dict)
-        self.assertEqual(imgs.shape, (2, 480, 864, 3))
+        self.assertGreaterEqual(imgs.shape[0], 2)
+        self.assertEqual(imgs.shape[1:], (480, 864, 3))
         self.assertIn("<Subject 1> Girl, based on <Picture 1>", summary)
         self.assertIn("<Subject 2> Bedroom, based on <Picture 2>", summary)
 
@@ -250,7 +251,7 @@ class TestStoryboardModule(unittest.TestCase):
             control_after_generate="fixed",
         )
         self.assertIsInstance(sb, dict)
-        self.assertEqual(imgs.shape[0], 2)
+        self.assertGreaterEqual(imgs.shape[0], 2)
 
     def test_dynamic_shot_durations_and_embellishment(self):
         from director.storyboard import calculate_cinematic_shot_durations, generate_local_storyboard
@@ -375,7 +376,7 @@ class TestStoryboardHttpRoute(unittest.IsolatedAsyncioTestCase):
         self.assertIn("prompt", data)
         self.assertGreaterEqual(len(data.get("scenes", [])), 2)
         self.assertGreaterEqual(len(data.get("subjects", [])), 2)
-        self.assertEqual(len(data.get("reference_images", [])), len(data.get("subjects", [])))
+        self.assertGreaterEqual(len(data.get("reference_images", [])), len(data.get("subjects", [])))
 
     def test_build_director_timeline_file_and_persistence(self):
         from director.storyboard import StoryboardSubject, StoryboardScene, build_director_timeline
@@ -443,6 +444,68 @@ class TestStoryboardHttpRoute(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(seg0_refs[0]["imageFile"], "story_ref_1_cyberpunk_knight.png")
         self.assertEqual(seg0_refs[0]["fileName"], "story_ref_1_cyberpunk_knight.png")
         self.assertEqual(seg0_refs[0]["type"], "input")
+
+    def test_desert_logical_references_and_duration_adaptation(self):
+        """Test user's desert use-case: Character sheet (P1), desert landscape (P2), scene composition (P3)."""
+        from director.storyboard import (
+            StoryboardSubject,
+            StoryboardScene,
+            build_director_timeline,
+            generate_local_storyboard,
+            generate_storyboard_reference_images,
+        )
+
+        user_story = "Une personne marche dans le désert sous un soleil écrasant."
+        # Generate storyboard with embellished beats
+        sb_data = generate_local_storyboard(
+            story=user_story,
+            total_duration=10.0,
+            shot_duration=4.0,
+            style_prompt="8k, masterpiece",
+        )
+        # Verify narrative expansion decomposed into at least 3 shots
+        self.assertGreaterEqual(len(sb_data.scenes), 3)
+        # Verify duration adaptation ("force de proposition"):
+        # For 3-4 shots with comfortable pacing, total duration is adapted
+        scene_dur_sum = sum(s.duration for s in sb_data.scenes)
+        self.assertGreaterEqual(scene_dur_sum, 10.0)
+
+        # Generate multi-tier reference images (subjects + scene compositions)
+        batch_tensor, b64_list = generate_storyboard_reference_images(
+            subjects=sb_data.subjects,
+            scenes=sb_data.scenes,
+            width=864,
+            height=480,
+        )
+        # Must generate more than 2 images (character sheet + desert decor + scene keyframes)
+        total_expected = len(sb_data.subjects) + len(sb_data.scenes)
+        self.assertEqual(batch_tensor.shape[0], total_expected)
+        self.assertEqual(len(b64_list), total_expected)
+
+        # Build timeline and verify logical assignment
+        timeline = build_director_timeline(
+            sb_data.scenes,
+            subjects=sb_data.subjects,
+            director_mode="r2v",
+        )
+        self.assertEqual(timeline["timelineMode"], "prompt_batch")
+        common_refs = timeline["r2vCommon"]["refs"]
+        self.assertEqual(len(common_refs), total_expected)
+
+        # In each scene, refs must contain:
+        # 1. Character sheet (subject-1)
+        # 2. Desert environment (subject-2)
+        # 3. Scene-specific composition keyframe
+        for i, seg in enumerate(timeline["segments"]):
+            seg_refs = seg["refs"]
+            self.assertGreaterEqual(len(seg_refs), 3)
+            # Subject 1 is character
+            self.assertEqual(seg_refs[0]["subject_index"], 1)
+            # Subject 2 is desert decor (reused across scenes)
+            self.assertEqual(seg_refs[1]["subject_index"], 2)
+            # Item 3 is specific scene composition
+            self.assertEqual(seg_refs[2]["category"], "scene_composition")
+            self.assertEqual(seg_refs[2]["scene_index"], i + 1)
 
 
 if __name__ == "__main__":

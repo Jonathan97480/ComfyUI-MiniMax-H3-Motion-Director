@@ -420,3 +420,32 @@ The **MiniMax H3 AI Story Director** node turns any narrative script or plot ide
 5. **Direct Connection to Motion Director**:
    - Connect `storyboard` output directly to the `storyboard` socket on **MiniMax H3 Motion Director**.
    - Open the Director modal to view all generated scenes, prompts, camera directions, and visual references ready to run!
+
+
+---
+
+## ⚡ Deno MiniMax H3 Reference-to-Video Workflow (7+1 Sol-Attn) — 12GB VRAM Optimized
+
+The [`addon/`](addon/) directory bundles the complete, standalone **Deno MiniMax H3 R2V (7+1 MemOpt Sol)** workflow along with its **1-click automatic installer**:
+
+### 7+1 Sol-Attn Workflow Highlights
+- **Image & Audio-Guided Video Generation (R2V)**: 7 steps at base resolution + 1 final refinement step after 2x 3D latent upscaling.
+- **Optimized for 12GB VRAM GPUs (RTX 3060 / 4070)**: With the bundled memory patches in `addon/patches/`, this high-resolution workflow (upscaled to 2K / 2.5K) executes smoothly without GPU Out Of Memory errors.
+
+### Automatic Installer (`addon/Install-Deno-Minimax-H3-R2V.bat`)
+Simply run the script to:
+1. **Clone or update** all required custom nodes:
+   - `Deno2026/comfyui-deno-custom-nodes`
+   - `Zironic/H3-Optimizations`
+   - `LBH-123-AI/Comfyui_Minimax_h3_latent_Upscaler`
+   - `Kosinkadink/ComfyUI-VideoHelperSuite`
+   - `kijai/comfyui-kjnodes`
+   - `Jonathan97480/ComfyUI-MiniMax-H3-Motion-Director`
+2. **Automatically apply all node patches and low-VRAM optimizations** via [`addon/apply_vram_optimizations.py`](addon/apply_vram_optimizations.py):
+   - `int8_linear` streaming in `comfy_kitchen` (**-4.5 GB peak VRAM**).
+   - In-place sequential `rms_rope_split_half_` in `comfy_kitchen` (**-3.2 GB peak VRAM**).
+   - Native `bfloat16` alignment in `comfy/ldm/minimax/model.py` ensuring `sol-attn` sparse attention stays active during the 2x upscale stage.
+   - Compatibility fixes for Deno Audio JSON parsing and 3D Latent Upscaler deserialization.
+   - Automatic configuration of `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` and `--disable-comfy-compiler` in startup `.bat` files.
+3. **Deploy the workflow** [`Deno_minimax_final_R2V_7+1_memopt_Sol.json`](addon/Deno_minimax_final_R2V_7+1_memopt_Sol.json) to `ComfyUI/user/default/workflows/MiniMax-H3/`.
+4. **Directly download** all required model weights from HuggingFace (Singularity INT8 diffusion, Qwen3-VL 32B text encoder, DMD Turbo 8-step LoRA, 3D Latent Upscaler, Video & Audio VAEs).

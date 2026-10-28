@@ -186,6 +186,25 @@ if errorlevel 1 (
 
 echo        OK - Dependances Python pretes.
 
+rem ---------------------------------------------------------------- 3.5 Apply VRAM Optimizations & Patches
+echo.
+echo  [2.5/5] Application des correctifs de noeuds et optimisations VRAM [12GB RTX 3060 ready]...
+
+set "OPT_PY="
+if exist "%~dp0apply_vram_optimizations.py" set "OPT_PY=%~dp0apply_vram_optimizations.py"
+if not defined OPT_PY if exist "%CN%\ComfyUI-MiniMax-H3-Motion-Director\addon\apply_vram_optimizations.py" set "OPT_PY=%CN%\ComfyUI-MiniMax-H3-Motion-Director\addon\apply_vram_optimizations.py"
+
+if defined OPT_PY (
+    "%PY%" "%OPT_PY%"
+) else (
+    echo        Telechargement de apply_vram_optimizations.py depuis GitHub...
+    set "OPT_URL=https://raw.githubusercontent.com/Jonathan97480/ComfyUI-MiniMax-H3-Motion-Director/main/addon/apply_vram_optimizations.py"
+    call :download "!OPT_URL!" "%TEMP%\apply_vram_optimizations.py"
+    if exist "%TEMP%\apply_vram_optimizations.py" (
+        "%PY%" "%TEMP%\apply_vram_optimizations.py"
+    )
+)
+
 rem ---------------------------------------------------------------- 4. Scan & Download Models
 echo.
 echo  [3/5] Analyse des modeles H3 et Upscaler requis...

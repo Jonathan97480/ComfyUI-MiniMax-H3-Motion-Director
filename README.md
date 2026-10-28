@@ -298,3 +298,32 @@ Le nœud **MiniMax H3 AI Story Director** permet de créer automatiquement une v
 5. **Connexion directe au Motion Director** :
    - Reliez simplement la sortie `storyboard` du nouveau nœud à la nouvelle entrée `storyboard` du **MiniMax H3 Motion Director**.
    - Ouvrez la fenêtre du Director pour voir instantanément l'ensemble des scènes, durées, prompts et images de référence configurés automatiquement !
+
+
+---
+
+## ⚡ Workflow Deno MiniMax H3 Reference-to-Video (7+1 Sol-Attn) — Optimisé 12GB VRAM
+
+Le dossier [`addon/`](addon/) intègre le flux de travail de référence complet et autonome **Deno MiniMax H3 R2V (7+1 MemOpt Sol)** ainsi que son **installateur automatique en 1 clic** :
+
+### Points forts du flux 7+1 Sol-Attn
+- **Génération vidéo guidée par images et audio (R2V)** : Génération 7 étapes à résolution de base + 1 étape finale après agrandissement latent 3D 2x.
+- **Optimisé pour les cartes 12 Go (RTX 3060 / 4070)** : Grâce aux patchs mémoire intégrés dans `addon/patches/`, ce workflow haute résolution (upscale 2K / 2.5K) s'exécute sans dépassement de VRAM (Out Of Memory).
+
+### Script d'installation automatique (`addon/Install-Deno-Minimax-H3-R2V.bat`)
+Lancez simplement le script pour :
+1. **Cloner ou mettre à jour** tous les nœuds personnalisés indispensables :
+   - `Deno2026/comfyui-deno-custom-nodes`
+   - `Zironic/H3-Optimizations`
+   - `LBH-123-AI/Comfyui_Minimax_h3_latent_Upscaler`
+   - `Kosinkadink/ComfyUI-VideoHelperSuite`
+   - `kijai/comfyui-kjnodes`
+   - `Jonathan97480/ComfyUI-MiniMax-H3-Motion-Director`
+2. **Appliquer automatiquement tous les correctifs et optimisations mémoire** via [`addon/apply_vram_optimizations.py`](addon/apply_vram_optimizations.py) :
+   - `int8_linear` streaming dans `comfy_kitchen` (**-4.5 Go de pic VRAM**).
+   - `rms_rope_split_half_` in-place séquentiel dans `comfy_kitchen` (**-3.2 Go de pic VRAM**).
+   - Alignement `bfloat16` natif dans `comfy/ldm/minimax/model.py` pour maintenir l'attention sparse `sol-attn` active lors de la passe 2x.
+   - Correctifs de validation JSON pour le chargeur audio Deno et compatibilité Upscaler 3D.
+   - Configuration de `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` et `--disable-comfy-compiler` dans les scripts de lancement ComfyUI.
+3. **Déployer le flux** [`Deno_minimax_final_R2V_7+1_memopt_Sol.json`](addon/Deno_minimax_final_R2V_7+1_memopt_Sol.json) dans `ComfyUI/user/default/workflows/MiniMax-H3/`.
+4. **Télécharger directement** depuis HuggingFace tous les modèles nécessaires (diffusion INT8 Singularity, encodeur de texte Qwen3-VL 32B, LoRA Turbo 8-step, Upscaler latent 3D, VAEs vidéo et audio).

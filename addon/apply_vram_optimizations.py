@@ -50,16 +50,87 @@ def find_comfy_and_site_packages():
             break
 
     if site_packages is None and comfy_dir:
-        cand = os.path.join(os.path.dirname(comfy_dir), "python_embeded", "Lib", "site-packages")
-        if os.path.isdir(cand):
-            site_packages = cand
+        candidates = [
+            os.path.join(os.path.dirname(comfy_dir), "python_embeded", "Lib", "site-packages"),
+            os.path.join(comfy_dir, ".venv", "Lib", "site-packages"),
+            os.path.join(comfy_dir, "venv", "Lib", "site-packages"),
+            os.path.join(os.path.dirname(comfy_dir), ".venv", "Lib", "site-packages"),
+            os.path.join(os.path.dirname(comfy_dir), "venv", "Lib", "site-packages"),
+        ]
+        for cand in candidates:
+            if os.path.isdir(os.path.join(cand, "comfy_kitchen")):
+                site_packages = cand
+                break
 
     return comfy_dir, site_packages
+
+FALLBACK_MODULATED_CODE = """
+
+def _modulate_int8_input(x: torch.Tensor, scale: torch.Tensor) -> torch.Tensor:
+    \"\"\"Materialize the portable batch-one modulation contract once.\"\"\"
+    k = x.shape[-1]
+    if scale.numel() != k:
+        raise ValueError(
+            f"modulation_scale must contain one batch-one row of {k} values, "
+            f"got {scale.numel()}"
+        )
+    shape = (1,) * (x.ndim - 1) + (k,)
+    return x * (1.0 + scale.reshape(shape))
+
+
+def int8_linear_modulated(
+    x: torch.Tensor,
+    modulation_scale: torch.Tensor,
+    weight: torch.Tensor,
+    weight_scale: torch.Tensor,
+    bias: torch.Tensor | None = None,
+    out_dtype: torch.dtype = torch.bfloat16,
+    convrot: bool = False,
+    convrot_groupsize: int = 256,
+) -> torch.Tensor:
+    \"\"\"Portable batch-one modulation reference for an INT8 projection.\"\"\"
+    return int8_linear(
+        _modulate_int8_input(x, modulation_scale),
+        weight, weight_scale, bias, out_dtype,
+        convrot, convrot_groupsize,
+    )
+
+
+def int8_linear_rms_modulated(
+    x: torch.Tensor,
+    norm_weight: torch.Tensor,
+    norm_eps: float,
+    modulation_scale: torch.Tensor,
+    weight: torch.Tensor,
+    weight_scale: torch.Tensor,
+    bias: torch.Tensor | None = None,
+    out_dtype: torch.dtype = torch.bfloat16,
+    convrot: bool = False,
+    convrot_groupsize: int = 256,
+) -> torch.Tensor:
+    \"\"\"Portable RMSNorm plus batch-one modulation reference.\"\"\"
+    normalized = torch.nn.functional.rms_norm(
+        x, (x.shape[-1],), norm_weight, norm_eps
+    )
+    return int8_linear_modulated(
+        normalized, modulation_scale, weight, weight_scale, bias, out_dtype,
+        convrot, convrot_groupsize,
+    )
+"""
 
 def ensure_patch_file(patch_filename):
     local_path = os.path.join(PATCHES_DIR, patch_filename)
     if os.path.isfile(local_path):
-        return local_path
+        if patch_filename == "quantization.py":
+            try:
+                with open(local_path, "r", encoding="utf-8") as f:
+                    if "int8_linear_modulated" in f.read():
+                        return local_path
+                logging.info("quantization.py local obsolete (manque int8_linear_modulated), telechargement depuis GitHub...")
+            except Exception:
+                pass
+        else:
+            return local_path
     
     # Try downloading from GitHub
     os.makedirs(PATCHES_DIR, exist_ok=True)
@@ -70,7 +141,7 @@ def ensure_patch_file(patch_filename):
         return local_path
     except Exception as e:
         logging.warning(f"Échec du téléchargement pour {patch_filename}: {e}")
-        return None
+        return local_path if os.path.isfile(local_path) else None
 
 def backup_and_copy(patch_filename, dst):
     src = ensure_patch_file(patch_filename)
@@ -87,6 +158,19 @@ def backup_and_copy(patch_filename, dst):
         logging.info(f"Sauvegarde créée : {bak}")
 
     shutil.copy2(src, dst)
+
+    # Verification defensive specifique pour comfy_kitchen/quantization.py
+    if patch_filename == "quantization.py":
+        try:
+            with open(dst, "r", encoding="utf-8") as f:
+                content = f.read()
+            if "int8_linear_modulated" not in content:
+                logging.info("Ajout defensif de int8_linear_modulated et helpers dans quantization.py...")
+                with open(dst, "a", encoding="utf-8") as f:
+                    f.write(FALLBACK_MODULATED_CODE)
+        except Exception as e:
+            logging.warning(f"Impossible de verifier int8_linear_modulated dans {dst}: {e}")
+
     logging.info(f"Fichier patché avec succès : {dst}")
     return True
 

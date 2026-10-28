@@ -892,7 +892,7 @@ function bindBatchRefDrop(slot, editor, index, slotIndex) {
 function removeSegRef(editor, index, slot) {
     const seg = batchAssetTarget(editor, index);
     if (!seg) return;
-    seg.refs = (seg.refs || []).filter((r) => Number(r.index ?? r.slot) !== slot);
+    seg.refs = (seg.refs || []).filter((r) => Number(r.slot ?? r.index) !== slot && Number(r.index ?? r.slot) !== slot);
     commitBatchMutation(editor);
 }
 
@@ -1255,7 +1255,7 @@ function appendR2vAssetSections(assets, seg, index, editor) {
     };
 
     for (let i = 0; i < R2V_PICTURE_SLOTS; i++) {
-        let ref = (seg.refs || []).find((r) => Number(r.index ?? r.slot) === i);
+        let ref = (seg.refs || []).find((r) => Number(r.slot ?? r.index) === i || Number(r.index ?? r.slot) === i);
         if (!ref && seg.useCommonAssets !== false && !(seg.excludedCommonAssetIds || []).includes(`common-picture-${i + 1}`)) {
             const commonRef = (editor.timeline?.r2vCommon?.refs || []).find((c) => Number(c.index ?? c.slot) === i && (c.imageFile || c.imageB64));
             if (commonRef) {

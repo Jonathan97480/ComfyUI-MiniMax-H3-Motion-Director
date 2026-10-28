@@ -994,6 +994,7 @@ def enrich_cinematic_story_beat(
     is_repeat_env: bool = False,
     companion_name: str | None = None,
     companion_subj_idx: int | None = None,
+    scene_comp_pic_idx: int | None = 3,
 ) -> str:
     """Embellish raw user story beat with rich cinematic details, atmospheric lighting, turnaround character reference locking, and per-scene decor re-use."""
     clean_beat = beat.strip().rstrip(".!?,")
@@ -1023,6 +1024,7 @@ def enrich_cinematic_story_beat(
         clean_beat = re.sub(pattern, rep, clean_beat, flags=re.IGNORECASE)
 
     clean_stype = shot_type.split("(")[0].strip()
+    comp_ref_clause = f" Camera framing, character pose, and spatial staging strictly follow keyframe composition reference <Picture {scene_comp_pic_idx}>." if scene_comp_pic_idx else ""
 
     if shot_index == 1:
         # Phase 1: Establishing spatial geometry, mood, lighting
@@ -1031,23 +1033,25 @@ def enrich_cinematic_story_beat(
             f"strictly matching the spatial architecture in <Picture {env_subj_idx}>. The environment is quiet and atmospheric "
             f"with rich volumetric {lighting.lower()} highlights and deep environmental texture. <Subject {char_subj_idx}> ({char_name}) "
             f"is present in the frame matching the turnaround character reference sheet in <Picture {char_subj_idx}>, introducing the narrative presence "
-            f"with natural, understated physical posture. Hold this establishing composition briefly so the viewer assimilates the layout and mood."
+            f"with natural, understated physical posture.{comp_ref_clause} Hold this establishing composition briefly so the viewer assimilates the layout and mood."
         )
     elif shot_index == 2:
         # Phase 2: Focus, micro-expressions, intimate reaction
         env_clause = f"in <Subject {env_subj_idx}> (reusing the exact same environment reference <Picture {env_subj_idx}>)" if is_repeat_env else f"in <Subject {env_subj_idx}> ({env_name})"
         comp_clause = f", encountering <Subject {companion_subj_idx}> ({companion_name}, referencing turnaround sheet <Picture {companion_subj_idx}>)" if companion_name and companion_subj_idx else (f", noticing the subtle glow of <Subject 3> ({prop_name})" if prop_name else "")
+        comp_s2_clause = f" Actor staging, close perspective, and shot framing strictly match keyframe composition reference <Picture {scene_comp_pic_idx}>." if scene_comp_pic_idx else ""
         return (
             f"Make a hard cinematic cut to an intimate {clean_stype.lower()} of <Subject {char_subj_idx}> {env_clause}. Facial features, expressive gaze, "
-            f"hairstyle and clothing from turnaround reference sheet <Picture {char_subj_idx}> are preserved throughout. <Subject {char_subj_idx}>{comp_clause} "
+            f"hairstyle and clothing from turnaround reference sheet <Picture {char_subj_idx}> are preserved throughout.{comp_s2_clause} <Subject {char_subj_idx}>{comp_clause} "
             f"reacts naturally to the surroundings, shifting gaze with subtle curiosity as {clean_beat or 'the sequence unfolds'}. Subtle micro-movements, breathing, and fabric motion bring tactile realism."
         )
     elif shot_index == total_shots:
         # Final Phase: Dramatic resolution, departure, spatial permanence
         env_clause = f"in <Subject {env_subj_idx}> (reusing the exact same environment reference <Picture {env_subj_idx}>)" if is_repeat_env else f"in <Subject {env_subj_idx}> ({env_name})"
+        comp_final_clause = f" Shot staging, camera angle, and narrative culmination are defined by keyframe reference <Picture {scene_comp_pic_idx}>." if scene_comp_pic_idx else ""
         return (
             f"Make a hard cinematic cut to a wide tracking departure shot {env_clause}. <Subject {char_subj_idx}> (reusing turnaround reference sheet <Picture {char_subj_idx}>) "
-            f"completes the movement, progressing deliberately through the space matching {clean_beat or 'the final narrative beat'}. The camera maintains steady composed "
+            f"completes the movement, progressing deliberately through the space matching {clean_beat or 'the final narrative beat'}.{comp_final_clause} The camera maintains steady composed "
             f"framing as <Subject {char_subj_idx}> transitions toward the edge of frame or into the deep background, leaving the enduring spatial architecture, "
             f"materials and gentle environmental particles of <Subject {env_subj_idx}> clearly visible."
         )
@@ -1055,9 +1059,10 @@ def enrich_cinematic_story_beat(
         # Intermediate Phases: Dynamic interaction, physical action
         env_clause = f"in <Subject {env_subj_idx}> (reusing environment reference <Picture {env_subj_idx}>)" if is_repeat_env else f"transitioning into <Subject {env_subj_idx}> ({env_name})"
         comp_clause = f" accompanied by <Subject {companion_subj_idx}> ({companion_name}, referencing <Picture {companion_subj_idx}>)" if companion_name and companion_subj_idx else (f" with <Subject 3> ({prop_name}) providing an illuminated visual focal point" if prop_name else "")
+        comp_inter_clause = f" Framing, character action vector, and staging strictly follow keyframe composition reference <Picture {scene_comp_pic_idx}>." if scene_comp_pic_idx else ""
         return (
             f"Make a hard cut to a dynamic {clean_stype.lower()} framing <Subject {char_subj_idx}> (reusing turnaround reference sheet <Picture {char_subj_idx}>) "
-            f"actively engaged in {clean_beat} {env_clause}{comp_clause}. Physical interaction with <Subject {env_subj_idx}> is tangible, "
+            f"actively engaged in {clean_beat} {env_clause}{comp_clause}.{comp_inter_clause} Physical interaction with <Subject {env_subj_idx}> is tangible, "
             f"featuring authentic spatial depth, cast shadows, and natural weight. Camera motion executes a deliberate {camera_motion.lower()}, "
             f"tracking the character's focused movement and dramatic momentum."
         )
@@ -1861,23 +1866,41 @@ def build_director_timeline(
             s_file = getattr(s, "image_file", "") or ""
             s_b64 = s.image_b64 or ""
             if s_file or s_b64:
-                if not any(r.get("imageFile") == s_file and r.get("imageB64") == s_b64 for r in all_pool_refs if s_file or s_b64):
-                    if len(all_pool_refs) < 9:
-                        idx = len(all_pool_refs)
-                        comp_item = {
-                            "index": idx,
-                            "slot": idx,
-                            "imageFile": s_file,
-                            "fileName": s_file,
-                            "imageB64": s_b64,
-                            "assetId": f"scene-comp-{s.index}",
-                            "name": f"Composition {s.title or f'Plan {s.index}'}",
-                            "category": "scene_composition",
-                            "scene_index": s.index,
-                            "type": "input",
-                        }
-                        all_pool_refs.append(comp_item)
-                        scene_comp_refs_by_scene[s.index] = comp_item
+                existing_item = next(
+                    (r for r in all_pool_refs if (s_file and r.get("imageFile") == s_file) or (s_b64 and r.get("imageB64") == s_b64)),
+                    None,
+                )
+                if existing_item is not None:
+                    scene_comp_refs_by_scene[s.index] = existing_item
+                elif len(all_pool_refs) < 9:
+                    idx = len(all_pool_refs)
+                    comp_item = {
+                        "index": idx,
+                        "slot": idx,
+                        "imageFile": s_file,
+                        "fileName": s_file,
+                        "imageB64": s_b64,
+                        "assetId": f"scene-comp-{s.index}",
+                        "name": f"Composition {s.title or f'Plan {s.index}'}",
+                        "category": "scene_composition",
+                        "scene_index": s.index,
+                        "type": "input",
+                    }
+                    all_pool_refs.append(comp_item)
+                    scene_comp_refs_by_scene[s.index] = comp_item
+                else:
+                    scene_comp_refs_by_scene[s.index] = {
+                        "index": len(all_pool_refs),
+                        "slot": len(all_pool_refs),
+                        "imageFile": s_file,
+                        "fileName": s_file,
+                        "imageB64": s_b64,
+                        "assetId": f"scene-comp-{s.index}",
+                        "name": f"Composition {s.title or f'Plan {s.index}'}",
+                        "category": "scene_composition",
+                        "scene_index": s.index,
+                        "type": "input",
+                    }
 
     effective_prompt = full_h3_prompt or (scenes[0].full_prompt if scenes else "")
 
@@ -1927,14 +1950,29 @@ def build_director_timeline(
     if director_mode.lower() == "mixed":
         mixed_segments = []
         for s in scenes:
-            curated_pics = get_curated_refs_for_scene(s)
+            raw_curated = get_curated_refs_for_scene(s)
+            curated_pics = []
+            for j, r in enumerate(raw_curated):
+                r_c = copy.deepcopy(r)
+                r_c["slot"] = j
+                r_c["index"] = j
+                r_c["assetId"] = f"segment-s{s.index - 1}-picture-{j + 1}"
+                curated_pics.append(r_c)
+
             start_pic_file = getattr(s, "image_file", "") or (curated_pics[0]["imageFile"] if curated_pics else "")
             start_pic_b64 = s.image_b64 or (curated_pics[0]["imageB64"] if curated_pics else "")
+
+            seg_prompt = s.full_prompt
+            if len(curated_pics) >= 3 and "<Picture 3>" not in seg_prompt:
+                seg_prompt = (
+                    f"{seg_prompt} Shot framing, character pose, and camera staging strictly follow "
+                    f"keyframe composition reference <Picture 3>."
+                )
 
             seg_dict: dict[str, Any] = {
                 "id": f"seg_{s.index}",
                 "mode": "r2v",
-                "prompt": s.full_prompt,
+                "prompt": seg_prompt,
                 "duration": float(s.duration),
                 "inputs": {
                     "resultRefs": [],
@@ -1992,8 +2030,16 @@ def build_director_timeline(
         for j, r in enumerate(curated_refs):
             r_copy = copy.deepcopy(r)
             r_copy["slot"] = j
+            r_copy["index"] = j
             r_copy["assetId"] = f"segment-s{s.index - 1}-picture-{j + 1}"
             seg_refs.append(r_copy)
+
+        seg_prompt = s.full_prompt
+        if len(seg_refs) >= 3 and "<Picture 3>" not in seg_prompt:
+            seg_prompt = (
+                f"{seg_prompt} Shot framing, character pose, and camera staging strictly follow "
+                f"keyframe composition reference <Picture 3>."
+            )
 
         std_segments.append(
             {
@@ -2002,7 +2048,7 @@ def build_director_timeline(
                 "length": seg_frames,
                 "durationSec": float(s.duration),
                 "frameCount": seg_frames,
-                "prompt": s.full_prompt,
+                "prompt": seg_prompt,
                 "negativePrompt": "",
                 "taskType": task_key,
                 "refs": seg_refs,

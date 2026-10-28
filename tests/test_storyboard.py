@@ -496,10 +496,19 @@ class TestStoryboardHttpRoute(unittest.IsolatedAsyncioTestCase):
         # 1. Character sheet (subject-1)
         # 2. Desert environment (subject-2)
         # 3. Scene-specific composition keyframe
+        seen_scene_comps = []
         for i, seg in enumerate(timeline["segments"]):
             seg_refs = seg["refs"]
             self.assertGreaterEqual(len(seg_refs), 3)
             self.assertFalse(seg["useCommonAssets"])
+            # Ensure dense 0-based indexing for UI slot matching
+            self.assertEqual(seg_refs[0]["slot"], 0)
+            self.assertEqual(seg_refs[0]["index"], 0)
+            self.assertEqual(seg_refs[1]["slot"], 1)
+            self.assertEqual(seg_refs[1]["index"], 1)
+            self.assertEqual(seg_refs[2]["slot"], 2)
+            self.assertEqual(seg_refs[2]["index"], 2)
+
             # Subject 1 is character
             self.assertEqual(seg_refs[0]["subject_index"], 1)
             # Subject 2 is desert decor (reused across scenes)
@@ -507,6 +516,16 @@ class TestStoryboardHttpRoute(unittest.IsolatedAsyncioTestCase):
             # Item 3 is specific scene composition
             self.assertEqual(seg_refs[2]["category"], "scene_composition")
             self.assertEqual(seg_refs[2]["scene_index"], i + 1)
+            seen_scene_comps.append(seg_refs[2]["imageB64"])
+
+            # Prompt must reference character (<Picture 1>), decor (<Picture 2>), and keyframe composition (<Picture 3>)
+            self.assertIn("<Picture 1>", seg["prompt"])
+            self.assertIn("<Picture 2>", seg["prompt"])
+            self.assertIn("<Picture 3>", seg["prompt"])
+
+        # Scene composition references must be unique per scene
+        self.assertEqual(len(seen_scene_comps), len(timeline["segments"]))
+        self.assertEqual(len(set(seen_scene_comps)), len(timeline["segments"]))
 
         from director.effective_refs import compile_effective_references
 

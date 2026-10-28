@@ -218,10 +218,10 @@ if /i "%~1"=="NoPause" (
 )
 
 echo  Certains modeles requis pour ce flux de travail sont manquants.
-echo  - Minimax-h3_Singularity_ref2va_Pruned_v1.3_int8.safetensors (~21 GB)
-echo  - qwen3vl_32b_minimax_h3_int8_convrot.safetensors          (~27 GB)
-echo  - minimax_h3_dmd_ref2va_8step_turbo_pruned.safetensors      (~1.4 GB)
-echo  - minimax_h3_latent_upscaler_3d_bf16.safetensors            (~690 MB)
+echo  - Minimax-h3_Singularity_ref2va_Pruned_v1.3_int8.safetensors [~21 GB]
+echo  - qwen3vl_32b_minimax_h3_int8_convrot.safetensors          [~27 GB]
+echo  - minimax_h3_dmd_ref2va_8step_turbo_pruned.safetensors      [~1.4 GB]
+echo  - minimax_h3_latent_upscaler_3d_bf16.safetensors            [~690 MB]
 echo.
 choice /c YN /n /m "  Telecharger les modeles manquants maintenant ? [Y=Oui / N=Non] "
 if errorlevel 2 (
@@ -232,37 +232,37 @@ if errorlevel 2 (
 
 echo.
 if "%S_SINGULARITY%"=="MISSING" (
-    echo        [1/6] Telechargement de Singularity Ref2VA INT8 (~21 GB)...
+    echo        [1/6] Telechargement de Singularity Ref2VA INT8 [~21 GB]...
     call :download "%URL_DIFF_SINGULARITY%" "%T_SINGULARITY%"
     if errorlevel 1 >>"%WARN%" echo  - Echec du telechargement Singularity Ref2VA.
 )
 
 if "%S_TEXTENC%"=="MISSING" (
-    echo        [2/6] Telechargement de Qwen3-VL 32B INT8 ConvRot Text Encoder (~27 GB)...
+    echo        [2/6] Telechargement de Qwen3-VL 32B INT8 ConvRot Text Encoder [~27 GB]...
     call :download "%URL_TEXT_ENC_INT8%" "%T_TEXTENC%"
     if errorlevel 1 >>"%WARN%" echo  - Echec du telechargement Text Encoder INT8 ConvRot.
 )
 
 if "%S_LORA_TURBO%"=="MISSING" (
-    echo        [3/6] Telechargement de DMD Ref2VA 8-Step Turbo LoRA (~1.4 GB)...
+    echo        [3/6] Telechargement de DMD Ref2VA 8-Step Turbo LoRA [~1.4 GB]...
     call :download "%URL_LORA_TURBO_R2V%" "%T_LORA_TURBO%"
     if errorlevel 1 >>"%WARN%" echo  - Echec du telechargement Turbo LoRA Ref2VA.
 )
 
 if "%S_LATENTUP%"=="MISSING" (
-    echo        [4/6] Telechargement de Minimax H3 Latent Upscaler 3D BF16 (~690 MB)...
+    echo        [4/6] Telechargement de Minimax H3 Latent Upscaler 3D BF16 [~690 MB]...
     call :download "%URL_LATENT_UP%" "%T_LATENTUP%"
     if errorlevel 1 >>"%WARN%" echo  - Echec du telechargement Latent Upscaler 3D.
 )
 
 if "%S_VAEVID%"=="MISSING" (
-    echo        [5/6] Telechargement de MiniMax H3 Video VAE FP16 (~168 MB)...
+    echo        [5/6] Telechargement de MiniMax H3 Video VAE FP16 [~168 MB]...
     call :download "%URL_VAE_VID%" "%T_VAEVID%"
     if errorlevel 1 >>"%WARN%" echo  - Echec du telechargement Video VAE.
 )
 
 if "%S_VAEAUD%"=="MISSING" (
-    echo        [6/6] Telechargement de MiniMax H3 Audio VAE FP32 (~84 MB)...
+    echo        [6/6] Telechargement de MiniMax H3 Audio VAE FP32 [~84 MB]...
     call :download "%URL_VAE_AUD%" "%T_VAEAUD%"
     if errorlevel 1 >>"%WARN%" echo  - Echec du telechargement Audio VAE.
 )
@@ -410,25 +410,24 @@ exit /b 0
 :download
 rem %1 = URL, %2 = Target path
 if not exist "%~dp2" mkdir "%~dp2"
-call :curl_get "%~1" "%~2"
-if not errorlevel 1 goto :dl_ok
-if exist "%~2.part" (
-    echo        Telechargement interrompu - reprise...
-    call :curl_get "%~1" "%~2"
-    if not errorlevel 1 goto :dl_ok
+curl -L --fail -C - --retry 3 -o "%~2.part" "%~1"
+if errorlevel 1 (
+    if exist "%~2.part" (
+        echo        Telechargement interrompu - reprise en cours...
+        curl -L --fail -C - --retry 3 -o "%~2.part" "%~1"
+    )
 )
-echo        [ERROR] Echec du telechargement : %~1
-exit /b 1
-
-:dl_ok
+if errorlevel 1 (
+    echo        [ERROR] Echec du telechargement : %~1
+    exit /b 1
+)
 if exist "%~2.part" move /y "%~2.part" "%~2" >nul
-if not exist "%~2" exit /b 1
+if not exist "%~2" (
+    echo        [ERROR] Fichier cible introuvable apres telechargement : %~2
+    exit /b 1
+)
 echo        Enregistre : %~2
 exit /b 0
-
-:curl_get
-curl -L --fail -C - --retry 3 -o "%~2.part" "%~1"
-exit /b %errorlevel%
 
 :download_zip
 rem %1 = zip url, %2 = target folder, %3 = unpacked subfolder name

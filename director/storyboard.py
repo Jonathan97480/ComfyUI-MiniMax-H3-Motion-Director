@@ -2006,7 +2006,7 @@ def build_director_timeline(
                 "negativePrompt": "",
                 "taskType": task_key,
                 "refs": seg_refs,
-                "useCommonAssets": True,
+                "useCommonAssets": False if seg_refs else True,
                 "excludedCommonAssetIds": [],
                 "referenceVideo": {},
             }

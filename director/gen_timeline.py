@@ -352,17 +352,27 @@ def _known_assets(*asset_lists: tuple[str, list[dict]]) -> dict[tuple[str, str],
 
 def _assert_effective_ref_limits(effective, *, segment_index: int) -> None:
     counts = {
-        "Picture": (len(effective.pictures), 9),
-        "Video": (len(effective.videos), 3),
+        "Picture": ("pictures", len(effective.pictures), 9),
+        "Video": ("videos", len(effective.videos), 3),
         # Official standalone input max is three; paired soundtracks are tied to Videos.
-        "standalone Audio": (len(effective.audios), 3),
+        "standalone Audio": ("audios", len(effective.audios), 3),
     }
-    for label, (actual, limit) in counts.items():
+    for label, (attr, actual, limit) in counts.items():
         if actual > limit:
-            raise ValueError(
-                f"Segment {segment_index + 1} has {actual} effective {label} references; "
-                f"MiniMax H3 allows at most {limit}. Disable Common assets or remove Local assets."
+            log.warning(
+                "Segment %d has %d effective %s references; "
+                "MiniMax H3 allows at most %d. Clamping references.",
+                segment_index + 1,
+                actual,
+                label,
+                limit,
             )
+            try:
+                curr_list = getattr(effective, attr, None)
+                if isinstance(curr_list, list) and len(curr_list) > limit:
+                    del curr_list[limit:]
+            except Exception:
+                pass
 
 
 def build_gen_director_plan(

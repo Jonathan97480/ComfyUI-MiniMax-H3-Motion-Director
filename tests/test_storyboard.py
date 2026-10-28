@@ -499,6 +499,7 @@ class TestStoryboardHttpRoute(unittest.IsolatedAsyncioTestCase):
         for i, seg in enumerate(timeline["segments"]):
             seg_refs = seg["refs"]
             self.assertGreaterEqual(len(seg_refs), 3)
+            self.assertFalse(seg["useCommonAssets"])
             # Subject 1 is character
             self.assertEqual(seg_refs[0]["subject_index"], 1)
             # Subject 2 is desert decor (reused across scenes)
@@ -506,6 +507,65 @@ class TestStoryboardHttpRoute(unittest.IsolatedAsyncioTestCase):
             # Item 3 is specific scene composition
             self.assertEqual(seg_refs[2]["category"], "scene_composition")
             self.assertEqual(seg_refs[2]["scene_index"], i + 1)
+
+        from director.effective_refs import compile_effective_references
+
+        # Verify that each segment's effective references compile to <= 9 pictures,
+        # even if all common pictures are selected!
+        all_common_ids = {r["assetId"] for r in timeline["r2vCommon"]["refs"]}
+        for seg in timeline["segments"]:
+            effective = compile_effective_references(
+                common_pictures=timeline["r2vCommon"]["refs"],
+                selected_common_asset_ids=all_common_ids if seg["useCommonAssets"] else set(),
+                local_pictures=seg["refs"],
+            )
+            self.assertLessEqual(len(effective.pictures), 9)
+            # Curated segment with useCommonAssets=False has exactly its local refs
+            self.assertEqual(len(effective.pictures), len(seg["refs"]))
+
+    def test_effective_references_dedup_and_clamp(self):
+        from director.effective_refs import compile_effective_references
+
+        class MockRef:
+            def __init__(self, index, tensor, asset_id):
+                self.index = index
+                self.tensor = tensor
+                self.asset_id = asset_id
+
+        # 9 common pictures
+        common_pics = [
+            MockRef(index=i, tensor=torch.zeros((1, 64, 64, 3)) + (i + 1) * 0.1, asset_id=f"common-pic-{i+1}")
+            for i in range(9)
+        ]
+        # 3 local pictures (where 1 is a duplicate tensor of common 0)
+        local_pics = [
+            MockRef(index=0, tensor=common_pics[0].tensor, asset_id="seg-local-1"),
+            MockRef(index=1, tensor=torch.ones((1, 64, 64, 3)), asset_id="seg-local-2"),
+            MockRef(index=2, tensor=torch.ones((1, 64, 64, 3)) * 0.5, asset_id="seg-local-3"),
+        ]
+
+        selected_common_ids = {f"common-pic-{i+1}" for i in range(9)}
+        effective = compile_effective_references(
+            common_pictures=common_pics,
+            selected_common_asset_ids=selected_common_ids,
+            local_pictures=local_pics,
+        )
+
+        # Total pictures must not exceed 9!
+        self.assertLessEqual(len(effective.pictures), 9)
+        self.assertEqual(len(effective.pictures), 9)
+
+        # Local pictures must take priority and be preserved
+        local_ids_in_effective = [p.asset_id for p in effective.pictures if p.asset_id.startswith("seg-local-")]
+        self.assertEqual(len(local_ids_in_effective), 3)
+
+        # Verify that prompt tags resolve both local and deduplicated common asset IDs
+        self.assertIn(("picture", "seg-local-1"), effective.tags)
+        self.assertIn(("picture", "common-pic-1"), effective.tags)
+        self.assertEqual(
+            effective.tags[("picture", "seg-local-1")],
+            effective.tags[("picture", "common-pic-1")],
+        )
 
 
 if __name__ == "__main__":

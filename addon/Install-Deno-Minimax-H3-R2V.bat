@@ -184,6 +184,13 @@ if errorlevel 1 (
     "%PY%" -I -m pip install --quiet --disable-pip-version-check --no-warn-script-location "nvidia-ml-py>=12" >nul 2>&1
 )
 
+rem Assurer la presence de tomli pour les prestartup scripts (ex: ComfyUI-SAM3, comfy-env)
+"%PY%" -c "import tomli" >nul 2>&1
+if errorlevel 1 (
+    echo        Installation de tomli et tomli-w pour comfy-env / SAM3...
+    "%PY%" -I -m pip install --quiet --disable-pip-version-check --no-warn-script-location "tomli" "tomli-w" >nul 2>&1
+)
+
 echo        OK - Dependances Python pretes.
 
 rem ---------------------------------------------------------------- 3.5 Apply VRAM Optimizations & Patches

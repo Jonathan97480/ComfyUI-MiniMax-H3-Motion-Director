@@ -300,34 +300,45 @@ rem ---------------------------------------------------------------- 5. Deploy W
 echo.
 echo  [4/5] Deploiement du flux de travail Deno MiniMax H3...
 
-set "WF_NAME=Deno_minimax_final_R2V_7+1_memopt_Sol.json"
 set "USER_WF_DIR=%COMFY%\user\default\workflows\MiniMax-H3"
 set "ROOT_WF_DIR=%COMFY%\user\default\workflows"
 set "DENO_WF_DIR=%CN%\comfyui-deno-custom-nodes\workflows"
 set "DIR_WF_DIR=%CN%\ComfyUI-MiniMax-H3-Motion-Director\example_workflows"
 
 if not exist "%USER_WF_DIR%" mkdir "%USER_WF_DIR%"
+if not exist "%ROOT_WF_DIR%" mkdir "%ROOT_WF_DIR%"
 if not exist "%DENO_WF_DIR%" mkdir "%DENO_WF_DIR%"
 if not exist "%DIR_WF_DIR%" mkdir "%DIR_WF_DIR%"
 
-set "SRC_WF="
-if exist "d:\download\%WF_NAME%" set "SRC_WF=d:\download\%WF_NAME%"
-if not defined SRC_WF if exist "%~dp0%WF_NAME%" set "SRC_WF=%~dp0%WF_NAME%"
-if not defined SRC_WF if exist "%DIR_WF_DIR%\%WF_NAME%" set "SRC_WF=%DIR_WF_DIR%\%WF_NAME%"
-if not defined SRC_WF if exist "%USER_WF_DIR%\%WF_NAME%" set "SRC_WF=%USER_WF_DIR%\%WF_NAME%"
-
-if defined SRC_WF (
-    copy /y "%SRC_WF%" "%USER_WF_DIR%\%WF_NAME%" >nul 2>&1
-    copy /y "%SRC_WF%" "%ROOT_WF_DIR%\%WF_NAME%" >nul 2>&1
-    copy /y "%SRC_WF%" "%DENO_WF_DIR%\%WF_NAME%" >nul 2>&1
-    copy /y "%SRC_WF%" "%DIR_WF_DIR%\%WF_NAME%" >nul 2>&1
-    echo        Flux de travail installe avec succes dans :
-    echo        - %USER_WF_DIR%\%WF_NAME%
-    echo        - %ROOT_WF_DIR%\%WF_NAME%
-    echo        - %DENO_WF_DIR%\%WF_NAME%
-) else (
-    echo        [AVERTISSEMENT] Fichier source %WF_NAME% non trouve pour la copie.
-    >>"%WARN%" echo  - Flux %WF_NAME% non trouve dans d:\download ou a cote de l'installateur.
+for %%W in (
+    "Deno_Minimax_Final_Motion_Director_7+1.json"
+    "Deno_MM_Motion_Director_Sol_Optimized.json"
+    "Deno_Fast_Scene_Director_7+1.json"
+    "Deno_minimax_final_R2V_7+1_memopt_Sol.json"
+) do (
+    set "COPIED="
+    if exist "%~dp0%%~W" (
+        copy /y "%~dp0%%~W" "%USER_WF_DIR%\%%~W" >nul 2>&1
+        copy /y "%~dp0%%~W" "%ROOT_WF_DIR%\%%~W" >nul 2>&1
+        copy /y "%~dp0%%~W" "%DENO_WF_DIR%\%%~W" >nul 2>&1
+        copy /y "%~dp0%%~W" "%DIR_WF_DIR%\%%~W" >nul 2>&1
+        set "COPIED=1"
+    ) else if exist "%~dp0workflows\%%~W" (
+        copy /y "%~dp0workflows\%%~W" "%USER_WF_DIR%\%%~W" >nul 2>&1
+        copy /y "%~dp0workflows\%%~W" "%ROOT_WF_DIR%\%%~W" >nul 2>&1
+        copy /y "%~dp0workflows\%%~W" "%DENO_WF_DIR%\%%~W" >nul 2>&1
+        copy /y "%~dp0workflows\%%~W" "%DIR_WF_DIR%\%%~W" >nul 2>&1
+        set "COPIED=1"
+    ) else if exist "d:\download\%%~W" (
+        copy /y "d:\download\%%~W" "%USER_WF_DIR%\%%~W" >nul 2>&1
+        copy /y "d:\download\%%~W" "%ROOT_WF_DIR%\%%~W" >nul 2>&1
+        copy /y "d:\download\%%~W" "%DENO_WF_DIR%\%%~W" >nul 2>&1
+        copy /y "d:\download\%%~W" "%DIR_WF_DIR%\%%~W" >nul 2>&1
+        set "COPIED=1"
+    )
+    if defined COPIED (
+        echo        Flux %%~W installe avec succes dans %USER_WF_DIR%
+    )
 )
 
 rem ---------------------------------------------------------------- Summary

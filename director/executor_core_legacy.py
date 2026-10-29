@@ -29,6 +29,7 @@ from ..nodes.conditioning import (
 )
 from ..patches import motion_context_patch_status
 from .core_sampling import sample_single_stage
+from .deno_fast_core import concat_av_latents, separate_av_latents, upscale_3d_latent
 from .core_sampling import (
     describe_external_sampler,
     resolve_sampling_mode,
@@ -344,6 +345,10 @@ def execute_director_plan_core(
     pin_renorm_enabled: bool = False,
     clear_vram_between_segments: bool = True,
     postprocess_config: str | dict[str, Any] = "",
+    fast_engine_7_1: bool = True,
+    latent_upscaler_model: str = "minimax_h3_latent_upscaler_3d_bf16.safetensors",
+    upscale_factor: float = 1.5,
+    **extra_kwargs,
 ) -> tuple[torch.Tensor, list[torch.Tensor], list[dict[str, Any]], str]:
     core_started = time.perf_counter()
     legacy_preview = (plan.raw or {}).get(
@@ -807,16 +812,40 @@ def execute_director_plan_core(
                 positive_prompt, ref_indices=ref_idxs, audio_indices=audio_idxs
             )
 
+        # Check if 7+1 fast latent pipeline is active
+        use_7_1_fast = False
+        stage1_sigmas = None
+        stage2_sigmas = None
+        scale_fact = float(upscale_factor or 1.5)
+
+        if fast_engine_7_1 and external_sigmas is not None and isinstance(external_sigmas, torch.Tensor):
+            num_sigmas = int(external_sigmas.numel())
+            if num_sigmas >= 9:
+                stage1_sigmas = external_sigmas[:8]
+                stage2_sigmas = external_sigmas[7:]
+                use_7_1_fast = (scale_fact > 1.0)
+            elif num_sigmas >= 3:
+                stage1_sigmas = external_sigmas[:-1]
+                stage2_sigmas = external_sigmas[-2:]
+                use_7_1_fast = (scale_fact > 1.0)
+
+        if use_7_1_fast:
+            base_w = int(round((ctx_w / scale_fact) / 16.0) * 16)
+            base_h = int(round((ctx_h / scale_fact) / 16.0) * 16)
+        else:
+            base_w = ctx_w
+            base_h = ctx_h
+
         report_director_progress(
             node_id, segment_index=progress_index, segment_total=seg_total,
             phase="context_encode", phase_value=0, phase_max=1, **meta,
         )
         first_frame, last_frame, ref_images, ref_videos, ref_audios, ref_video_audios = _build_minimax_inputs(
             plan, seg, clip_frames=visible_clip_frames, reference_clip_frames=reference_clip_frames,
-            ctx_w=ctx_w, ctx_h=ctx_h, prev_tail=prev_tail,
+            ctx_w=base_w, ctx_h=base_h, prev_tail=prev_tail,
         )
         if ref_videos:
-            ref_videos = {name: fit_canvas(frames, ctx_w, ctx_h) for name, frames in ref_videos.items()}
+            ref_videos = {name: fit_canvas(frames, base_w, base_h) for name, frames in ref_videos.items()}
         reference_diagnostics[timeline_slot] = format_effective_references(
             timeline_slot, ref_images=ref_images, ref_videos=ref_videos,
             ref_audios=ref_audios, ref_video_audios=ref_video_audios,
@@ -828,13 +857,14 @@ def execute_director_plan_core(
 
         positive, negative, latent, task_hint = run_minimax_conditioning(
             clip=clip, vae=vae, audio_vae=audio_vae, prompt=positive_prompt,
-            width=ctx_w, height=ctx_h, length=num_frames, task_key=seg.task_key,
+            width=base_w, height=base_h, length=num_frames, task_key=seg.task_key,
             first_frame=first_frame, last_frame=last_frame, ref_images=ref_images,
             ref_videos=ref_videos, ref_video_audios=ref_video_audios, ref_audios=ref_audios,
         )
 
         motion_info = None
         if context_entry is not None:
+            use_ctx_latent = None if use_7_1_fast else context_entry.latent
             positive, motion_info = apply_exported_motion_context(
                 positive,
                 video_vae=vae,
@@ -842,7 +872,7 @@ def execute_director_plan_core(
                 latent=latent,
                 context_frames=context_entry.frames,
                 context_audio=context_entry.audio,
-                context_latent=context_entry.latent,
+                context_latent=use_ctx_latent,
                 context_end_frame=int((context_entry.handoff or {}).get("context_end_frame") or 0) or None,
                 context_span=context_span,
                 target_frame_count=target_len,
@@ -863,7 +893,7 @@ def execute_director_plan_core(
             phase="context_encode", phase_value=1, phase_max=1, **meta,
         )
         if clear_vram_between_segments:
-            cleanup_segment_vram(enabled=True, unload_models=seg_total > 1)
+            cleanup_segment_vram(enabled=True, unload_models=False if use_7_1_fast else (seg_total > 1))
 
         def _report_sample_phase(phase: str, value: float) -> None:
             report_director_progress(
@@ -879,15 +909,68 @@ def execute_director_plan_core(
 
         _h3_sample_started = time.perf_counter()
         try:
-            samples = sample_single_stage(
-                model=model, positive=positive, negative=negative, latent=latent, seed=seed,
-                cfg=cfg, steps=steps, sampler_name=sampler, scheduler=scheduler,
-                shift_video=shift_video, shift_audio=shift_audio,
-                external_sampler=external_sampler, external_sigmas=external_sigmas,
-                on_phase=_report_sample_phase,
-                on_step_preview=_report_step_preview if live_tae_preview else None,
-                preview_every=int(preview_config["preview_every"]),
-            )
+            if use_7_1_fast:
+                stage1_steps = len(stage1_sigmas) - 1
+                stage1_samples = sample_single_stage(
+                    model=model, positive=positive, negative=negative, latent=latent, seed=seed,
+                    cfg=cfg, steps=stage1_steps, sampler_name=sampler, scheduler=scheduler,
+                    shift_video=shift_video, shift_audio=shift_audio,
+                    external_sampler=external_sampler, external_sigmas=stage1_sigmas,
+                    on_phase=_report_sample_phase,
+                    on_step_preview=_report_step_preview if live_tae_preview else None,
+                    preview_every=int(preview_config["preview_every"]),
+                )
+                video_l, audio_l = separate_av_latents(stage1_samples)
+                upscaled_video = upscale_3d_latent(video_l, latent_upscaler_model, scale_fact)
+                stage2_in = concat_av_latents(upscaled_video, audio_l)
+
+                f_f_hi, l_f_hi, r_i_hi, r_v_hi, r_a_hi, r_va_hi = _build_minimax_inputs(
+                    plan, seg, clip_frames=visible_clip_frames, reference_clip_frames=reference_clip_frames,
+                    ctx_w=ctx_w, ctx_h=ctx_h, prev_tail=prev_tail,
+                )
+                if r_v_hi:
+                    r_v_hi = {name: fit_canvas(frames, ctx_w, ctx_h) for name, frames in r_v_hi.items()}
+                pos_hi, neg_hi, _, _ = run_minimax_conditioning(
+                    clip=clip, vae=vae, audio_vae=audio_vae, prompt=positive_prompt,
+                    width=ctx_w, height=ctx_h, length=num_frames, task_key=seg.task_key,
+                    first_frame=f_f_hi, last_frame=l_f_hi, ref_images=r_i_hi,
+                    ref_videos=r_v_hi, ref_video_audios=r_va_hi, ref_audios=r_a_hi,
+                )
+                if context_entry is not None:
+                    pos_hi, _ = apply_exported_motion_context(
+                        pos_hi, video_vae=vae, audio_vae=audio_vae, latent=stage2_in,
+                        context_frames=context_entry.frames, context_audio=context_entry.audio,
+                        context_latent=None,
+                        context_end_frame=int((context_entry.handoff or {}).get("context_end_frame") or 0) or None,
+                        context_span=context_span, target_frame_count=target_len,
+                        generation_frame_count=num_frames, visual_enabled=apply_visual_context,
+                        audio_enabled=apply_audio_context, fps=float(plan.frame_rate or 24.0),
+                        color_reanchor_enabled=color_reanchor_requested, color_anchor=color_anchor,
+                        task_key=seg.task_key,
+                        pin_renorm_enabled=bool(pin_renorm_enabled and apply_visual_context),
+                        pin_renorm_baseline_std=(context_entry.handoff or {}).get("pin_renorm_baseline_std"),
+                        pin_renorm_baseline_source=("cache" if context_loaded_from_cache else "inherited"),
+                    )
+                stage2_steps = len(stage2_sigmas) - 1
+                samples = sample_single_stage(
+                    model=model, positive=pos_hi, negative=neg_hi, latent=stage2_in, seed=seed,
+                    cfg=cfg, steps=stage2_steps, sampler_name=sampler, scheduler=scheduler,
+                    shift_video=shift_video, shift_audio=shift_audio,
+                    external_sampler=external_sampler, external_sigmas=stage2_sigmas,
+                    on_phase=_report_sample_phase,
+                    on_step_preview=_report_step_preview if live_tae_preview else None,
+                    preview_every=int(preview_config["preview_every"]),
+                )
+            else:
+                samples = sample_single_stage(
+                    model=model, positive=positive, negative=negative, latent=latent, seed=seed,
+                    cfg=cfg, steps=steps, sampler_name=sampler, scheduler=scheduler,
+                    shift_video=shift_video, shift_audio=shift_audio,
+                    external_sampler=external_sampler, external_sigmas=external_sigmas,
+                    on_phase=_report_sample_phase,
+                    on_step_preview=_report_step_preview if live_tae_preview else None,
+                    preview_every=int(preview_config["preview_every"]),
+                )
             stage_times["h3_sampling"] = time.perf_counter() - _h3_sample_started
         except torch.cuda.OutOfMemoryError as exc:
             raise RuntimeError(

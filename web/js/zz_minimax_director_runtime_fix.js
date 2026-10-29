@@ -370,7 +370,7 @@ app.registerExtension({
     name: "MiniMaxH3.MotionDirector.RuntimeContinuityFix",
 
     beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData?.name !== DIRECTOR_CLASS) return;
+        if (nodeData?.name !== DIRECTOR_CLASS && nodeData?.name !== "DenoMiniMaxH3MotionDirector") return;
         wrapDirector(nodeType);
     },
 });

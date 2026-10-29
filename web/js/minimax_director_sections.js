@@ -8,6 +8,7 @@ import {
     shouldShowInternalSampling,
 } from "./minimax_director_sections_core.mjs?boot=director_sections_v1";
 
+const DIRECTOR_CLASSES = new Set(["MiniMaxH3MotionDirector", "DenoMiniMaxH3MotionDirector"]);
 const DIRECTOR_CLASS = "MiniMaxH3MotionDirector";
 const SYNC_MS = 250;
 const SECTION_GAP = 9;
@@ -535,7 +536,7 @@ app.registerExtension({
     name: "MiniMaxH3.MotionDirector.MainSections",
 
     beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData?.name !== DIRECTOR_CLASS) return;
+        if (!DIRECTOR_CLASSES.has(nodeData?.name)) return;
         wrapDirector(nodeType);
     },
 });

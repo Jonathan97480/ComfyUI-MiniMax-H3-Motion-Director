@@ -337,9 +337,14 @@ class MiniMaxH3MotionDirector:
         postprocess_config="",
         prompt=None,
         extra_pnginfo=None,
+        fast_engine_7_1=True,
+        latent_upscaler_model="minimax_h3_latent_upscaler_3d_bf16.safetensors",
+        upscale_factor=1.5,
         **kwargs,
     ):
-        del kwargs
+        fast_engine_7_1 = kwargs.get("fast_engine_7_1", fast_engine_7_1)
+        latent_upscaler_model = kwargs.get("latent_upscaler_model", latent_upscaler_model)
+        upscale_factor = float(kwargs.get("upscale_factor", upscale_factor))
         run_started = time.perf_counter()
         auto_save_seconds = None
 
@@ -391,6 +396,9 @@ class MiniMaxH3MotionDirector:
             pin_renorm_enabled=pin_renorm_enabled,
             clear_vram_between_segments=clear_vram_between_segments,
             postprocess_config=postprocess_config,
+            fast_engine_7_1=fast_engine_7_1,
+            latent_upscaler_model=latent_upscaler_model,
+            upscale_factor=upscale_factor,
         )
 
         if bool(getattr(plan, "mixed_mode", False)):

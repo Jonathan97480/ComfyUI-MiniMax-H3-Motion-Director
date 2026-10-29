@@ -26,3 +26,26 @@ class MiniMaxH3MotionDirector(_UnifiedDirector):
 
         outputs = super().execute(*args, **kwargs)
         return outputs[0], outputs[1], outputs[2]
+
+
+class DenoMiniMaxH3MotionDirector(_UnifiedDirector):
+    """Unified Deno 7+1 Motion Director with 'Open Director' timeline modal and fast latent upscaler engine."""
+
+    RETURN_TYPES = ("IMAGE", "AUDIO", "FLOAT")
+    RETURN_NAMES = ("images", "audio", "fps")
+    OUTPUT_IS_LIST = (True, True, False)
+    OUTPUT_NODE = True
+
+    DESCRIPTION = (
+        "Deno MiniMax H3 Motion Director (7+1 Fast). Copie complète du Motion Director "
+        "avec bouton 'Open Director', panneau de montage visuel timeline et moteur accéléré 7+1."
+    )
+
+    def execute(self, *args, **kwargs):
+        kwargs["export_source_images"] = False
+        kwargs["fast_engine_7_1"] = kwargs.get("fast_engine_7_1", True)
+        kwargs["latent_upscaler_model"] = kwargs.get("latent_upscaler_model", "minimax_h3_latent_upscaler_3d_bf16.safetensors")
+        kwargs["upscale_factor"] = float(kwargs.get("upscale_factor", 1.5))
+
+        outputs = super().execute(*args, **kwargs)
+        return outputs[0], outputs[1], outputs[2]

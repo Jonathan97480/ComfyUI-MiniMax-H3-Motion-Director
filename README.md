@@ -327,3 +327,23 @@ Lancez simplement le script pour :
    - Configuration de `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` et `--disable-comfy-compiler` dans les scripts de lancement ComfyUI.
 3. **Déployer le flux** [`Deno_minimax_final_R2V_7+1_memopt_Sol.json`](addon/Deno_minimax_final_R2V_7+1_memopt_Sol.json) dans `ComfyUI/user/default/workflows/MiniMax-H3/`.
 4. **Télécharger directement** depuis HuggingFace tous les modèles nécessaires (diffusion INT8 Singularity, encodeur de texte Qwen3-VL 32B, LoRA Turbo 8-step, Upscaler latent 3D, VAEs vidéo et audio).
+
+
+---
+
+## ⚡ Deno MiniMax H3 Motion Director (Moteur 7+1 Rapide avec Bouton Open Director)
+
+Le nœud **`DenoMiniMaxH3MotionDirector`** (affiché dans ComfyUI sous le nom **`Deno MiniMax H3 Motion Director (7+1 Fast) 🎬`**) offre la copie exacte et complète de l'expérience du Motion Director d'origine avec toute la vitesse du pipeline d'upscaling latent 7+1 :
+
+### Ce que ce nœud apporte :
+1. **Bouton "Open Director" (Ouvrir Director)** : Identique au nœud d'origine, un simple clic ouvre le grand panneau popup d'édition visuelle de la chronologie (Timeline).
+2. **Éditeur de scènes complet** : Ajoutez vos scènes, réglez leur durée, leurs images et vidéos de référence, leurs prompts individuels et l'enchaînement narratif.
+3. **Moteur d'accélération Deno 7+1 intégré sous le capot** :
+   - **Étape 1 (7 étapes)** : Échantillonnage rapide à résolution de base (ex: 896x512).
+   - **Upscale Latent 3D (1.5x)** : Agrandissement spatial et temporel direct dans l'espace latent avec `MinimaxH3LatentUpscaler3D`.
+   - **Étape 2 (1 étape)** : Raffinement haute résolution (ex: 1344x768 ou 2K) avec les sigmas de Turbo LoRA.
+   - **Continuité Motion Context sans à-coups** : Les scènes s'enchaînent parfaitement sans rupture visuelle.
+   - **Zéro déchargement inutile de VRAM** : Le modèle UNET reste chargé sur la carte graphique entre les scènes pour une vitesse de rendu maximale.
+
+### Flux de travail prêt à l'emploi :
+- **`Deno_Minimax_Final_Motion_Director_7+1.json`** : Disponible directement dans le dossier `MiniMax-H3` de vos flux ComfyUI, pré-câblé avec les loaders INT8, LoRA Turbo 8-step, BlockSparseAttn, et le nœud `DenoMiniMaxH3MotionDirector`.

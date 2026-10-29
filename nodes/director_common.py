@@ -84,20 +84,45 @@ def timeline_required_inputs() -> dict:
 
 def director_perf_inputs() -> dict:
     """Performance widgets shared by Director nodes."""
+    from ..director.deno_fast_core import get_upscaler_model_list
     return {
-        "bd_grp_perf": ("BDGROUP", {"default": "性能"}),
+        "bd_grp_perf": ("BDGROUP", {"default": "性能 & Deno 7+1"}),
+        "fast_engine_7_1": (
+            "BOOLEAN",
+            {
+                "default": True,
+                "tooltip": "Moteur ultra-rapide Deno 7+1 : 7 steps base + Upscale 3D Latent + 1 step refine.",
+            },
+        ),
+        "latent_upscaler_model": (
+            get_upscaler_model_list(),
+            {
+                "default": "minimax_h3_latent_upscaler_3d_bf16.safetensors",
+                "tooltip": "Modèle d'upscale 3D latent utilisé en mode Deno 7+1.",
+            },
+        ),
+        "upscale_factor": (
+            "FLOAT",
+            {
+                "default": 1.5,
+                "min": 1.0,
+                "max": 2.5,
+                "step": 0.05,
+                "tooltip": "Facteur d'upscale 3D (1.5x recommandé pour 7+1 rapide, 1.0x pour direct).",
+            },
+        ),
         "clear_vram_between_segments": (
             "BOOLEAN",
             {
                 "default": True,
-                "tooltip": "段间清理显存：每段结束后卸载模型并清空 CUDA 缓存。",
+                "tooltip": "Nettoyage VRAM : en mode 7+1, conserve les modèles en mémoire GPU entre les scènes.",
             },
         ),
         "export_source_images": (
             "BOOLEAN",
             {
                 "default": False,
-                "tooltip": "输出 source_images（时间轴原片帧对比）。默认关以节省内存。",
+                "tooltip": "Sortie source_images (comparaison timeline). Désactivé pour économiser la mémoire.",
             },
         ),
     }

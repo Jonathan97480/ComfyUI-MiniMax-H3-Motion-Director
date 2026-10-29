@@ -5,7 +5,7 @@ import { mountMaterialLibrary } from "./minimax_material_library_modal.mjs?boot=
 
 function isDirectorNode(node) {
     const cls = node?.comfyClass || node?.type || "";
-    return cls === "MiniMaxH3MotionDirector" || cls === "ComfyMiniMaxH3MotionDirector";
+    return cls === "MiniMaxH3MotionDirector" || cls === "ComfyMiniMaxH3MotionDirector" || cls === "DenoMiniMaxH3MotionDirector";
 }
 
 function bindMaterialLibraryModalState(controller) {

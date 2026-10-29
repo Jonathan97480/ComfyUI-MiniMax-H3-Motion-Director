@@ -8,6 +8,7 @@ import {
     staleDirectorOutputIndices,
 } from "./minimax_director_outputs_core.mjs?boot=director_outputs_v3";
 
+const DIRECTOR_CLASSES = new Set(["MiniMaxH3MotionDirector", "DenoMiniMaxH3MotionDirector"]);
 const DIRECTOR_CLASS = "MiniMaxH3MotionDirector";
 const REPORT_STYLE_ID = "mmx-director-report-tools";
 const reportEnhancements = new Map();
@@ -612,7 +613,7 @@ app.registerExtension({
     },
 
     beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData?.name !== DIRECTOR_CLASS) return;
+        if (!DIRECTOR_CLASSES.has(nodeData?.name)) return;
 
         const onNodeCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {

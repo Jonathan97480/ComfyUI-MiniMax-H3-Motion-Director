@@ -166,6 +166,10 @@ def execute_director_plan_core(
     pin_renorm_enabled: bool = False,
     clear_vram_between_segments: bool = True,
     postprocess_config: str | dict[str, Any] = "",
+    fast_engine_7_1: bool = True,
+    latent_upscaler_model: str = "minimax_h3_latent_upscaler_3d_bf16.safetensors",
+    upscale_factor: float = 1.5,
+    **extra_kwargs,
 ):
     postprocess = normalize_postprocess_config(postprocess_config)
     face_config = postprocess["face_refine"]
@@ -201,6 +205,10 @@ def execute_director_plan_core(
         "pin_renorm_enabled": pin_renorm_enabled,
         "clear_vram_between_segments": clear_vram_between_segments,
         "postprocess_config": postprocess_config,
+        "fast_engine_7_1": fast_engine_7_1,
+        "latent_upscaler_model": latent_upscaler_model,
+        "upscale_factor": upscale_factor,
+        **extra_kwargs,
     }
 
     # Source Bridge pixels do not exist until both nominal segments are ready.

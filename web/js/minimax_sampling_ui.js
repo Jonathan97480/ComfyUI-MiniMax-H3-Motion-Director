@@ -100,7 +100,7 @@ const DIRECTOR_GROUP_WIDGET_LAYOUT = Object.freeze([
 ]);
 
 function isDirectorWorkflowNode(node) {
-    return String(node?.type || node?.comfyClass || "") === "MiniMaxH3MotionDirector";
+    const c = String(node?.type || node?.comfyClass || ""); return c === "MiniMaxH3MotionDirector" || c === "DenoMiniMaxH3MotionDirector";
 }
 
 function removePersistedDirectorGroupInputs(node) {
@@ -167,7 +167,7 @@ export function repairDirectorGroupWidgetWorkflow(graphData) {
 }
 
 export function migrateLegacySamplingControlNode(node) {
-    if (!node || node.type !== "MiniMaxH3MotionDirector" || !Array.isArray(node.inputs)) {
+    if (!node || (node.type !== "MiniMaxH3MotionDirector" && node.type !== "DenoMiniMaxH3MotionDirector") || !Array.isArray(node.inputs)) {
         return false;
     }
     const inputIndex = node.inputs.findIndex((input) => input?.name === "sampling_control");

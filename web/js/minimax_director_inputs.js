@@ -16,6 +16,7 @@ import {
     timelineGroupHasInternalPrompt,
 } from "./minimax_director_inputs_core.mjs?boot=unified_inputs_v2";
 
+const DIRECTOR_CLASSES = new Set(["MiniMaxH3MotionDirector", "DenoMiniMaxH3MotionDirector"]);
 const DIRECTOR_CLASS = "MiniMaxH3MotionDirector";
 const INPUTS_CLASS = "MiniMaxH3MotionDirectorInputs";
 const ASSETS_CLASS = "MiniMaxH3MotionDirectorAssets";
@@ -493,7 +494,7 @@ app.registerExtension({
     name: "MiniMaxH3.MotionDirector.UnifiedInputs",
 
     beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData?.name === DIRECTOR_CLASS) {
+        if (DIRECTOR_CLASSES.has(nodeData?.name)) {
             wrapDirectorMigration(nodeType);
             return;
         }

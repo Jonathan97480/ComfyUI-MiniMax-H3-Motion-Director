@@ -59,7 +59,10 @@ else:
 
     install_audio_drive_support()
 
-    from .nodes.director_output import MiniMaxH3MotionDirector  # noqa: E402
+    from .nodes.director_output import (  # noqa: E402
+        MiniMaxH3MotionDirector,
+        DenoMiniMaxH3MotionDirector,
+    )
     from .nodes.director_inputs import (  # noqa: E402
         MiniMaxH3MotionDirectorAssets,
         MiniMaxH3MotionDirectorInputs,
@@ -69,15 +72,16 @@ else:
 
     NODE_CLASS_MAPPINGS = {
         "MiniMaxH3MotionDirector": MiniMaxH3MotionDirector,
+        "DenoMiniMaxH3MotionDirector": DenoMiniMaxH3MotionDirector,
         "MiniMaxH3MotionDirectorInputs": MiniMaxH3MotionDirectorInputs,
         "MiniMaxH3MotionDirectorAssets": MiniMaxH3MotionDirectorAssets,
         "MiniMaxH3StoryDirector": MiniMaxH3StoryDirector,
-        "DenoMiniMaxH3FastDirector": "Deno MiniMax H3 Fast Scene Director (7+1)",
         "DenoMiniMaxH3FastDirector": DenoMiniMaxH3FastDirector,
     }
 
     NODE_DISPLAY_NAME_MAPPINGS = {
         "MiniMaxH3MotionDirector": "MiniMax H3 Motion Director",
+        "DenoMiniMaxH3MotionDirector": "Deno MiniMax H3 Motion Director (7+1 Fast) 🎬",
         "MiniMaxH3MotionDirectorInputs": "MiniMax H3 Motion Director Inputs",
         "MiniMaxH3MotionDirectorAssets": "MiniMax H3 Motion Director Assets",
         "DenoMiniMaxH3FastDirector": "Deno MiniMax H3 Fast Scene Director (7+1)",

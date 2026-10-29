@@ -821,6 +821,6 @@ function wrap(nodeType) {
 app.registerExtension({
     name: "MiniMaxH3.MotionDirector.AudioRoles",
     beforeRegisterNodeDef(nodeType, nodeData) {
-        if (nodeData?.name === DIRECTOR_CLASS) wrap(nodeType);
+        if (nodeData?.name === DIRECTOR_CLASS || nodeData?.name === "DenoMiniMaxH3MotionDirector") wrap(nodeType);
     },
 });

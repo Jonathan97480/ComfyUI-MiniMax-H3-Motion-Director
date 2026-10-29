@@ -1,0 +1,2840 @@
+{
+  "id": "f5aaad36-6bd6-4c50-9d96-b0276067bd50",
+  "revision": 0,
+  "last_node_id": 25,
+  "last_link_id": 34,
+  "nodes": [
+    {
+      "id": "um",
+      "type": "UNETLoader",
+      "pos": [
+        800,
+        74
+      ],
+      "size": [
+        400,
+        84
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "unet_name",
+          "name": "unet_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "unet_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "weight_dtype",
+          "name": "weight_dtype",
+          "type": "COMBO",
+          "widget": {
+            "name": "weight_dtype"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "MODEL",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            22,
+            23
+          ]
+        }
+      ],
+      "title": "MODEL - REF2VA",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "UNETLoader",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "Minimax-h3_Singularity_ref2va_Pruned_v1.3_int8.safetensors",
+        "default"
+      ],
+      "color": "#140A1FFF",
+      "bgcolor": "#27133EFF"
+    },
+    {
+      "id": "clip",
+      "type": "CLIPLoader",
+      "pos": [
+        800,
+        214
+      ],
+      "size": [
+        400,
+        106
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "clip_name",
+          "name": "clip_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "clip_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "type",
+          "name": "type",
+          "type": "COMBO",
+          "widget": {
+            "name": "type"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "device",
+          "name": "device",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "device"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "CLIP",
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            16
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "CLIPLoader",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "qwen3vl_32b_minimax_h3_int8_convrot.safetensors",
+        "minimax",
+        "default"
+      ],
+      "color": "#746101FF",
+      "bgcolor": "#937B01FF"
+    },
+    {
+      "id": "vvae",
+      "type": "VAELoader",
+      "pos": [
+        800,
+        376
+      ],
+      "size": [
+        400,
+        58
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VAE",
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            14
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "VAELoader",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "minimax_h3_video_vae_fp16.safetensors"
+      ],
+      "color": "#A74646FF",
+      "bgcolor": "#C65353FF"
+    },
+    {
+      "id": "avae",
+      "type": "VAELoader",
+      "pos": [
+        800,
+        490
+      ],
+      "size": [
+        400,
+        58
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "vae_name",
+          "name": "vae_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "vae_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VAE",
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            15
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "VAELoader",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "minimax_h3_audio_vae_fp32.safetensors"
+      ],
+      "color": "#A74646FF",
+      "bgcolor": "#C65353FF"
+    },
+    {
+      "id": "lora1",
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        1680,
+        74
+      ],
+      "size": [
+        400,
+        82
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 26
+        },
+        {
+          "localized_name": "lora_name",
+          "name": "lora_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "lora_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "strength_model",
+          "name": "strength_model",
+          "type": "FLOAT",
+          "widget": {
+            "name": "strength_model"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "MODEL",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            33
+          ]
+        }
+      ],
+      "title": "Turbo LoRA",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "LoraLoaderModelOnly",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "MINIMAX\\minimax_h3_turbo_v4_step600_ema.safetensors",
+        1
+      ],
+      "color": "#7F3055FF",
+      "bgcolor": "#9E3C69FF"
+    },
+    {
+      "id": "shift",
+      "type": "MiniMaxH3SigmaShift",
+      "pos": [
+        1680,
+        326
+      ],
+      "size": [
+        400,
+        82
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 34
+        },
+        {
+          "localized_name": "shift_video",
+          "name": "shift_video",
+          "type": "FLOAT",
+          "widget": {
+            "name": "shift_video"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "shift_audio",
+          "name": "shift_audio",
+          "type": "FLOAT",
+          "widget": {
+            "name": "shift_audio"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "MODEL",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            27
+          ]
+        }
+      ],
+      "title": "Sigma Shift (turbo)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "MiniMaxH3SigmaShift",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        12,
+        3
+      ],
+      "color": "#140A1FFF",
+      "bgcolor": "#27133EFF"
+    },
+    {
+      "id": "att",
+      "type": "ModelAttentionBackend",
+      "pos": [
+        1680,
+        464
+      ],
+      "size": [
+        400,
+        58
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 29
+        },
+        {
+          "localized_name": "backend",
+          "name": "attention",
+          "type": "COMBO",
+          "widget": {
+            "name": "attention"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            31
+          ]
+        }
+      ],
+      "title": "Attention (after turbo switch)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.42.0",
+        "Node name for S&R": "ModelAttentionBackend",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "comfy kitchen attention"
+      ],
+      "color": "#140A1FFF",
+      "bgcolor": "#27133EFF"
+    },
+    {
+      "id": "turbo_on",
+      "type": "PrimitiveBoolean",
+      "pos": [
+        2120,
+        74
+      ],
+      "size": [
+        400,
+        58
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "value",
+          "name": "value",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "BOOLEAN",
+          "name": "BOOLEAN",
+          "type": "BOOLEAN",
+          "links": [
+            10,
+            32
+          ]
+        }
+      ],
+      "title": "TURBO LoRA ON",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0",
+        "Node name for S&R": "PrimitiveBoolean",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        true
+      ],
+      "color": "#7A0101FF",
+      "bgcolor": "#990101FF"
+    },
+    {
+      "id": "turbo_steps",
+      "type": "PrimitiveInt",
+      "pos": [
+        2120,
+        188
+      ],
+      "size": [
+        400,
+        82
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "value",
+          "name": "value",
+          "type": "INT",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "INT",
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            9
+          ]
+        }
+      ],
+      "title": "TURBO STEPS",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0",
+        "Node name for S&R": "PrimitiveInt",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        6,
+        "fixed"
+      ],
+      "color": "#011401FF",
+      "bgcolor": "#033303FF"
+    },
+    {
+      "id": "normal_steps",
+      "type": "PrimitiveInt",
+      "pos": [
+        2120,
+        326
+      ],
+      "size": [
+        400,
+        82
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "value",
+          "name": "value",
+          "type": "INT",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "INT",
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            8
+          ]
+        }
+      ],
+      "title": "NORMAL STEPS",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0",
+        "Node name for S&R": "PrimitiveInt",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        20,
+        "fixed"
+      ],
+      "color": "#011401FF",
+      "bgcolor": "#033303FF"
+    },
+    {
+      "id": "sw_steps",
+      "type": "ComfySwitchNode",
+      "pos": [
+        2120,
+        464
+      ],
+      "size": [
+        400,
+        78
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "on_false",
+          "name": "on_false",
+          "shape": 7,
+          "type": "INT",
+          "link": 8
+        },
+        {
+          "localized_name": "on_true",
+          "name": "on_true",
+          "shape": 7,
+          "type": "INT",
+          "link": 9
+        },
+        {
+          "localized_name": "switch",
+          "name": "switch",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "switch"
+          },
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "output",
+          "name": "output",
+          "type": "INT",
+          "links": [
+            12
+          ]
+        }
+      ],
+      "title": "TURBO SWITCH (steps)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0",
+        "Node name for S&R": "ComfySwitchNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        true
+      ],
+      "color": "#0097A7FF",
+      "bgcolor": "#00838FFF"
+    },
+    {
+      "id": "sw_model",
+      "type": "ComfySwitchNode",
+      "pos": [
+        2120,
+        598
+      ],
+      "size": [
+        400,
+        78
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "on_false",
+          "name": "on_false",
+          "shape": 7,
+          "type": "MODEL",
+          "link": 28
+        },
+        {
+          "localized_name": "on_true",
+          "name": "on_true",
+          "shape": 7,
+          "type": "MODEL",
+          "link": 27
+        },
+        {
+          "localized_name": "switch",
+          "name": "switch",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "switch"
+          },
+          "link": 32
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "output",
+          "name": "output",
+          "type": "MODEL",
+          "links": [
+            29
+          ]
+        }
+      ],
+      "title": "TURBO SWITCH (model)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0",
+        "Node name for S&R": "ComfySwitchNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        true
+      ],
+      "color": "#0097A7FF",
+      "bgcolor": "#00838FFF"
+    },
+    {
+      "id": "turbo_note",
+      "type": "MarkdownNote",
+      "pos": [
+        2120,
+        732
+      ],
+      "size": [
+        400,
+        118.51780767858918
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "TURBO LoRA SWITCH",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "## TURBO LoRA SWITCH\n\n**true** = turbo LoRA + sigma shift on, at **TURBO STEPS**. Fast.\n\n**false** = base model only, at **NORMAL STEPS** (20). Slower, full base model quality.\n\nOne toggle swaps both the model path and the step count."
+      ],
+      "color": "#011401FF",
+      "bgcolor": "#033303FF"
+    },
+    {
+      "id": "ssel",
+      "type": "KSamplerSelect",
+      "pos": [
+        2560,
+        74
+      ],
+      "size": [
+        280,
+        58
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "sampler_name",
+          "name": "sampler_name",
+          "type": "COMBO",
+          "widget": {
+            "name": "sampler_name"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "SAMPLER",
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            17
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "KSamplerSelect",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "er_sde"
+      ],
+      "color": "#140A1FFF",
+      "bgcolor": "#27133EFF"
+    },
+    {
+      "id": "sched",
+      "type": "BasicScheduler",
+      "pos": [
+        2560,
+        188
+      ],
+      "size": [
+        280,
+        106
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 30
+        },
+        {
+          "localized_name": "scheduler",
+          "name": "scheduler",
+          "type": "COMBO",
+          "widget": {
+            "name": "scheduler"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "steps",
+          "name": "steps",
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": 12
+        },
+        {
+          "localized_name": "denoise",
+          "name": "denoise",
+          "type": "FLOAT",
+          "widget": {
+            "name": "denoise"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "SIGMAS",
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            18
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "BasicScheduler",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "simple",
+        6,
+        1
+      ],
+      "color": "#140A1FFF",
+      "bgcolor": "#27133EFF"
+    },
+    {
+      "id": "dir",
+      "type": "MiniMaxH3MotionDirector",
+      "pos": [
+        2880,
+        74
+      ],
+      "size": [
+        640,
+        545
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 5002
+        },
+        {
+          "localized_name": "video_vae",
+          "name": "video_vae",
+          "type": "VAE",
+          "link": 14
+        },
+        {
+          "localized_name": "audio_vae",
+          "name": "audio_vae",
+          "type": "VAE",
+          "link": 15
+        },
+        {
+          "localized_name": "clip",
+          "name": "clip",
+          "type": "CLIP",
+          "link": 16
+        },
+        {
+          "localized_name": "sampler",
+          "name": "sampler",
+          "shape": 7,
+          "type": "SAMPLER",
+          "link": 17
+        },
+        {
+          "localized_name": "sigmas",
+          "name": "sigmas",
+          "shape": 7,
+          "type": "SIGMAS",
+          "link": 18
+        },
+        {
+          "localized_name": "director_inputs",
+          "name": "director_inputs",
+          "shape": 7,
+          "type": "MMX_MOTION_DIR_INPUTS",
+          "link": null
+        },
+        {
+          "localized_name": "task_type",
+          "name": "task_type",
+          "type": "COMBO",
+          "widget": {
+            "name": "task_type"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "global_prompt",
+          "name": "global_prompt",
+          "type": "STRING",
+          "widget": {
+            "name": "global_prompt"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bd_grp_sample",
+          "name": "bd_grp_sample",
+          "type": "BDGROUP",
+          "widget": {
+            "name": "bd_grp_sample"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "cfg",
+          "name": "cfg",
+          "type": "FLOAT",
+          "widget": {
+            "name": "cfg"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "seed",
+          "name": "seed",
+          "type": "INT",
+          "widget": {
+            "name": "seed"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "frame_rate",
+          "name": "frame_rate",
+          "type": "FLOAT",
+          "widget": {
+            "name": "frame_rate"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "width",
+          "name": "width",
+          "type": "INT",
+          "widget": {
+            "name": "width"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "height",
+          "name": "height",
+          "type": "INT",
+          "widget": {
+            "name": "height"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "ref_max_size",
+          "name": "ref_max_size",
+          "type": "INT",
+          "widget": {
+            "name": "ref_max_size"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "total_frames",
+          "name": "total_frames",
+          "type": "INT",
+          "widget": {
+            "name": "total_frames"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "timeline_data",
+          "name": "timeline_data",
+          "type": "STRING",
+          "widget": {
+            "name": "timeline_data"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bd_grp_motion",
+          "name": "bd_grp_motion",
+          "shape": 7,
+          "type": "BDGROUP",
+          "widget": {
+            "name": "bd_grp_motion"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "motion_context_enabled",
+          "name": "motion_context_enabled",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "motion_context_enabled"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "context_length",
+          "name": "context_length",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "context_length"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "source_overlap_frames",
+          "name": "source_overlap_frames",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "source_overlap_frames"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "audio_context_enabled",
+          "name": "audio_context_enabled",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "audio_context_enabled"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "color_reanchor_enabled",
+          "name": "color_reanchor_enabled",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "color_reanchor_enabled"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bd_grp_advanced",
+          "name": "bd_grp_advanced",
+          "shape": 7,
+          "type": "BDGROUP",
+          "widget": {
+            "name": "bd_grp_advanced"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "steps",
+          "name": "steps",
+          "shape": 7,
+          "type": "INT",
+          "widget": {
+            "name": "steps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "sampler_name",
+          "name": "sampler_name",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "sampler_name"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "scheduler",
+          "name": "scheduler",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "scheduler"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "shift_video",
+          "name": "shift_video",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "shift_video"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "shift_audio",
+          "name": "shift_audio",
+          "shape": 7,
+          "type": "FLOAT",
+          "widget": {
+            "name": "shift_audio"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bd_grp_perf",
+          "name": "bd_grp_perf",
+          "shape": 7,
+          "type": "BDGROUP",
+          "widget": {
+            "name": "bd_grp_perf"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "clear_vram_between_segments",
+          "name": "clear_vram_between_segments",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "clear_vram_between_segments"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "export_source_images",
+          "name": "export_source_images",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "export_source_images"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bd_grp_experimental",
+          "name": "bd_grp_experimental",
+          "shape": 7,
+          "type": "BDGROUP",
+          "widget": {
+            "name": "bd_grp_experimental"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "pin_renorm_enabled",
+          "name": "pin_renorm_enabled",
+          "shape": 7,
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "pin_renorm_enabled"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "postprocess_config",
+          "name": "postprocess_config",
+          "shape": 7,
+          "type": "STRING",
+          "widget": {
+            "name": "postprocess_config"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "shape": 6,
+          "type": "IMAGE",
+          "links": [
+            5003
+          ]
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "shape": 6,
+          "type": "AUDIO",
+          "links": [
+            5004
+          ]
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "links": [
+            5005
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "minimax-h3-motion-director",
+        "ver": "f99390645533c0993a8914f2585d7199ebc3e8e2",
+        "Node name for S&R": "MiniMaxH3MotionDirector",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        },
+        "mmx_director_widget_state": {
+          "task_type": "r2v — 参考主体生视频(Reference to Video)",
+          "global_prompt": "integrated_multimodal_description: [Shot 1] Live-action, cinematic, photoreal documentary footage shot on a full-frame camera with a 35mm lens, a static wide shot at standing eye level frames Real photographic footage with natural warm golden-hour light, real depth of field, fine sensor grain, real dry haze in the distance and slightly imperfect handheld framing, the look of an unretouched documentary camera rather than a rendering. an open flat clearing of short golden dry grass and bare red earth on a wide African savanna, warm low evening sun throwing long shadows across it, dry still air shimmering faintly with heat, everything at full life size and real human scale. Fixed landmarks hold the exact same spot in frame the entire time: one flat-topped umbrella acacia hard against the LEFT edge, one tall red termite mound hard against the RIGHT edge, a weathered grey dead leadwood log lying in the BOTTOM-RIGHT corner, a small still waterhole lying in the BOTTOM-LEFT corner closest to camera, and the distant blue escarpment standing as a level line across the BACK beyond the grass. The clearing is one bounded area, the waterhole and the leadwood log in front of it, the escarpment behind it, the acacia to its left and the termite mound to its right, and the ground seen in the first seconds is all the ground there is, the same size and shape throughout. The bamboo hut stands raised on its hardwood stilts in the middle of the clearing on that same fixed rectangle, one single small building about four paces by five, its open front and its stair square to the camera, its left end toward the acacia and its right end toward the termite mound, holding that exact size and position for the rest of the shot. Each beat begins exactly where the previous beat ended, with only the already-finished work standing in place, and the work carries straight on from there. Everything already standing stays standing exactly as it is and the work only adds to it; each beat puts up something new beside or on top of what is already finished. The dry grass across the clearing is swept into clean bare paths where he walks and stands golden and undisturbed everywhere else, and the material for each stage is stacked in neat low piles at the edge of the clearing and is used up as the work goes. The same one builder works throughout: a man in an olive linen shirt, a wide-brim canvas hat and khaki trousers, the same face and clothing every second, one person working alone. The hut stands about one and a half times his height, so he is large against it. Everything is built ONLY from smooth grey stones, sawn planks, bamboo, canvas and steel gathered at the edge of the clearing. Every surface is plain and unmarked. The camera holds a static shot throughout, the same wide view of the whole clearing from one spot at the same height and distance, with the umbrella acacia on the LEFT edge fixed in the same place in frame. The distant blue escarpment across the back sits as a level line at the same height in the frame in every single second of the shot, never rising and never dropping, with the same band of warm sky above it and the same still waterhole in the bottom-left corner below it.\noverall_soundscape: A steady unhurried outdoor bed: ring-necked doves cooing from the acacia, cicadas pulsing from the grass and a light warm wind through the dry grass heads, recorded in the open on a stereo field recorder a few metres back, open air with natural distance and separation between every sound.\nnon_diegetic_music: none",
+          "bd_grp_sample": "Sampling Settings  [External]",
+          "cfg": 1,
+          "seed": 3318353467532,
+          "control_after_generate": "fixed",
+          "frame_rate": 24,
+          "width": 768,
+          "height": 1376,
+          "ref_max_size": 1376,
+          "total_frames": 107,
+          "timeline_data": "{\"version\":5,\"editMode\":\"segment\",\"totalFrames\":107,\"frameRate\":24,\"width\":768,\"height\":1376,\"refMaxSize\":1376,\"output\":{\"mode\":\"fixed\",\"aspectRatio\":\"9:16 (竖屏)\",\"megapixels\":1,\"multiple\":32,\"longEdge\":1376,\"width\":768,\"height\":1376,\"maxExportFrames\":0,\"exportMode\":\"all\",\"audioMode\":\"generate\",\"continuityEnabled\":false,\"continuityOverlapFrames\":9},\"videoClips\":[],\"video\":{\"fileName\":\"\",\"videoFile\":\"\",\"subfolder\":\"\",\"type\":\"input\",\"frames\":[],\"frameMap\":[],\"sourceFrameCount\":107,\"deletedSourceRanges\":[]},\"global\":{\"taskType\":\"r2v — 参考主体生视频(Reference to Video)\",\"prompt\":\"integrated_multimodal_description: [Shot 1] Live-action, cinematic, photoreal documentary footage shot on a full-frame camera with a 35mm lens, a static wide shot at standing eye level frames Real photographic footage with natural warm golden-hour light, real depth of field, fine sensor grain, real dry haze in the distance and slightly imperfect handheld framing, the look of an unretouched documentary camera rather than a rendering. an open flat clearing of short golden dry grass and bare red earth on a wide African savanna, warm low evening sun throwing long shadows across it, dry still air shimmering faintly with heat, everything at full life size and real human scale. Fixed landmarks hold the exact same spot in frame the entire time: one flat-topped umbrella acacia hard against the LEFT edge, one tall red termite mound hard against the RIGHT edge, a weathered grey dead leadwood log lying in the BOTTOM-RIGHT corner, a small still waterhole lying in the BOTTOM-LEFT corner closest to camera, and the distant blue escarpment standing as a level line across the BACK beyond the grass. The clearing is one bounded area, the waterhole and the leadwood log in front of it, the escarpment behind it, the acacia to its left and the termite mound to its right, and the ground seen in the first seconds is all the ground there is, the same size and shape throughout. The bamboo hut stands raised on its hardwood stilts in the middle of the clearing on that same fixed rectangle, one single small building about four paces by five, its open front and its stair square to the camera, its left end toward the acacia and its right end toward the termite mound, holding that exact size and position for the rest of the shot. Each beat begins exactly where the previous beat ended, with only the already-finished work standing in place, and the work carries straight on from there. Everything already standing stays standing exactly as it is and the work only adds to it; each beat puts up something new beside or on top of what is already finished. The dry grass across the clearing is swept into clean bare paths where he walks and stands golden and undisturbed everywhere else, and the material for each stage is stacked in neat low piles at the edge of the clearing and is used up as the work goes. The same one builder works throughout: a man in an olive linen shirt, a wide-brim canvas hat and khaki trousers, the same face and clothing every second, one person working alone. The hut stands about one and a half times his height, so he is large against it. Everything is built ONLY from smooth grey stones, sawn planks, bamboo, canvas and steel gathered at the edge of the clearing. Every surface is plain and unmarked. The camera holds a static shot throughout, the same wide view of the whole clearing from one spot at the same height and distance, with the umbrella acacia on the LEFT edge fixed in the same place in frame. The distant blue escarpment across the back sits as a level line at the same height in the frame in every single second of the shot, never rising and never dropping, with the same band of warm sky above it and the same still waterhole in the bottom-left corner below it.\\noverall_soundscape: A steady unhurried outdoor bed: ring-necked doves cooing from the acacia, cicadas pulsing from the grass and a light warm wind through the dry grass heads, recorded in the open on a stereo field recorder a few metres back, open air with natural distance and separation between every sound.\\nnon_diegetic_music: none\",\"refs\":[],\"referenceVideo\":{\"videoFile\":\"\",\"fileName\":\"\",\"type\":\"input\",\"subfolder\":\"\"},\"continuousReference\":false,\"refAudios\":[],\"refVideos\":[],\"genImage\":{\"imageFile\":\"\"},\"sourceWidth\":960,\"sourceHeight\":1280},\"segments\":[{\"id\":\"mtjbg61k9sosy\",\"start\":0,\"length\":107,\"frameCount\":107,\"durationSec\":4,\"prompt\":\"The reference image is the opening frame at 0.00 seconds.\\n\\nintegrated_multimodal_description: [Shot 1] Live-action, cinematic, smartphone-style vertical footage with warm natural dusk tones, a static full-body shot frames the woman standing outdoors at sunset with tall palm trees silhouetted against a vivid pink and violet sky behind her, soft purple twilight light wrapping around her from the side and a gentle warm glow along the edges of her shoulders and legs. She stands angled away from the camera in her loose white cropped t-shirt and bikini bottoms, looking back over her shoulder toward the lens. She begins to sway her hips slowly from side to side in a relaxed, confident rhythm, shifting her weight from one leg to the other, then runs one hand slowly up through her hair while turning her upper body a little more toward the camera, holding a soft, self-assured smile. She keeps moving with easy, flowing motion to the music, rolling her shoulders and hips smoothly, the palm fronds swaying gently in the warm evening breeze behind her as the sky deepens to purple.\\noverall_soundscape: A soft warm evening breeze, distant palm fronds rustling gently, faint far-off waves rolling onto a shore.\\nnon_diegetic_music: A relaxed, calm downtempo track with a mellow bass line, soft warm synth pads and a slow laid-back beat, gentle and smooth throughout.\",\"negativePrompt\":\"\",\"taskType\":\"\",\"refs\":[{\"index\":0,\"assetId\":\"segment-mtjbg61k9sosy-picture-d5bbef69-aa60-45a8-8c1f-5982cf33c5dc\",\"imageFile\":\"ComfyUI_00820_.png\",\"fileName\":\"\",\"type\":\"input\",\"subfolder\":\"\"}],\"refAudios\":[],\"refVideos\":[],\"genImage\":{\"imageFile\":\"ComfyUI_00823_.png\",\"fileName\":\"\"},\"contextLink\":{\"schema\":\"previous_context_link_v1\",\"enabled\":false,\"visual\":false,\"audio\":false}}],\"gen\":{\"defaultFrameCount\":124},\"runSelectEnabled\":false,\"runSelection\":[],\"liveTaePreview\":true,\"timelineMode\":\"prompt_batch\",\"seedMode\":\"fixed\",\"shots\":[{\"id\":\"mtjbg61k9sosy\",\"durationSec\":6,\"prompt\":\"The reference image is the opening frame at 0.00 seconds.\\n\\nintegrated_multimodal_description: [Shot 1] Live-action, cinematic, smartphone-style vertical footage with warm natural dusk tones and fine sensor grain, a full-body shot frames the woman standing on a weathered wooden beach-house deck at sunset, tall palm trees silhouetted against a vivid pink, coral and violet sky behind her, the calm ocean glowing pink at the horizon, a white wooden railing running along the right edge of the frame. Soft purple twilight light wraps around her from camera-left while a warm golden rim light traces the edges of her shoulders, arms and legs. She wears a loose white cropped t-shirt and bikini bottoms, standing angled away from the camera and looking back over her shoulder toward the lens. As the shot begins she sways her hips slowly from side to side in a relaxed, confident rhythm, shifting her weight from one bare foot to the other on the creaking wooden boards. She lifts both hands, gathers her hair up off her neck and lets it fall back over her shoulders, then turns smoothly to face the camera, rolling her shoulders and running her palms down along her sides. She steps one slow pace closer to the lens, tilts her head with a soft, self-assured smile and keeps moving to the beat with easy flowing hip rolls. The camera arcs slowly to the left around her with small amplitude, keeping her centred, the palm fronds swaying in the warm evening breeze behind her and the hem of her t-shirt fluttering lightly as the sky deepens toward purple.\\noverall_soundscape: Close and clear: the soft creak of wooden deck boards under her bare feet with each step, the light rustle of cotton fabric as she moves, a warm steady ocean breeze, palm fronds rustling overhead, gentle waves rolling onto the sand and drawing back in a slow rhythm, a single distant seagull calling once.\\nnon_diegetic_music: A relaxed downtempo R&B track at a slow tempo, a warm round bass line, soft electric piano chords, a crisp laid-back snare and gentle shaker, smooth and steady from start to finish.\",\"negativePrompt\":\"bad video\",\"startImage\":{\"imageFile\":\"ComfyUI_00820_.png\",\"width\":960,\"height\":1280},\"endImage\":null,\"contextLink\":{\"schema\":\"previous_context_link_v1\",\"enabled\":false,\"visual\":false,\"audio\":false}}],\"keyframes\":[{\"id\":\"mtjbg61k9sosy\",\"imageFile\":\"ComfyUI_00820_.png\",\"width\":960,\"height\":1280,\"start\":0,\"length\":158,\"frameCount\":158,\"durationSec\":6,\"prompt\":\"The reference image is the opening frame at 0.00 seconds.\\n\\nintegrated_multimodal_description: [Shot 1] Live-action, cinematic, smartphone-style vertical footage with warm natural dusk tones and fine sensor grain, a full-body shot frames the woman standing on a weathered wooden beach-house deck at sunset, tall palm trees silhouetted against a vivid pink, coral and violet sky behind her, the calm ocean glowing pink at the horizon, a white wooden railing running along the right edge of the frame. Soft purple twilight light wraps around her from camera-left while a warm golden rim light traces the edges of her shoulders, arms and legs. She wears a loose white cropped t-shirt and bikini bottoms, standing angled away from the camera and looking back over her shoulder toward the lens. As the shot begins she sways her hips slowly from side to side in a relaxed, confident rhythm, shifting her weight from one bare foot to the other on the creaking wooden boards. She lifts both hands, gathers her hair up off her neck and lets it fall back over her shoulders, then turns smoothly to face the camera, rolling her shoulders and running her palms down along her sides. She steps one slow pace closer to the lens, tilts her head with a soft, self-assured smile and keeps moving to the beat with easy flowing hip rolls. The camera arcs slowly to the left around her with small amplitude, keeping her centred, the palm fronds swaying in the warm evening breeze behind her and the hem of her t-shirt fluttering lightly as the sky deepens toward purple.\\noverall_soundscape: Close and clear: the soft creak of wooden deck boards under her bare feet with each step, the light rustle of cotton fabric as she moves, a warm steady ocean breeze, palm fronds rustling overhead, gentle waves rolling onto the sand and drawing back in a slow rhythm, a single distant seagull calling once.\\nnon_diegetic_music: A relaxed downtempo R&B track at a slow tempo, a warm round bass line, soft electric piano chords, a crisp laid-back snare and gentle shaker, smooth and steady from start to finish.\",\"negativePrompt\":\"bad video\",\"isStartFrame\":true,\"isEndFrame\":false}],\"durationSec\":6,\"r2vCommon\":{\"refs\":[],\"refAudios\":[],\"refVideos\":[]},\"audioRoles\":{\"version\":2,\"global\":{},\"segments\":{\"mtjbg61k9sosy\":{},\"mveqghnq4ovm9\":{}}}}",
+          "bd_grp_motion": "Cross-Segment Continuity",
+          "motion_context_enabled": true,
+          "context_length": 22,
+          "source_overlap_frames": 5,
+          "audio_context_enabled": true,
+          "color_reanchor_enabled": true,
+          "bd_grp_advanced": "Advanced sampling · Sampling: external",
+          "steps": 25,
+          "sampler_name": "res_multistep",
+          "scheduler": "simple",
+          "shift_video": 12,
+          "shift_audio": 3,
+          "bd_grp_perf": "Performance",
+          "clear_vram_between_segments": true,
+          "export_source_images": false,
+          "bd_grp_experimental": "Experimental",
+          "pin_renorm_enabled": false,
+          "postprocess_config": "{\"version\":9,\"global_refine\":{\"enabled\":false,\"mode\":\"refine\",\"second_sampling_enabled\":true,\"result_previews_enabled\":false,\"denoise\":\"0.25\",\"steps\":0,\"seed_mode\":\"inherit\",\"seed_offset\":1,\"skip_fl2v\":false,\"upscale_method\":\"lanczos\",\"upscale_model\":\"\",\"latent_upscale_model\":\"\",\"latent_upscale_precision\":\"fp16\",\"latent_upscale_device\":\"cuda\",\"vsr_quality\":\"high\",\"resolution_mode\":\"follow_director\",\"aspect\":\"16:9\",\"megapixels\":1,\"width\":1376,\"height\":768,\"rtx_deblur_enabled\":false,\"rtx_deblur_quality\":\"medium\",\"rtx_deblur_strength\":1,\"passes\":1},\"face_refine\":{\"enabled\":false,\"detector\":\"ultralytics\",\"detector_model\":\"bbox\\\\face_yolov8m.pt\",\"confidence\":0.35,\"select\":\"largest\",\"crop_factor\":2.5,\"canvas_mode\":\"auto_capped_768\",\"canvas_size\":768,\"smooth_method\":\"gaussian\",\"smooth_window\":21,\"size_smooth_window\":51,\"size_mode\":\"adaptive\",\"adaptive\":true,\"base_denoise\":0.45,\"strength_small_face\":0.8,\"strength_large_face\":0.35,\"face_px_small\":30,\"face_px_large\":120,\"mask_mode\":\"rect\",\"paste_region\":\"face_rect\",\"feather\":24,\"colour_match\":true,\"blend\":1,\"undetected_frames\":\"fade\",\"identity_reference\":\"\",\"identity_track\":false,\"identity_threshold\":0.28,\"fallback_detector\":\"none\",\"fallback_head_frac\":0.5,\"gamma\":1,\"denoise_smooth\":9,\"mask_dilation\":24,\"feather_scales_with_crop\":false,\"sam_model\":\"\",\"sam_threshold\":0.93,\"sam_dilation\":0,\"sam_temporal_smooth\":5},\"preview\":{\"enabled\":true,\"preview_frames\":8,\"preview_fps\":12,\"max_resolution\":1024,\"jpeg_quality\":80,\"preview_every\":1},\"save\":{\"auto_save\":false,\"filename_prefix\":\"video/MiniMaxH3_Director\",\"format\":\"auto\",\"codec\":\"auto\",\"encoding\":\"auto\",\"crf\":23}}",
+          "minimax_motion_director_ui": ""
+        }
+      },
+      "widgets_values": [
+        "r2v — 参考主体生视频(Reference to Video)",
+        "integrated_multimodal_description: [Shot 1] Live-action, cinematic, photoreal documentary footage shot on a full-frame camera with a 35mm lens, a static wide shot at standing eye level frames Real photographic footage with natural warm golden-hour light, real depth of field, fine sensor grain, real dry haze in the distance and slightly imperfect handheld framing, the look of an unretouched documentary camera rather than a rendering. an open flat clearing of short golden dry grass and bare red earth on a wide African savanna, warm low evening sun throwing long shadows across it, dry still air shimmering faintly with heat, everything at full life size and real human scale. Fixed landmarks hold the exact same spot in frame the entire time: one flat-topped umbrella acacia hard against the LEFT edge, one tall red termite mound hard against the RIGHT edge, a weathered grey dead leadwood log lying in the BOTTOM-RIGHT corner, a small still waterhole lying in the BOTTOM-LEFT corner closest to camera, and the distant blue escarpment standing as a level line across the BACK beyond the grass. The clearing is one bounded area, the waterhole and the leadwood log in front of it, the escarpment behind it, the acacia to its left and the termite mound to its right, and the ground seen in the first seconds is all the ground there is, the same size and shape throughout. The bamboo hut stands raised on its hardwood stilts in the middle of the clearing on that same fixed rectangle, one single small building about four paces by five, its open front and its stair square to the camera, its left end toward the acacia and its right end toward the termite mound, holding that exact size and position for the rest of the shot. Each beat begins exactly where the previous beat ended, with only the already-finished work standing in place, and the work carries straight on from there. Everything already standing stays standing exactly as it is and the work only adds to it; each beat puts up something new beside or on top of what is already finished. The dry grass across the clearing is swept into clean bare paths where he walks and stands golden and undisturbed everywhere else, and the material for each stage is stacked in neat low piles at the edge of the clearing and is used up as the work goes. The same one builder works throughout: a man in an olive linen shirt, a wide-brim canvas hat and khaki trousers, the same face and clothing every second, one person working alone. The hut stands about one and a half times his height, so he is large against it. Everything is built ONLY from smooth grey stones, sawn planks, bamboo, canvas and steel gathered at the edge of the clearing. Every surface is plain and unmarked. The camera holds a static shot throughout, the same wide view of the whole clearing from one spot at the same height and distance, with the umbrella acacia on the LEFT edge fixed in the same place in frame. The distant blue escarpment across the back sits as a level line at the same height in the frame in every single second of the shot, never rising and never dropping, with the same band of warm sky above it and the same still waterhole in the bottom-left corner below it.\noverall_soundscape: A steady unhurried outdoor bed: ring-necked doves cooing from the acacia, cicadas pulsing from the grass and a light warm wind through the dry grass heads, recorded in the open on a stereo field recorder a few metres back, open air with natural distance and separation between every sound.\nnon_diegetic_music: none",
+        "Sampling Settings  [External]",
+        1,
+        3318353467532,
+        "fixed",
+        24,
+        768,
+        1376,
+        1376,
+        107,
+        "{\"version\":5,\"editMode\":\"segment\",\"totalFrames\":107,\"frameRate\":24,\"width\":768,\"height\":1376,\"refMaxSize\":1376,\"output\":{\"mode\":\"fixed\",\"aspectRatio\":\"9:16 (竖屏)\",\"megapixels\":1,\"multiple\":32,\"longEdge\":1376,\"width\":768,\"height\":1376,\"maxExportFrames\":0,\"exportMode\":\"all\",\"audioMode\":\"generate\",\"continuityEnabled\":false,\"continuityOverlapFrames\":9},\"videoClips\":[],\"video\":{\"fileName\":\"\",\"videoFile\":\"\",\"subfolder\":\"\",\"type\":\"input\",\"frames\":[],\"frameMap\":[],\"sourceFrameCount\":107,\"deletedSourceRanges\":[]},\"global\":{\"taskType\":\"r2v — 参考主体生视频(Reference to Video)\",\"prompt\":\"integrated_multimodal_description: [Shot 1] Live-action, cinematic, photoreal documentary footage shot on a full-frame camera with a 35mm lens, a static wide shot at standing eye level frames Real photographic footage with natural warm golden-hour light, real depth of field, fine sensor grain, real dry haze in the distance and slightly imperfect handheld framing, the look of an unretouched documentary camera rather than a rendering. an open flat clearing of short golden dry grass and bare red earth on a wide African savanna, warm low evening sun throwing long shadows across it, dry still air shimmering faintly with heat, everything at full life size and real human scale. Fixed landmarks hold the exact same spot in frame the entire time: one flat-topped umbrella acacia hard against the LEFT edge, one tall red termite mound hard against the RIGHT edge, a weathered grey dead leadwood log lying in the BOTTOM-RIGHT corner, a small still waterhole lying in the BOTTOM-LEFT corner closest to camera, and the distant blue escarpment standing as a level line across the BACK beyond the grass. The clearing is one bounded area, the waterhole and the leadwood log in front of it, the escarpment behind it, the acacia to its left and the termite mound to its right, and the ground seen in the first seconds is all the ground there is, the same size and shape throughout. The bamboo hut stands raised on its hardwood stilts in the middle of the clearing on that same fixed rectangle, one single small building about four paces by five, its open front and its stair square to the camera, its left end toward the acacia and its right end toward the termite mound, holding that exact size and position for the rest of the shot. Each beat begins exactly where the previous beat ended, with only the already-finished work standing in place, and the work carries straight on from there. Everything already standing stays standing exactly as it is and the work only adds to it; each beat puts up something new beside or on top of what is already finished. The dry grass across the clearing is swept into clean bare paths where he walks and stands golden and undisturbed everywhere else, and the material for each stage is stacked in neat low piles at the edge of the clearing and is used up as the work goes. The same one builder works throughout: a man in an olive linen shirt, a wide-brim canvas hat and khaki trousers, the same face and clothing every second, one person working alone. The hut stands about one and a half times his height, so he is large against it. Everything is built ONLY from smooth grey stones, sawn planks, bamboo, canvas and steel gathered at the edge of the clearing. Every surface is plain and unmarked. The camera holds a static shot throughout, the same wide view of the whole clearing from one spot at the same height and distance, with the umbrella acacia on the LEFT edge fixed in the same place in frame. The distant blue escarpment across the back sits as a level line at the same height in the frame in every single second of the shot, never rising and never dropping, with the same band of warm sky above it and the same still waterhole in the bottom-left corner below it.\\noverall_soundscape: A steady unhurried outdoor bed: ring-necked doves cooing from the acacia, cicadas pulsing from the grass and a light warm wind through the dry grass heads, recorded in the open on a stereo field recorder a few metres back, open air with natural distance and separation between every sound.\\nnon_diegetic_music: none\",\"refs\":[],\"referenceVideo\":{\"videoFile\":\"\",\"fileName\":\"\",\"type\":\"input\",\"subfolder\":\"\"},\"continuousReference\":false,\"refAudios\":[],\"refVideos\":[],\"genImage\":{\"imageFile\":\"\"},\"sourceWidth\":960,\"sourceHeight\":1280},\"segments\":[{\"id\":\"mtjbg61k9sosy\",\"start\":0,\"length\":107,\"frameCount\":107,\"durationSec\":4,\"prompt\":\"The reference image is the opening frame at 0.00 seconds.\\n\\nintegrated_multimodal_description: [Shot 1] Live-action, cinematic, smartphone-style vertical footage with warm natural dusk tones, a static full-body shot frames the woman standing outdoors at sunset with tall palm trees silhouetted against a vivid pink and violet sky behind her, soft purple twilight light wrapping around her from the side and a gentle warm glow along the edges of her shoulders and legs. She stands angled away from the camera in her loose white cropped t-shirt and bikini bottoms, looking back over her shoulder toward the lens. She begins to sway her hips slowly from side to side in a relaxed, confident rhythm, shifting her weight from one leg to the other, then runs one hand slowly up through her hair while turning her upper body a little more toward the camera, holding a soft, self-assured smile. She keeps moving with easy, flowing motion to the music, rolling her shoulders and hips smoothly, the palm fronds swaying gently in the warm evening breeze behind her as the sky deepens to purple.\\noverall_soundscape: A soft warm evening breeze, distant palm fronds rustling gently, faint far-off waves rolling onto a shore.\\nnon_diegetic_music: A relaxed, calm downtempo track with a mellow bass line, soft warm synth pads and a slow laid-back beat, gentle and smooth throughout.\",\"negativePrompt\":\"\",\"taskType\":\"\",\"refs\":[{\"index\":0,\"assetId\":\"segment-mtjbg61k9sosy-picture-d5bbef69-aa60-45a8-8c1f-5982cf33c5dc\",\"imageFile\":\"ComfyUI_00820_.png\",\"fileName\":\"\",\"type\":\"input\",\"subfolder\":\"\"}],\"refAudios\":[],\"refVideos\":[],\"genImage\":{\"imageFile\":\"ComfyUI_00823_.png\",\"fileName\":\"\"},\"contextLink\":{\"schema\":\"previous_context_link_v1\",\"enabled\":false,\"visual\":false,\"audio\":false}}],\"gen\":{\"defaultFrameCount\":124},\"runSelectEnabled\":false,\"runSelection\":[],\"liveTaePreview\":true,\"timelineMode\":\"prompt_batch\",\"seedMode\":\"fixed\",\"shots\":[{\"id\":\"mtjbg61k9sosy\",\"durationSec\":6,\"prompt\":\"The reference image is the opening frame at 0.00 seconds.\\n\\nintegrated_multimodal_description: [Shot 1] Live-action, cinematic, smartphone-style vertical footage with warm natural dusk tones and fine sensor grain, a full-body shot frames the woman standing on a weathered wooden beach-house deck at sunset, tall palm trees silhouetted against a vivid pink, coral and violet sky behind her, the calm ocean glowing pink at the horizon, a white wooden railing running along the right edge of the frame. Soft purple twilight light wraps around her from camera-left while a warm golden rim light traces the edges of her shoulders, arms and legs. She wears a loose white cropped t-shirt and bikini bottoms, standing angled away from the camera and looking back over her shoulder toward the lens. As the shot begins she sways her hips slowly from side to side in a relaxed, confident rhythm, shifting her weight from one bare foot to the other on the creaking wooden boards. She lifts both hands, gathers her hair up off her neck and lets it fall back over her shoulders, then turns smoothly to face the camera, rolling her shoulders and running her palms down along her sides. She steps one slow pace closer to the lens, tilts her head with a soft, self-assured smile and keeps moving to the beat with easy flowing hip rolls. The camera arcs slowly to the left around her with small amplitude, keeping her centred, the palm fronds swaying in the warm evening breeze behind her and the hem of her t-shirt fluttering lightly as the sky deepens toward purple.\\noverall_soundscape: Close and clear: the soft creak of wooden deck boards under her bare feet with each step, the light rustle of cotton fabric as she moves, a warm steady ocean breeze, palm fronds rustling overhead, gentle waves rolling onto the sand and drawing back in a slow rhythm, a single distant seagull calling once.\\nnon_diegetic_music: A relaxed downtempo R&B track at a slow tempo, a warm round bass line, soft electric piano chords, a crisp laid-back snare and gentle shaker, smooth and steady from start to finish.\",\"negativePrompt\":\"bad video\",\"startImage\":{\"imageFile\":\"ComfyUI_00820_.png\",\"width\":960,\"height\":1280},\"endImage\":null,\"contextLink\":{\"schema\":\"previous_context_link_v1\",\"enabled\":false,\"visual\":false,\"audio\":false}}],\"keyframes\":[{\"id\":\"mtjbg61k9sosy\",\"imageFile\":\"ComfyUI_00820_.png\",\"width\":960,\"height\":1280,\"start\":0,\"length\":158,\"frameCount\":158,\"durationSec\":6,\"prompt\":\"The reference image is the opening frame at 0.00 seconds.\\n\\nintegrated_multimodal_description: [Shot 1] Live-action, cinematic, smartphone-style vertical footage with warm natural dusk tones and fine sensor grain, a full-body shot frames the woman standing on a weathered wooden beach-house deck at sunset, tall palm trees silhouetted against a vivid pink, coral and violet sky behind her, the calm ocean glowing pink at the horizon, a white wooden railing running along the right edge of the frame. Soft purple twilight light wraps around her from camera-left while a warm golden rim light traces the edges of her shoulders, arms and legs. She wears a loose white cropped t-shirt and bikini bottoms, standing angled away from the camera and looking back over her shoulder toward the lens. As the shot begins she sways her hips slowly from side to side in a relaxed, confident rhythm, shifting her weight from one bare foot to the other on the creaking wooden boards. She lifts both hands, gathers her hair up off her neck and lets it fall back over her shoulders, then turns smoothly to face the camera, rolling her shoulders and running her palms down along her sides. She steps one slow pace closer to the lens, tilts her head with a soft, self-assured smile and keeps moving to the beat with easy flowing hip rolls. The camera arcs slowly to the left around her with small amplitude, keeping her centred, the palm fronds swaying in the warm evening breeze behind her and the hem of her t-shirt fluttering lightly as the sky deepens toward purple.\\noverall_soundscape: Close and clear: the soft creak of wooden deck boards under her bare feet with each step, the light rustle of cotton fabric as she moves, a warm steady ocean breeze, palm fronds rustling overhead, gentle waves rolling onto the sand and drawing back in a slow rhythm, a single distant seagull calling once.\\nnon_diegetic_music: A relaxed downtempo R&B track at a slow tempo, a warm round bass line, soft electric piano chords, a crisp laid-back snare and gentle shaker, smooth and steady from start to finish.\",\"negativePrompt\":\"bad video\",\"isStartFrame\":true,\"isEndFrame\":false}],\"durationSec\":6,\"r2vCommon\":{\"refs\":[],\"refAudios\":[],\"refVideos\":[]},\"audioRoles\":{\"version\":2,\"global\":{},\"segments\":{\"mtjbg61k9sosy\":{},\"mveqghnq4ovm9\":{}}}}",
+        "Cross-Segment Continuity",
+        true,
+        22,
+        5,
+        true,
+        true,
+        "Advanced sampling · Sampling: external",
+        25,
+        "res_multistep",
+        "simple",
+        12,
+        3,
+        "Performance",
+        true,
+        false,
+        "Experimental",
+        false,
+        "{\"version\":9,\"global_refine\":{\"enabled\":false,\"mode\":\"refine\",\"second_sampling_enabled\":true,\"result_previews_enabled\":false,\"denoise\":\"0.25\",\"steps\":0,\"seed_mode\":\"inherit\",\"seed_offset\":1,\"skip_fl2v\":false,\"upscale_method\":\"lanczos\",\"upscale_model\":\"\",\"latent_upscale_model\":\"\",\"latent_upscale_precision\":\"fp16\",\"latent_upscale_device\":\"cuda\",\"vsr_quality\":\"high\",\"resolution_mode\":\"follow_director\",\"aspect\":\"16:9\",\"megapixels\":1,\"width\":1376,\"height\":768,\"rtx_deblur_enabled\":false,\"rtx_deblur_quality\":\"medium\",\"rtx_deblur_strength\":1,\"passes\":1},\"face_refine\":{\"enabled\":false,\"detector\":\"ultralytics\",\"detector_model\":\"bbox\\\\face_yolov8m.pt\",\"confidence\":0.35,\"select\":\"largest\",\"crop_factor\":2.5,\"canvas_mode\":\"auto_capped_768\",\"canvas_size\":768,\"smooth_method\":\"gaussian\",\"smooth_window\":21,\"size_smooth_window\":51,\"size_mode\":\"adaptive\",\"adaptive\":true,\"base_denoise\":0.45,\"strength_small_face\":0.8,\"strength_large_face\":0.35,\"face_px_small\":30,\"face_px_large\":120,\"mask_mode\":\"rect\",\"paste_region\":\"face_rect\",\"feather\":24,\"colour_match\":true,\"blend\":1,\"undetected_frames\":\"fade\",\"identity_reference\":\"\",\"identity_track\":false,\"identity_threshold\":0.28,\"fallback_detector\":\"none\",\"fallback_head_frac\":0.5,\"gamma\":1,\"denoise_smooth\":9,\"mask_dilation\":24,\"feather_scales_with_crop\":false,\"sam_model\":\"\",\"sam_threshold\":0.93,\"sam_dilation\":0,\"sam_temporal_smooth\":5},\"preview\":{\"enabled\":true,\"preview_frames\":8,\"preview_fps\":12,\"max_resolution\":1024,\"jpeg_quality\":80,\"preview_every\":1},\"save\":{\"auto_save\":false,\"filename_prefix\":\"video/MiniMaxH3_Director\",\"format\":\"auto\",\"codec\":\"auto\",\"encoding\":\"auto\",\"crf\":23}}",
+        ""
+      ],
+      "color": "#011401FF",
+      "bgcolor": "#033303FF"
+    },
+    {
+      "id": "cv",
+      "type": "CreateVideo",
+      "pos": [
+        3560,
+        74
+      ],
+      "size": [
+        300,
+        150
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 19
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": 20
+        },
+        {
+          "localized_name": "fps",
+          "name": "fps",
+          "type": "FLOAT",
+          "widget": {
+            "name": "fps"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "bit_depth",
+          "name": "bit_depth",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "bit_depth"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "color_space",
+          "name": "color_space",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "color_space"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "shape": 7,
+          "type": "COMBO",
+          "widget": {
+            "name": "codec"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "VIDEO",
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            21
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "CreateVideo",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        24,
+        8,
+        "sRGB",
+        "none"
+      ],
+      "color": "#08406BFF",
+      "bgcolor": "#0A528AFF"
+    },
+    {
+      "id": "sv",
+      "type": "SaveVideo",
+      "pos": [
+        3560,
+        280
+      ],
+      "size": [
+        760,
+        1000
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "link": 21
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "widget": {
+            "name": "format"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "codec",
+          "name": "format.codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "widget": {
+            "name": "format.codec"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "codec",
+          "name": "codec",
+          "shape": 7,
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "widget": {
+            "name": "codec"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "video",
+          "name": "video",
+          "type": "VIDEO",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.34.0",
+        "Node name for S&R": "SaveVideo",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        "video/MM",
+        "auto",
+        "auto",
+        "auto"
+      ],
+      "color": "#AD3500FF",
+      "bgcolor": "#CC3E00FF"
+    },
+    {
+      "id": "guide",
+      "type": "MarkdownNote",
+      "pos": [
+        0,
+        30
+      ],
+      "size": [
+        760,
+        1446
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "How To Use",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## How To Use This Workflow\n\n**REF2VA version.** MiniMax H3 video with sound, using the official **REF2VA** model, which covers r2v (reference photos of people or things placed in a brand-new shot), driven by the **MiniMax H3 Motion Director** node. The Director splits long videos into segments and stitches them together with continuity, and the turbo switch lets you pick fast or full quality with one toggle.\n\n### 1. Pick the mode and write your prompt\nOpen the **MiniMax H3 Motion Director** node (green). Set the task type dropdown to **r2v** (this is the REF2VA model; for t2v / i2v / fl2v use the **MM Director FL2VA v2** workflow) and add your image in the segment if the mode needs one. Write your prompt in the timeline editor in the official H3 format: start with `integrated_multimodal_description: [Shot 1]`, then style and camera, the scene, the action, and the sound (`overall_soundscape:` and `non_diegetic_music:`). Describe everything as things that are there.\n\n### 2. Length, size and frame rate\nSet these in the Director node:\n- **Resolution**: 768 x 1376 (9:16) by default. Keep both sides multiples of 32.\n- **24 fps**, **107 frames** per segment (about 4.5 seconds).\n- Add more segments in the timeline for longer videos.\n\n### 3. Realism LoRA stack\nThe **Realism LoRA stack** loads two LoRAs: **better_motion** (0.75) and **realism-people** (0.75). **REALISM LoRAs ON = true** runs them, **false** skips the whole stack. You can also switch single LoRAs on or off inside the stack.\n\n### 4. Turbo switch (fast or full quality)\n- **TURBO LoRA ON = true**: turbo LoRA + Sigma Shift, **TURBO STEPS** (6). Fast.\n- **TURBO LoRA ON = false**: base model only, **NORMAL STEPS** (20). Slower, full base model quality.\nOne toggle swaps both the model path and the steps. CFG stays at **1** in the Director.\n\n**AdaLN fix.** The v4 EMA turbo LoRA was trained on the full model. On this pruned model, the **H3 AdaLN LoRA Fix** node (right after the Turbo LoRA, mode `port`) converts its 102 timing pieces to fit, so the whole LoRA applies and the `ERROR lora ... adaln_proj` log spam stops. Keep it on `port`.\n\n### Sampling (external)\nThe Director uses the sampler wired into it, so its own sampling fields are ignored:\n- **KSamplerSelect**: `er_sde`\n- **BasicScheduler**: `simple`, steps come from the turbo switch, denoise **1.0**\n- **Sigma Shift (turbo)**: video **12**, audio **3**\n\nThe seed is set to randomize, so every run gives a new video.\n\n### Continuity (between segments)\n- Motion context **on**, context length **22**, source overlap **5** frames\n- Audio context **on**. Keep it on, turning it off causes a droning sound between segments.\n- Colour re-anchor **on**, which stops colours drifting from one segment to the next.\n\n### Output\n**Create Video** builds the video at 24 fps with the generated sound, and **Save Video** saves it to `ComfyUI/output/video/` with the prefix `MM`.\n\n---\n\n## Required Models\n\n```\nComfyUI/\n└── models/\n    ├── diffusion_models/\n    │   └── minimax_h3_ref2va_pruned_int8_convrot.safetensors\n    ├── text_encoders/\n    │   └── qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors\n    ├── vae/\n    │   ├── minimax_h3_video_vae_fp16.safetensors\n    │   └── minimax_h3_audio_vae_fp32.safetensors\n    └── loras/\n        └── MINIMAX/\n            ├── minimax_h3_turbo_v4_step600_ema.safetensors\n            ├── better_motion_h3_lora_v1_500.safetensors\n            └── h3-realism-people-t2v-i2v-r2v.safetensors\n```\n\n### Core models\n| File | Folder | Download |\n|---|---|---|\n| `minimax_h3_ref2va_pruned_int8_convrot.safetensors` | `models/diffusion_models/` | [direct download](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_pruned_int8_convrot.safetensors) · [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3) |\n| `qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors` | `models/text_encoders/` | [direct download](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors) · [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3) |\n| `minimax_h3_video_vae_fp16.safetensors` | `models/vae/` | [direct download](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_video_vae_fp16.safetensors) · [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3) |\n| `minimax_h3_audio_vae_fp32.safetensors` | `models/vae/` | [direct download](https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors) · [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3) |\n\n### Turbo LoRA (`models/loras/`)\n| LoRA file | Strength | What it does | Download |\n|---|---|---|---|\n| `minimax_h3_turbo_v4_step600_ema.safetensors` | 1.0 | turbo v4 EMA (CFG 1, 6 steps, shift 12 / 3) | [direct download](https://huggingface.co/larryvrh/MiniMax-H3-Turbo-Lora/resolve/main/minimax_h3_turbo_v4_step600_ema.safetensors) · [larryvrh/MiniMax-H3-Turbo-Lora](https://huggingface.co/larryvrh/MiniMax-H3-Turbo-Lora) |\n\n### Realism LoRAs (`models/loras/MINIMAX/`)\n| LoRA file | Strength | What it does | Download |\n|---|---|---|---|\n| `better_motion_h3_lora_v1_500.safetensors` | 0.75 | smoother, more natural motion | [direct download](https://huggingface.co/vpakarinen/better-human-motion-h3-lora/resolve/main/better_motion_h3_lora_v1_500.safetensors) · [vpakarinen/better-human-motion-h3-lora](https://huggingface.co/vpakarinen/better-human-motion-h3-lora) |\n| `h3-realism-people-t2v-i2v-r2v.safetensors` | 0.75 | more realistic people | [direct download](https://huggingface.co/fal/MiniMax-H3-Realism-People-LoRA/resolve/main/h3-realism-people-t2v-i2v-r2v.safetensors) · [fal/MiniMax-H3-Realism-People-LoRA](https://huggingface.co/fal/MiniMax-H3-Realism-People-LoRA) |\n\n### Custom nodes\n- **H3 AdaLN LoRA Fix** (from PlagueKind's node pack): needed for the v4 EMA turbo LoRA on pruned models\n- **MiniMax H3 Motion Director** (the Director node): https://github.com/j955229/ComfyUI-MiniMax-H3-Motion-Director\n- **rgthree-comfy** (Power Lora Loader, banner labels): https://github.com/rgthree/rgthree-comfy\n\nEverything else is built into ComfyUI. You need a recent ComfyUI for MiniMax H3 and the **Model Attention Backend** node, so update ComfyUI if any core node shows up red.\n\n**Download tips**\n- Civitai links need you to be logged in.\n- Keep the file names shown above. If a download comes with a different name, rename it, or just re-pick the file in its loader node.\n- The LoRA loaders expect the `MINIMAX` subfolder shown in the tree. If yours are somewhere else, re-pick them in their loader nodes.\n\n---\n\nWorkflow by LoRAtech"
+      ],
+      "color": "#000000FF",
+      "bgcolor": "#161616FF"
+    },
+    {
+      "id": "banner",
+      "type": "Label (rgthree)",
+      "pos": [
+        0,
+        -140
+      ],
+      "size": [
+        4295.859375,
+        96
+      ],
+      "flags": {
+        "pinned": true,
+        "allow_interaction": false
+      },
+      "order": 19,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "LoRAtech - MMH3 | LoRAtech - MMH3 | LoRAtech - MMH3 | LoRAtech - MMH3 | LoRAtech - MMH3 | LoRAtech - MMH3",
+      "properties": {
+        "fontSize": 96,
+        "fontFamily": "Impact",
+        "fontColor": "#ffffff",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0,
+        "angle": 0,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": "banner2",
+      "type": "Label (rgthree)",
+      "pos": [
+        0,
+        1516
+      ],
+      "size": [
+        4295.859375,
+        96
+      ],
+      "flags": {
+        "pinned": true,
+        "allow_interaction": false
+      },
+      "order": 20,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "LoRAtech - MMH3 | LoRAtech - MMH3 | LoRAtech - MMH3 | LoRAtech - MMH3 | LoRAtech - MMH3 | LoRAtech - MMH3",
+      "properties": {
+        "fontSize": 96,
+        "fontFamily": "Impact",
+        "fontColor": "#ffffff",
+        "textAlign": "left",
+        "backgroundColor": "transparent",
+        "padding": 0,
+        "borderRadius": 0,
+        "angle": 0,
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "color": "#fff0",
+      "bgcolor": "#fff0"
+    },
+    {
+      "id": "realism",
+      "type": "Power Lora Loader (rgthree)",
+      "pos": [
+        1240,
+        74
+      ],
+      "size": [
+        400,
+        214
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "model",
+          "type": "MODEL",
+          "link": 22
+        },
+        {
+          "dir": 3,
+          "name": "clip",
+          "type": "CLIP",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "dir": 4,
+          "name": "MODEL",
+          "shape": 3,
+          "type": "MODEL",
+          "links": [
+            24
+          ]
+        },
+        {
+          "dir": 4,
+          "name": "CLIP",
+          "shape": 3,
+          "type": "CLIP",
+          "links": []
+        }
+      ],
+      "title": "Realism LoRA stack",
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "2c5342a8cb0eaecaabf61435a5f37dd594c510ba",
+        "Show Strengths": "Single Strength",
+        "Match": "",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        {},
+        {
+          "type": "PowerLoraLoaderHeaderWidget"
+        },
+        {
+          "on": true,
+          "lora": "MINIMAX\\better_motion_h3_lora_v1_500.safetensors",
+          "strength": 0.75,
+          "strengthTwo": null
+        },
+        {
+          "on": true,
+          "lora": "MINIMAX\\h3-realism-people-t2v-i2v-r2v.safetensors",
+          "strength": 0.75,
+          "strengthTwo": null
+        },
+        {},
+        ""
+      ],
+      "color": "#140A1FFF",
+      "bgcolor": "#27133EFF"
+    },
+    {
+      "id": "realism_on",
+      "type": "PrimitiveBoolean",
+      "pos": [
+        1240,
+        368
+      ],
+      "size": [
+        400,
+        58
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "value",
+          "name": "value",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "value"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "BOOLEAN",
+          "name": "BOOLEAN",
+          "type": "BOOLEAN",
+          "links": [
+            25
+          ]
+        }
+      ],
+      "title": "REALISM LoRAs ON",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0",
+        "Node name for S&R": "PrimitiveBoolean",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        true
+      ],
+      "color": "#7A0101FF",
+      "bgcolor": "#990101FF"
+    },
+    {
+      "id": "sw_realism",
+      "type": "ComfySwitchNode",
+      "pos": [
+        1240,
+        482
+      ],
+      "size": [
+        400,
+        78
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "on_false",
+          "name": "on_false",
+          "shape": 7,
+          "type": "MODEL",
+          "link": 23
+        },
+        {
+          "localized_name": "on_true",
+          "name": "on_true",
+          "shape": 7,
+          "type": "MODEL",
+          "link": 24
+        },
+        {
+          "localized_name": "switch",
+          "name": "switch",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "switch"
+          },
+          "link": 25
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "output",
+          "name": "output",
+          "type": "MODEL",
+          "links": [
+            26,
+            28
+          ]
+        }
+      ],
+      "title": "REALISM SWITCH (model)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.38.0",
+        "Node name for S&R": "ComfySwitchNode",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "input_ue_unconnectable": {},
+          "version": "7.8"
+        }
+      },
+      "widgets_values": [
+        true
+      ],
+      "color": "#0097A7FF",
+      "bgcolor": "#00838FFF"
+    },
+    {
+      "id": "note_models",
+      "type": "MarkdownNote",
+      "pos": [
+        800,
+        604
+      ],
+      "size": [
+        400,
+        320
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Models: what to pick",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## Models: what to pick\n\n**Diffusion model.** This is the **MM Director REF2VA v2** workflow, so it loads the official `minimax_h3_ref2va_pruned_int8_convrot.safetensors` (21 GB) from [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3). It covers r2v (reference photos of people or things placed in a brand-new shot). For t2v / i2v / fl2v, open the **MM Director FL2VA v2** workflow instead.\n\nOther official REF2VA files, same folder:\n- `..._ref2va_pruned_w6a8` (16 GB): smallest, for lower VRAM\n- `..._ref2va_int8_convrot` (34 GB): full, unpruned\n\n**AdaLN fix.** The v4 EMA turbo LoRA was trained on the full model. On this pruned model, the **H3 AdaLN LoRA Fix** node (right after the Turbo LoRA, mode `port`) converts its 102 timing pieces to fit, so the whole LoRA applies and the `ERROR lora ... adaln_proj` log spam stops. Keep it on `port`.\n\n**Text encoder** (all from Comfy-Org/MiniMax-H3):\n- `qwen3vl_32b_minimax_h3_nvfp4_awq` (15.7 GB): smallest, used here\n- `..._int8_convrot` (27 GB) / `..._bf16` (51.5 GB): bigger, more RAM\n\n**VAEs.** Keep both: the video VAE for the picture, the audio VAE for the sound. Weight dtype on the loader stays **default**."
+      ],
+      "color": "#000000FF",
+      "bgcolor": "#161616FF"
+    },
+    {
+      "id": "note_realism",
+      "type": "MarkdownNote",
+      "pos": [
+        1240,
+        616
+      ],
+      "size": [
+        400,
+        187
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Realism LoRAs: what they do",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## Realism LoRAs: what they do\n\n- **better_motion** (0.75): smoother, more natural human movement.\n- **realism-people** (0.75): more realistic skin, faces and bodies.\n\n**Strengths.** Roughly 0.5 to 1.0 is the useful range. Lower one if the look gets over-processed or faces drift; raise it if the video looks soft or plasticky.\n\n**Switch it off** (REALISM LoRAs ON = false) for anime, cartoon or stylised looks, for a little more speed, or to compare with and without.\n\n**Single LoRAs.** Click the toggle next to each LoRA inside the stack to switch just that one off. Add more H3 LoRAs with **Add Lora** at the bottom of the stack."
+      ],
+      "color": "#000000FF",
+      "bgcolor": "#161616FF"
+    },
+    {
+      "id": "note_turbo",
+      "type": "MarkdownNote",
+      "pos": [
+        1680,
+        578
+      ],
+      "size": [
+        400,
+        424
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Turbo LoRA: match the settings",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## Turbo LoRA: match the settings\n\nThe turbo LoRA, the step count and the sigma shift belong together. Change the LoRA, and change the other two with it.\n\n| Turbo LoRA | TURBO STEPS | Sigma Shift (video / audio) |\n|---|---|---|\n| `minimax_h3_turbo_v4_step600_ema` (this workflow) | 6 | 12 / 3 |\n| `minimax_h3_ref2v_turbo_4step_v0.1` | 6 (recommended, 4 minimum) | 12 / 3 |\n| `minimax_h3_ref2v_turbo_8step_v1.0_768p` | 8 | 12 / 3 |\n\nSteps or shift that don't match the LoRA give mushy, noisy or smeared video. **Tip:** run 4-step LoRAs at **6 steps**; it looks noticeably cleaner for little extra time.\n\n**Turbo off** (TURBO LoRA ON = false): the base model runs at **NORMAL STEPS** (20) and skips the turbo LoRA and this Sigma Shift node. Slower, full base model quality.\n\n**AdaLN LoRA Fix** (after the Turbo LoRA): keeps v4 EMA fully applied on this pruned model. Leave it on `port`; it does nothing to LoRAs that don't need it.\n\n**Attention.** The attention node sits after the turbo switch, so both paths use `comfy kitchen attention`. Leave it in place: the Director needs a normal MODEL wire from it."
+      ],
+      "color": "#000000FF",
+      "bgcolor": "#161616FF"
+    },
+    {
+      "id": "note_sampling",
+      "type": "MarkdownNote",
+      "pos": [
+        2560,
+        350
+      ],
+      "size": [
+        280,
+        184.5890383929452
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Sampling: safe to change?",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## Sampling: safe to change?\n\n**KSamplerSelect: `er_sde`.** Works well with the turbo LoRAs. Leave it unless you are testing.\n\n**BasicScheduler: `simple`.** Leave it. The steps come from the Turbo Switch, so change **TURBO STEPS** or **NORMAL STEPS** there, not here.\n\n**Denoise: 1.0.** Leave it at 1.0. This is a full generation, not a touch-up.\n\n**CFG** is set in the Director and stays at **1**."
+      ],
+      "color": "#000000FF",
+      "bgcolor": "#161616FF"
+    },
+    {
+      "id": "note_director",
+      "type": "MarkdownNote",
+      "pos": [
+        2880,
+        830
+      ],
+      "size": [
+        640,
+        289
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "title": "Motion Director: quick guide",
+      "properties": {
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "## Motion Director: quick guide\n\n### IMPORTANT: set the task type dropdown (top of the node) to **r2v**\nThis workflow loads the REF2VA model, so t2v / i2v / fl2v will fail or look wrong here. For t2v / i2v / fl2v, use the **MM Director FL2VA v2** workflow.\n\n**Task type** (top of the node):\n- **t2v**: text only.\n- **i2v**: your image becomes the first frame.\n- **fl2v**: first frame + last frame, it fills the motion in between.\n- **r2v**: reference photos of people or things, placed in a brand-new shot.\n\n**Size.** This workflow is set to **768 x 1376** (9:16). For 16:9 swap the two. Keep sides in multiples of 32.\n\n**Length.** H3 makes frames in steps of 17. **39, 90, 141 or 192** frames keep the sound perfectly in time with the picture. Other lengths work, with slight audio drift across long chained videos.\n\n**Continuity.** Keep motion and audio context on for multi-segment videos.\n\n**Post Processing** (inside the node): **Global Refine** runs a light second pass over the whole video; **Face Refine** finds small faces, redraws them close up and pastes them back. Both are off by default; switch them on in the node's Post Processing section."
+      ],
+      "color": "#000000FF",
+      "bgcolor": "#161616FF"
+    },
+    {
+      "id": "adaln_fix",
+      "type": "H3AdaLNLoRAFix",
+      "pos": [
+        1680,
+        212
+      ],
+      "size": [
+        400,
+        58
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 33
+        },
+        {
+          "localized_name": "mode",
+          "name": "mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "mode"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "MODEL",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            34
+          ]
+        }
+      ],
+      "title": "AdaLN LoRA Fix (keep on port)",
+      "properties": {
+        "Node name for S&R": "H3AdaLNLoRAFix"
+      },
+      "widgets_values": [
+        "port"
+      ],
+      "color": "#140A1FFF",
+      "bgcolor": "#27133EFF"
+    },
+    {
+      "id": 501,
+      "type": "H3MemoryOptimization",
+      "pos": [
+        2030,
+        464
+      ],
+      "size": [
+        360,
+        250
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 31
+        },
+        {
+          "localized_name": "Legacy QKV projection optimization",
+          "name": "fused_qkv",
+          "type": "COMBO",
+          "widget": {
+            "name": "fused_qkv"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "MLP memory optimization",
+          "name": "mlp_memory",
+          "type": "COMBO",
+          "widget": {
+            "name": "mlp_memory"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Activation chunk rows",
+          "name": "chunk_rows",
+          "type": "INT",
+          "widget": {
+            "name": "chunk_rows"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "preserve_precision",
+          "name": "preserve_precision",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "preserve_precision"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Precision mode",
+          "name": "precision_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "precision_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "QKV streaming",
+          "name": "qkv_streaming_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "qkv_streaming_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Legacy embedding memory",
+          "name": "embedding_memory_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "embedding_memory_mode"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "Attention memory mode",
+          "name": "kitchen_v_memory_mode",
+          "type": "COMBO",
+          "widget": {
+            "name": "kitchen_v_memory_mode"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "MODEL",
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            5001
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "h3-optimizations",
+        "ver": "862774944a331bc1a66cee1cf805b94bd138ebbe",
+        "Node name for S&R": "H3MemoryOptimization"
+      },
+      "widgets_values": [
+        "auto",
+        "auto",
+        512,
+        true,
+        "Preserve native",
+        "Forced",
+        "Auto",
+        "Lower VRAM (slower)"
+      ],
+      "widgets_values_named": {
+        "fused_qkv": "auto",
+        "mlp_memory": "auto",
+        "chunk_rows": 512,
+        "preserve_precision": true,
+        "precision_mode": "Preserve native",
+        "qkv_streaming_mode": "Forced",
+        "embedding_memory_mode": "Auto",
+        "kitchen_v_memory_mode": "Lower VRAM (slower)"
+      }
+    },
+    {
+      "id": 502,
+      "type": "BlockSparseAttention",
+      "pos": [
+        2380,
+        464
+      ],
+      "size": [
+        270,
+        250
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "link": 5001
+        },
+        {
+          "localized_name": "method",
+          "name": "selection",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "widget": {
+            "name": "selection"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "tau",
+          "name": "selection.tau",
+          "type": "FLOAT",
+          "widget": {
+            "name": "selection.tau"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "start_percent",
+          "name": "start_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "start_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "end_percent",
+          "name": "end_percent",
+          "type": "FLOAT",
+          "widget": {
+            "name": "end_percent"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "dense_blocks",
+          "name": "dense_blocks",
+          "type": "STRING",
+          "widget": {
+            "name": "dense_blocks"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "min_tokens",
+          "name": "min_tokens",
+          "type": "INT",
+          "widget": {
+            "name": "min_tokens"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "extra_tokens",
+          "name": "extra_tokens",
+          "type": "INT",
+          "widget": {
+            "name": "extra_tokens"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "sink_conditioning",
+          "name": "sink_conditioning",
+          "type": "COMBO",
+          "widget": {
+            "name": "sink_conditioning"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "verbose",
+          "name": "verbose",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "verbose"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "model",
+          "name": "model",
+          "type": "MODEL",
+          "links": [
+            5002
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.37.0",
+        "Node name for S&R": "BlockSparseAttention"
+      },
+      "widgets_values": [
+        "sol-attn",
+        1.3,
+        0.2,
+        1,
+        "",
+        12288,
+        256,
+        "exact_kv_and_rows",
+        false
+      ],
+      "widgets_values_named": {
+        "selection": "sol-attn",
+        "selection.tau": 1.3,
+        "start_percent": 0.2,
+        "end_percent": 1,
+        "dense_blocks": "",
+        "min_tokens": 12288,
+        "extra_tokens": 256,
+        "sink_conditioning": "exact_kv_and_rows",
+        "verbose": false
+      }
+    },
+    {
+      "id": 503,
+      "type": "VHS_VideoCombine",
+      "pos": [
+        3930,
+        74
+      ],
+      "size": [
+        448.82437947608014,
+        334
+      ],
+      "flags": {},
+      "order": 34,
+      "mode": 0,
+      "inputs": [
+        {
+          "localized_name": "images",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 5003
+        },
+        {
+          "localized_name": "audio",
+          "name": "audio",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": 5004
+        },
+        {
+          "localized_name": "meta_batch",
+          "name": "meta_batch",
+          "shape": 7,
+          "type": "VHS_BatchManager",
+          "link": 5005
+        },
+        {
+          "localized_name": "vae",
+          "name": "vae",
+          "shape": 7,
+          "type": "VAE",
+          "link": null
+        },
+        {
+          "localized_name": "frame_rate",
+          "name": "frame_rate",
+          "type": "FLOAT",
+          "widget": {
+            "name": "frame_rate"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "loop_count",
+          "name": "loop_count",
+          "type": "INT",
+          "widget": {
+            "name": "loop_count"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "filename_prefix",
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "format",
+          "name": "format",
+          "type": "COMBO",
+          "widget": {
+            "name": "format"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "pingpong",
+          "name": "pingpong",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "pingpong"
+          },
+          "link": null
+        },
+        {
+          "localized_name": "save_output",
+          "name": "save_output",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "save_output"
+          },
+          "link": null
+        },
+        {
+          "name": "pix_fmt",
+          "type": [
+            "yuv420p",
+            "yuv420p10le"
+          ],
+          "widget": {
+            "name": "pix_fmt"
+          },
+          "link": null
+        },
+        {
+          "name": "crf",
+          "type": "INT",
+          "widget": {
+            "name": "crf"
+          },
+          "link": null
+        },
+        {
+          "name": "save_metadata",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "save_metadata"
+          },
+          "link": null
+        },
+        {
+          "name": "trim_to_audio",
+          "type": "BOOLEAN",
+          "widget": {
+            "name": "trim_to_audio"
+          },
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "localized_name": "Filenames",
+          "name": "Filenames",
+          "type": "VHS_FILENAMES",
+          "links": [
+            366
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-videohelpersuite",
+        "ver": "4ee72c065db22c9d96c2427954dc69e7b908444b",
+        "Node name for S&R": "VHS_VideoCombine"
+      },
+      "widgets_values": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "minimax_h3/r2v_7plus1",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 15,
+        "save_metadata": true,
+        "trim_to_audio": false,
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "filename": "AnimateDiff_00011-audio.mp4",
+            "subfolder": "",
+            "type": "output",
+            "format": "video/h264-mp4",
+            "frame_rate": 24,
+            "workflow": "AnimateDiff_00011.png",
+            "fullpath": "E:\\ComfyUI\\ComfyUI-Easy-Install\\ComfyUI-Easy-Install\\ComfyUI\\output\\AnimateDiff_00011-audio.mp4"
+          }
+        }
+      },
+      "widgets_values_named": {
+        "frame_rate": 24,
+        "loop_count": 0,
+        "filename_prefix": "minimax_h3/r2v_7plus1",
+        "format": "video/h264-mp4",
+        "pix_fmt": "yuv420p",
+        "crf": 15,
+        "save_metadata": true,
+        "trim_to_audio": false,
+        "pingpong": false,
+        "save_output": true,
+        "videopreview": {
+          "hidden": false,
+          "paused": false,
+          "params": {
+            "filename": "AnimateDiff_00011-audio.mp4",
+            "subfolder": "",
+            "type": "output",
+            "format": "video/h264-mp4",
+            "frame_rate": 24,
+            "workflow": "AnimateDiff_00011.png",
+            "fullpath": "E:\\ComfyUI\\ComfyUI-Easy-Install\\ComfyUI-Easy-Install\\ComfyUI\\output\\AnimateDiff_00011-audio.mp4"
+          }
+        }
+      }
+    }
+  ],
+  "links": [
+    [
+      8,
+      "normal_steps",
+      0,
+      "sw_steps",
+      0,
+      "INT"
+    ],
+    [
+      9,
+      "turbo_steps",
+      0,
+      "sw_steps",
+      1,
+      "INT"
+    ],
+    [
+      10,
+      "turbo_on",
+      0,
+      "sw_steps",
+      2,
+      "BOOLEAN"
+    ],
+    [
+      12,
+      "sw_steps",
+      0,
+      "sched",
+      2,
+      "INT"
+    ],
+    [
+      14,
+      "vvae",
+      0,
+      "dir",
+      1,
+      "VAE"
+    ],
+    [
+      15,
+      "avae",
+      0,
+      "dir",
+      2,
+      "VAE"
+    ],
+    [
+      16,
+      "clip",
+      0,
+      "dir",
+      3,
+      "CLIP"
+    ],
+    [
+      17,
+      "ssel",
+      0,
+      "dir",
+      4,
+      "SAMPLER"
+    ],
+    [
+      18,
+      "sched",
+      0,
+      "dir",
+      5,
+      "SIGMAS"
+    ],
+    [
+      19,
+      "dir",
+      0,
+      "cv",
+      0,
+      "IMAGE"
+    ],
+    [
+      20,
+      "dir",
+      1,
+      "cv",
+      1,
+      "AUDIO"
+    ],
+    [
+      22,
+      "um",
+      0,
+      "realism",
+      0,
+      "MODEL"
+    ],
+    [
+      23,
+      "um",
+      0,
+      "sw_realism",
+      0,
+      "MODEL"
+    ],
+    [
+      24,
+      "realism",
+      0,
+      "sw_realism",
+      1,
+      "MODEL"
+    ],
+    [
+      25,
+      "realism_on",
+      0,
+      "sw_realism",
+      2,
+      "BOOLEAN"
+    ],
+    [
+      26,
+      "sw_realism",
+      0,
+      "lora1",
+      0,
+      "MODEL"
+    ],
+    [
+      27,
+      "shift",
+      0,
+      "sw_model",
+      1,
+      "MODEL"
+    ],
+    [
+      28,
+      "sw_realism",
+      0,
+      "sw_model",
+      0,
+      "MODEL"
+    ],
+    [
+      29,
+      "sw_model",
+      0,
+      "att",
+      0,
+      "MODEL"
+    ],
+    [
+      30,
+      "att",
+      0,
+      "sched",
+      0,
+      "MODEL"
+    ],
+    [
+      32,
+      "turbo_on",
+      0,
+      "sw_model",
+      2,
+      "BOOLEAN"
+    ],
+    [
+      21,
+      "cv",
+      0,
+      "sv",
+      0,
+      "VIDEO"
+    ],
+    [
+      33,
+      "lora1",
+      0,
+      "adaln_fix",
+      0,
+      "MODEL"
+    ],
+    [
+      34,
+      "adaln_fix",
+      0,
+      "shift",
+      0,
+      "MODEL"
+    ],
+    [
+      31,
+      "att",
+      0,
+      501,
+      0,
+      "MODEL"
+    ],
+    [
+      5001,
+      501,
+      0,
+      502,
+      0,
+      "MODEL"
+    ],
+    [
+      5002,
+      502,
+      0,
+      "dir",
+      0,
+      "MODEL"
+    ],
+    [
+      5003,
+      "dir",
+      0,
+      503,
+      0,
+      "IMAGE"
+    ],
+    [
+      5004,
+      "dir",
+      1,
+      503,
+      1,
+      "AUDIO"
+    ],
+    [
+      5005,
+      "dir",
+      2,
+      503,
+      2,
+      "FLOAT"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Models",
+      "bounding": [
+        790,
+        0,
+        420,
+        1476
+      ],
+      "color": "#27133EFF",
+      "flags": {}
+    },
+    {
+      "id": 7,
+      "title": "Realism LoRAs",
+      "bounding": [
+        1230,
+        0,
+        420,
+        1476
+      ],
+      "color": "#27133EFF",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Turbo LoRA + Shift + Attention",
+      "bounding": [
+        1670,
+        0,
+        420,
+        1476
+      ],
+      "color": "#27133EFF",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Turbo Switch",
+      "bounding": [
+        2110,
+        0,
+        420,
+        1476
+      ],
+      "color": "#25B825FF",
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "Sampling",
+      "bounding": [
+        2550,
+        0,
+        300,
+        1476
+      ],
+      "color": "#27133EFF",
+      "flags": {}
+    },
+    {
+      "id": 5,
+      "title": "Motion Director (prompt + timeline)",
+      "bounding": [
+        2870,
+        0,
+        660,
+        1476
+      ],
+      "color": "#25B825FF",
+      "flags": {}
+    },
+    {
+      "id": 6,
+      "title": "Output",
+      "bounding": [
+        3550,
+        0,
+        780,
+        1476
+      ],
+      "color": "#0A528AFF",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ue_links": [],
+    "links_added_by_ue": [],
+    "ds": {
+      "scale": 0.6588450000000002,
+      "offset": [
+        -1068.7858297475123,
+        250.78579939135847
+      ]
+    },
+    "frontendVersion": "1.49.6",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

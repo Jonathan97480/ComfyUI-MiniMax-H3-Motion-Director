@@ -174,6 +174,35 @@ def backup_and_copy(patch_filename, dst):
     logging.info(f"Fichier patché avec succès : {dst}")
     return True
 
+def patch_qwen_tts(site_packages):
+    if not site_packages:
+        return
+    qwen_tokenizer = os.path.join(site_packages, "qwen_tts", "core", "tokenizer_12hz", "modeling_qwen3_tts_tokenizer_v2.py")
+    if os.path.isfile(qwen_tokenizer):
+        try:
+            with open(qwen_tokenizer, "r", encoding="utf-8") as f:
+                content = f.read()
+            if "from transformers.utils.generic import check_model_inputs\n" in content:
+                fix = (
+                    "try:\n"
+                    "    from transformers.utils.generic import check_model_inputs as _orig_check_model_inputs\n"
+                    "    def check_model_inputs(func=None):\n"
+                    "        if func is None:\n"
+                    "            return _orig_check_model_inputs\n"
+                    "        return _orig_check_model_inputs(func)\n"
+                    "except ImportError:\n"
+                    "    def check_model_inputs(func=None):\n"
+                    "        if func is None:\n"
+                    "            return lambda f: f\n"
+                    "        return func\n"
+                )
+                content = content.replace("from transformers.utils.generic import check_model_inputs\n", fix)
+                with open(qwen_tokenizer, "w", encoding="utf-8") as f:
+                    f.write(content)
+                logging.info(f"Correctif Qwen3-TTS check_model_inputs appliqué avec succès : {qwen_tokenizer}")
+        except Exception as e:
+            logging.warning(f"Impossible de patcher qwen_tts: {e}")
+
 def patch_batch_files(easy_install_dir):
     bat_fa = os.path.join(easy_install_dir, "Start ComfyUI FlashAttention.bat")
     bat_std = os.path.join(easy_install_dir, "Start ComfyUI.bat")
@@ -244,6 +273,9 @@ def main():
         backup_and_copy("rope.py", os.path.join(ck_eager, "rope.py"))
     else:
         logging.warning("comfy_kitchen non trouvé dans site-packages. Vérifiez votre environnement python.")
+
+    # 4.5 Patch qwen_tts if present (check_model_inputs decorator fix)
+    patch_qwen_tts(site_packages)
 
     # 5. Patch .bat scripts in parent directory if standalone
     parent_dir = os.path.dirname(comfy_dir)

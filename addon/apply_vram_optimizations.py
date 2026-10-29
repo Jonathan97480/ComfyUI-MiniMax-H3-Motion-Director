@@ -218,6 +218,32 @@ def patch_quant_ops(comfy_dir):
         except Exception as e:
             logging.warning(f"Impossible de patcher quant_ops.py: {e}")
 
+def patch_comfy_logger(comfy_dir):
+    logger_path = os.path.join(comfy_dir, "app", "logger.py")
+    if os.path.isfile(logger_path):
+        try:
+            with open(logger_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            changed = False
+            if 'errors = kwargs.pop("errors", "replace")' not in content and 'class LogInterceptor' in content:
+                content = content.replace(
+                    'super().__init__(buffer, *args, **kwargs, encoding=encoding, line_buffering=stream.line_buffering)',
+                    'errors = kwargs.pop("errors", "replace")\n        super().__init__(buffer, *args, **kwargs, encoding=encoding, errors=errors, line_buffering=stream.line_buffering)'
+                )
+                changed = True
+            if 'except (UnicodeEncodeError, Exception):' not in content and '        super().write(data)' in content:
+                content = content.replace(
+                    '        super().write(data)',
+                    '        try:\n            super().write(data)\n        except (UnicodeEncodeError, Exception):\n            try:\n                enc = getattr(self, "encoding", "utf-8") or "utf-8"\n                super().write(data.encode(enc, errors="replace").decode(enc))\n            except Exception:\n                pass'
+                )
+                changed = True
+            if changed:
+                with open(logger_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                logging.info(f"Correctif logger.py appliqué (encodage UTF-8/emojis Windows protégé) : {logger_path}")
+        except Exception as e:
+            logging.warning(f"Impossible de patcher logger.py: {e}")
+
 def patch_batch_files(easy_install_dir):
     bat_fa = os.path.join(easy_install_dir, "Start ComfyUI FlashAttention.bat")
     bat_std = os.path.join(easy_install_dir, "Start ComfyUI.bat")
@@ -230,9 +256,19 @@ def patch_batch_files(easy_install_dir):
                 content = f.read()
 
             changed = False
-            # 1. Expandable segments
-            if "expandable_segments" not in content:
-                content = content.replace("@Echo off&&cd /D %~dp0", "@Echo off&&cd /D %~dp0\nset PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True")
+            # 1. Expandable segments and UTF-8 encoding
+            if "expandable_segments" not in content or "PYTHONUTF8" not in content:
+                fix_lines = (
+                    "@Echo off&&cd /D %~dp0\n"
+                    "set PYTHONUTF8=1\n"
+                    "set PYTHONIOENCODING=utf-8\n"
+                    "chcp 65001 >nul\n"
+                    "set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True"
+                )
+                if "set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True" in content:
+                    content = content.replace("set PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True", "set PYTHONUTF8=1\nset PYTHONIOENCODING=utf-8\nchcp 65001 >nul\nset PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True")
+                else:
+                    content = content.replace("@Echo off&&cd /D %~dp0", fix_lines)
                 changed = True
 
             # 2. Disable comfy compiler
@@ -283,6 +319,9 @@ def main():
 
     # 3.5 Patch comfy/quant_ops.py (enable CUDA backend on PyTorch cu12x)
     patch_quant_ops(comfy_dir)
+
+    # 3.6 Patch comfy/app/logger.py (prevent UnicodeEncodeError crash with emojis on Windows)
+    patch_comfy_logger(comfy_dir)
 
     # 4. Patch comfy_kitchen (in site-packages)
     if site_packages and os.path.isdir(os.path.join(site_packages, "comfy_kitchen")):

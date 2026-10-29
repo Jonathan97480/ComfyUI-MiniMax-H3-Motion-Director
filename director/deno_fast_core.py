@@ -10,6 +10,14 @@ import torch
 
 log = logging.getLogger("ComfyUI-MiniMax-H3-Motion-Director.deno_fast_core")
 
+try:
+    import comfy_kitchen as ck
+    if torch.cuda.is_available() and hasattr(ck, "registry") and not ck.registry.is_available("cuda"):
+        ck.registry.enable("cuda")
+        log.info("Auto-enabled comfy_kitchen CUDA backend for Sol-Attn.")
+except Exception:
+    pass
+
 
 def get_upscaler_model_list() -> list[str]:
     models = folder_paths.get_filename_list("latent_upscale_models")

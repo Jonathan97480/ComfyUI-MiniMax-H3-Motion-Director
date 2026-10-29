@@ -323,6 +323,7 @@ Lancez simplement le script pour :
    - `int8_linear` streaming dans `comfy_kitchen` (**-4.5 Go de pic VRAM**).
    - `rms_rope_split_half_` in-place séquentiel dans `comfy_kitchen` (**-3.2 Go de pic VRAM**).
    - Alignement `bfloat16` natif dans `comfy/ldm/minimax/model.py` pour maintenir l'attention sparse `sol-attn` active lors de la passe 2x.
+   - Activation du backend CUDA `comfy_kitchen` sous PyTorch CUDA 12.x dans `comfy/quant_ops.py` (évite le fallback dense à 68k tokens et les crashs OOM sur GPU 12 Go).
    - Correctifs de validation JSON pour le chargeur audio Deno et compatibilité Upscaler 3D.
    - Configuration de `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` et `--disable-comfy-compiler` dans les scripts de lancement ComfyUI.
 3. **Déployer le flux** [`Deno_minimax_final_R2V_7+1_memopt_Sol.json`](addon/Deno_minimax_final_R2V_7+1_memopt_Sol.json) dans `ComfyUI/user/default/workflows/MiniMax-H3/`.

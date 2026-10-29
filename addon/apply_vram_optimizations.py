@@ -12,6 +12,7 @@ Fichiers patchés :
 5. comfy/ldm/minimax/model.py (alignement du modèle sur self.dtype bfloat16 pour activation de Sol-Attn)
 6. comfy_extras/nodes_sparse_attention.py (détection bfloat16 + logging diagnostic du producer chunké)
 7. comfy/model_prefetch.py (gestion défensive du compilateur malloc_graph pour éviter les crashs aimdo)
+8. comfy/quant_ops.py (activation du backend CUDA comfy_kitchen sous PyTorch CUDA 12.x pour Sol-Attn)
 """
 
 import os
@@ -203,6 +204,20 @@ def patch_qwen_tts(site_packages):
         except Exception as e:
             logging.warning(f"Impossible de patcher qwen_tts: {e}")
 
+def patch_quant_ops(comfy_dir):
+    quant_ops_path = os.path.join(comfy_dir, "comfy", "quant_ops.py")
+    if os.path.isfile(quant_ops_path):
+        try:
+            with open(quant_ops_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            if "if cuda_version < (13,):" in content:
+                content = content.replace("if cuda_version < (13,):", "if cuda_version < (12,):")
+                with open(quant_ops_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                logging.info(f"Correctif quant_ops.py appliqué avec succès (CUDA 12.x activé) : {quant_ops_path}")
+        except Exception as e:
+            logging.warning(f"Impossible de patcher quant_ops.py: {e}")
+
 def patch_batch_files(easy_install_dir):
     bat_fa = os.path.join(easy_install_dir, "Start ComfyUI FlashAttention.bat")
     bat_std = os.path.join(easy_install_dir, "Start ComfyUI.bat")
@@ -265,6 +280,9 @@ def main():
 
     prefetch = os.path.join(comfy_dir, "comfy", "model_prefetch.py")
     backup_and_copy("model_prefetch.py", prefetch)
+
+    # 3.5 Patch comfy/quant_ops.py (enable CUDA backend on PyTorch cu12x)
+    patch_quant_ops(comfy_dir)
 
     # 4. Patch comfy_kitchen (in site-packages)
     if site_packages and os.path.isdir(os.path.join(site_packages, "comfy_kitchen")):

@@ -10,6 +10,15 @@ import weakref
 import comfy_kitchen as ck
 import torch
 
+# Auto-enable comfy_kitchen CUDA backend if disabled by ComfyUI quant_ops
+if torch.cuda.is_available():
+    try:
+        if hasattr(ck, 'registry') and not ck.registry.is_available('cuda'):
+            ck.registry.enable('cuda')
+            logging.info('[BlockSparseAttention] Auto-enabled comfy_kitchen CUDA backend for Sol-Attn.')
+    except Exception:
+        pass
+
 import comfy.model_management
 import comfy.model_prefetch
 import comfy.patcher_extension
@@ -156,7 +165,13 @@ def _ineligible(q, k, v, dim_head):
     if q.device.type != "cuda":
         return "not on CUDA"
     if not ck.sol_attn_is_available(q.device):
-        return "no compiled sol_attn kernel for this GPU"
+        if hasattr(ck, "registry") and not ck.registry.is_available("cuda"):
+            try:
+                ck.registry.enable("cuda")
+            except Exception:
+                pass
+        if not ck.sol_attn_is_available(q.device):
+            return "no compiled sol_attn kernel for this GPU"
     if q.dtype not in (torch.bfloat16, torch.float16, torch.float32):
         return f"dtype {q.dtype} (kernel takes bf16/fp16)"
     if dim_head != HEAD_DIM:
@@ -241,6 +256,12 @@ def h3_eligible(attn, x, rope_freqs, transformer_options, patch: SparseAttnPatch
     if attn.head_dim != HEAD_DIM:
         patch.log_once(("dense", n_tokens, "head_dim"), f"dense ({n_tokens} tokens): head_dim {attn.head_dim} != {HEAD_DIM}")
         return False
+    if not ck.sol_attn_is_available(x.device):
+        if hasattr(ck, "registry") and not ck.registry.is_available("cuda"):
+            try:
+                ck.registry.enable("cuda")
+            except Exception:
+                pass
     reason = patch.dense_reason(transformer_options, n_tokens, block_index)
     if reason is None and not ck.sol_attn_is_available(x.device):
         reason = "no compiled sol_attn kernel for this GPU"

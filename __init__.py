@@ -65,18 +65,22 @@ else:
         MiniMaxH3MotionDirectorInputs,
     )
     from .nodes.storyboard_node import MiniMaxH3StoryDirector  # noqa: E402
+    from .nodes.deno_fast_director import DenoMiniMaxH3FastDirector  # noqa: E402
 
     NODE_CLASS_MAPPINGS = {
         "MiniMaxH3MotionDirector": MiniMaxH3MotionDirector,
         "MiniMaxH3MotionDirectorInputs": MiniMaxH3MotionDirectorInputs,
         "MiniMaxH3MotionDirectorAssets": MiniMaxH3MotionDirectorAssets,
         "MiniMaxH3StoryDirector": MiniMaxH3StoryDirector,
+        "DenoMiniMaxH3FastDirector": "Deno MiniMax H3 Fast Scene Director (7+1)",
+        "DenoMiniMaxH3FastDirector": DenoMiniMaxH3FastDirector,
     }
 
     NODE_DISPLAY_NAME_MAPPINGS = {
         "MiniMaxH3MotionDirector": "MiniMax H3 Motion Director",
         "MiniMaxH3MotionDirectorInputs": "MiniMax H3 Motion Director Inputs",
         "MiniMaxH3MotionDirectorAssets": "MiniMax H3 Motion Director Assets",
+        "DenoMiniMaxH3FastDirector": "Deno MiniMax H3 Fast Scene Director (7+1)",
         "MiniMaxH3StoryDirector": "MiniMax H3 AI Story Director 🎬",
     }
 

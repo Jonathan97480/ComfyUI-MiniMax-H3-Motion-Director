@@ -1033,39 +1033,37 @@ def int8_linear(
             f"for weight shape {tuple(weight.shape)}"
         )
 
-    if convrot:
-        if x.shape[-1] % convrot_groupsize != 0:
-            raise ValueError(
-                f"ConvRot group size {convrot_groupsize} does not divide input features {x.shape[-1]}"
-            )
-        h = _build_hadamard(convrot_groupsize, device=x.device, dtype=x.dtype)
-        x = _rotate_activation(x, h, convrot_groupsize)
-
     orig_shape = x.shape
     x_2d = x.reshape(-1, x.shape[-1])
-
-    # Quantize input per-row
-    x_8, x_scale = quantize_int8_rowwise(x_2d)
-
-    m = x_8.shape[0]
+    m = x_2d.shape[0]
     n = weight.shape[0]
     weight_t = weight.T.contiguous()
     weight_scale = weight_scale.reshape(1, -1)
 
-    # Chunk rows to keep intermediate int32 accumulate buffer small (<= 64MB per chunk)
-    # Align chunk_size to 32 rows so _int8_matmul_accumulate never needs row padding on full chunks
+    h = None
+    if convrot:
+        if x_2d.shape[-1] % convrot_groupsize != 0:
+            raise ValueError(
+                f"ConvRot group size {convrot_groupsize} does not divide input features {x_2d.shape[-1]}"
+            )
+        h = _build_hadamard(convrot_groupsize, device=x.device, dtype=x.dtype)
+
     raw_chunk = max(32, min(m, 64 * 1024 * 1024 // (n * 4)))
-    chunk_size = max(32, (raw_chunk // 32) * 32)
+    chunk_size = max(32, min((raw_chunk // 32) * 32, 2048))
 
     result = torch.empty((m, n), device=x.device, dtype=out_dtype)
     for i in range(0, m, chunk_size):
         end_i = min(i + chunk_size, m)
-        chunk_res = _int8_matmul_accumulate(x_8[i:end_i], weight_t)
-        chunk_scales = x_scale[i:end_i].to(device=chunk_res.device, dtype=torch.float32) * weight_scale
+        chunk_x = x_2d[i:end_i]
+        if convrot:
+            chunk_x = _rotate_activation(chunk_x, h, convrot_groupsize)
+        chunk_x_8, chunk_x_scale = quantize_int8_rowwise(chunk_x)
+        chunk_res = _int8_matmul_accumulate(chunk_x_8, weight_t)
+        chunk_scales = chunk_x_scale.to(device=chunk_res.device, dtype=torch.float32) * weight_scale
         result[i:end_i] = (chunk_res.float() * chunk_scales).to(out_dtype)
-        del chunk_res, chunk_scales
+        del chunk_x, chunk_x_8, chunk_x_scale, chunk_res, chunk_scales
 
-    del x_8, x_scale, weight_t
+    del weight_t
 
     if bias is not None:
         result.add_(bias.to(device=result.device, dtype=result.dtype).reshape(1, -1))

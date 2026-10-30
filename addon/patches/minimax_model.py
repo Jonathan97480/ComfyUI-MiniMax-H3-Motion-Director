@@ -208,6 +208,14 @@ class MLP(nn.Module):
         self.fc2 = operations.Linear(ffn, hidden, bias=False, dtype=dtype, device=device)
 
     def forward(self, x):
+        if x.shape[0] > 4096:
+            chunk = 2048
+            out = torch.empty_like(x)
+            for i in range(0, x.shape[0], chunk):
+                end_i = min(i + chunk, x.shape[0])
+                xc = x[i:end_i]
+                out[i:end_i] = comfy.ops.linear_input_act(self.fc2, self.fc1(xc), "swiglu")
+            return out
         return comfy.ops.linear_input_act(self.fc2, self.fc1(x), "swiglu")
 
 

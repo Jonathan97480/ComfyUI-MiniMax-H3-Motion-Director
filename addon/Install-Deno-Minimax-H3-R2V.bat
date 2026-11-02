@@ -203,6 +203,13 @@ if errorlevel 1 (
     "%PY%" -I -m pip install --quiet --disable-pip-version-check --no-warn-script-location "tomli" "tomli-w" >nul 2>&1
 )
 
+rem Assurer la presence de comfy-aimdo>=0.6.0 pour compatibilite ModelVBAR pageout_callback (ComfyUI 0.43.0+)
+"%PY%" -c "import comfy_aimdo.model_vbar, inspect; assert 'pageout_callback' in inspect.signature(comfy_aimdo.model_vbar.ModelVBAR.__init__).parameters" >nul 2>&1
+if errorlevel 1 (
+    echo        Mise a niveau de comfy-aimdo vers 0.6.0+...
+    "%PY%" -I -m pip install --quiet --disable-pip-version-check --no-warn-script-location "comfy-aimdo>=0.6.0" "comfy-kitchen>=0.2.40" "comfyui-frontend-package>=1.57.6" >nul 2>&1
+)
+
 echo        OK - Dependances Python pretes.
 
 rem ---------------------------------------------------------------- 3.5 Apply VRAM Optimizations & Patches

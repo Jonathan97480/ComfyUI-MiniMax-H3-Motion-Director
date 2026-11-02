@@ -244,6 +244,43 @@ def patch_comfy_logger(comfy_dir):
         except Exception as e:
             logging.warning(f"Impossible de patcher logger.py: {e}")
 
+def patch_model_patcher(comfy_dir):
+    patcher_path = os.path.join(comfy_dir, "comfy", "model_patcher.py")
+    if os.path.isfile(patcher_path):
+        try:
+            with open(patcher_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            if "comfy_aimdo.model_vbar.ModelVBAR(size, self.load_device.index, pageout_callback=pageout)" in content and "except TypeError:" not in content:
+                old = "vbar = comfy_aimdo.model_vbar.ModelVBAR(size, self.load_device.index, pageout_callback=pageout)"
+                new = "try:\n                vbar = comfy_aimdo.model_vbar.ModelVBAR(size, self.load_device.index, pageout_callback=pageout)\n            except TypeError:\n                vbar = comfy_aimdo.model_vbar.ModelVBAR(size, self.load_device.index)"
+                content = content.replace(old, new)
+                with open(patcher_path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                logging.info(f"Correctif model_patcher.py appliqué (fallback ModelVBAR pageout) : {patcher_path}")
+        except Exception as e:
+            logging.warning(f"Impossible de patcher model_patcher.py: {e}")
+
+def ensure_comfy_aimdo():
+    """Vérifie que comfy-aimdo supporte pageout_callback (>= 0.6.0), met à jour si nécessaire."""
+    needs_update = False
+    try:
+        import comfy_aimdo.model_vbar
+        import inspect
+        sig = inspect.signature(comfy_aimdo.model_vbar.ModelVBAR.__init__)
+        if "pageout_callback" not in sig.parameters:
+            needs_update = True
+    except Exception:
+        needs_update = True
+
+    if needs_update:
+        try:
+            import subprocess
+            logging.info("Mise à niveau de comfy-aimdo vers >=0.6.0...")
+            subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "comfy-aimdo>=0.6.0", "comfy-kitchen>=0.2.40", "comfyui-frontend-package>=1.57.6"], check=False)
+            logging.info("comfy-aimdo mis à niveau avec succès.")
+        except Exception as e:
+            logging.warning(f"Impossible de mettre à niveau comfy-aimdo via pip: {e}")
+
 def update_comfyui_core(comfy_dir):
     """Met à jour ComfyUI vers v0.43.0+ (apportant MiniMaxH3LatentUpscaleWithModel) si un repo git est présent."""
     git_dir = os.path.join(comfy_dir, ".git")
@@ -338,6 +375,10 @@ def main():
 
     # 3.6 Patch comfy/app/logger.py (prevent UnicodeEncodeError crash with emojis on Windows)
     patch_comfy_logger(comfy_dir)
+
+    # 3.7 Patch comfy/model_patcher.py (fallback comfy-aimdo ModelVBAR) & ensure comfy-aimdo>=0.6.0
+    ensure_comfy_aimdo()
+    patch_model_patcher(comfy_dir)
 
     # 4. Patch comfy_kitchen (in site-packages)
     if site_packages and os.path.isdir(os.path.join(site_packages, "comfy_kitchen")):

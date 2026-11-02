@@ -244,6 +244,19 @@ def patch_comfy_logger(comfy_dir):
         except Exception as e:
             logging.warning(f"Impossible de patcher logger.py: {e}")
 
+def update_comfyui_core(comfy_dir):
+    """Met à jour ComfyUI vers v0.43.0+ (apportant MiniMaxH3LatentUpscaleWithModel) si un repo git est présent."""
+    git_dir = os.path.join(comfy_dir, ".git")
+    if os.path.isdir(git_dir):
+        try:
+            import subprocess
+            res = subprocess.run(["git", "fetch", "origin", "master"], cwd=comfy_dir, capture_output=True, text=True, timeout=20)
+            if res.returncode == 0:
+                subprocess.run(["git", "merge", "origin/master", "--ff-only"], cwd=comfy_dir, capture_output=True, text=True, timeout=15)
+                logging.info("ComfyUI Core synchronisé avec succès sur origin/master (v0.43.0+).")
+        except Exception as e:
+            logging.debug(f"Mise à jour git de ComfyUI ignorée: {e}")
+
 def patch_batch_files(easy_install_dir):
     bat_fa = os.path.join(easy_install_dir, "Start ComfyUI FlashAttention.bat")
     bat_std = os.path.join(easy_install_dir, "Start ComfyUI.bat")
@@ -306,6 +319,9 @@ def main():
     # 2. Patch Comfyui_Minimax_h3_latent_Upscaler
     upscaler = os.path.join(custom_nodes_dir, "Comfyui_Minimax_h3_latent_Upscaler", "nodes", "minimax_h3_latent_upscaler_3d.py")
     backup_and_copy("minimax_h3_latent_upscaler_3d.py", upscaler)
+
+    # 2.5 Ensure ComfyUI Core is up to date (v0.43.0+ for MiniMaxH3LatentUpscaleWithModel)
+    update_comfyui_core(comfy_dir)
 
     # 3. Patch ComfyUI Core
     comfy_model = os.path.join(comfy_dir, "comfy", "ldm", "minimax", "model.py")

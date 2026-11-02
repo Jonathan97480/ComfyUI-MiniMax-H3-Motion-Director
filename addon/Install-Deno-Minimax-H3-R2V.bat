@@ -155,6 +155,18 @@ if /i not "%~1"=="NoPause" (
     )
 )
 
+rem --- Update ComfyUI to v0.43.0+ for MiniMaxH3LatentUpscaleWithModel support ---
+if exist "%COMFY%\.git" (
+    where git >nul 2>&1
+    if not errorlevel 1 (
+        echo  [0/5] Verification et mise a jour de ComfyUI vers v0.43.0+...
+        pushd "%COMFY%"
+        git fetch origin master >nul 2>&1
+        git merge origin/master --ff-only >nul 2>&1
+        popd
+    )
+)
+
 rem ---------------------------------------------------------------- 2. Check Custom Nodes
 echo.
 echo  [1/5] Installation et mise a jour des Custom Nodes requis...
